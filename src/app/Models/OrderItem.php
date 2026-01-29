@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class OrderItem extends Model
+{
+    protected $fillable = [
+        'order_id',
+        'product_id',
+        'product_name',
+        'price',
+        'quantity',
+        'subtotal',
+        'variation_data',
+        'variation_price_delta_total',
+        'variation_price_breakdown',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'subtotal' => 'decimal:2',
+            'variation_data' => 'array',
+            'variation_price_delta_total' => 'decimal:2',
+            'variation_price_breakdown' => 'array',
+        ];
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+}

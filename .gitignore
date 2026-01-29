@@ -1,0 +1,9 @@
+# IDE / OS
+.idea/
+.DS_Store
+*.iml
+
+# Ortam (root'ta .env varsa)
+.env
+.env.*
+!.env.example

@@ -1,0 +1,437 @@
+/**
+ * NEVISTANBUL Admin Panel — Modern UI
+ * Primary: #184E77 | Success: #059669 | Clean, spacious, rounded
+ */
+
+/* ========== CSS Variables ========== */
+:root {
+    --fi-admin-radius: 0.75rem;
+    --fi-admin-radius-lg: 1rem;
+    --fi-admin-shadow: 0 1px 3px rgb(0 0 0 / 0.05);
+    --fi-admin-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --fi-admin-primary: 24 78 119;
+    --fi-admin-primary-hover: 21 67 102;
+}
+
+.dark {
+    --fi-admin-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    --fi-admin-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+}
+
+/* ========== Logo ========== */
+/* Light mode: beyaz logo görünsün diye sidebar header koyu arka plan */
+.fi-sidebar-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    ring-color: rgb(30 41 59) !important;
+}
+.fi-sidebar-header a {
+    display: flex;
+    align-items: center;
+}
+/* Dark mode: mevcut karanlık sidebar'da beyaz logo aynen kalsın */
+.dark .fi-sidebar-header {
+    background: transparent !important;
+}
+.dark .fi-logo img {
+    filter: none;
+}
+
+/* ========== Sidebar — Modern, clean ========== */
+.fi-sidebar {
+    border-right-width: 1px;
+    border-color: rgb(226 232 240);
+    background: linear-gradient(180deg, #ffffff 0%, rgb(248 250 252) 100%);
+    box-shadow: 2px 0 12px rgb(0 0 0 / 0.03);
+    transition: width 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fi-sidebar-nav-groups {
+    gap: 0.375rem;
+    padding: 0.5rem 0.375rem;
+}
+
+.fi-sidebar-group {
+    margin-bottom: 0.25rem;
+}
+
+.fi-sidebar-item-button {
+    border-radius: var(--fi-admin-radius);
+    margin: 0 0.375rem;
+    padding: 0.625rem 0.875rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    position: relative;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: rgb(24 78 119 / 0.08);
+    color: #184E77;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    background: linear-gradient(135deg, rgb(24 78 119 / 0.12) 0%, rgb(24 78 119 / 0.08) 100%);
+    color: #184E77;
+    box-shadow: var(--fi-admin-shadow);
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-button::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 0 3px 3px 0;
+    background: #184E77;
+}
+
+/* Sidebar collapse button */
+.fi-sidebar-collapse-button {
+    border-radius: var(--fi-admin-radius);
+    transition: background-color 0.15s ease;
+}
+
+.fi-sidebar-collapse-button:hover {
+    background-color: rgb(24 78 119 / 0.08);
+}
+
+/* ========== Dark mode — Sidebar ========== */
+.dark .fi-sidebar {
+    background: linear-gradient(180deg, rgb(15 23 42) 0%, rgb(3 7 18) 100%);
+    border-right-color: rgb(30 41 59);
+    box-shadow: 2px 0 20px rgb(0 0 0 / 0.25);
+}
+
+.dark .fi-sidebar-item-button:hover {
+    background-color: rgb(24 78 119 / 0.25);
+    color: rgb(203 213 225);
+}
+
+.dark .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    background: linear-gradient(135deg, rgb(24 78 119 / 0.4) 0%, rgb(24 78 119 / 0.25) 100%);
+    color: rgb(248 250 252);
+}
+
+.dark .fi-sidebar-item.fi-active .fi-sidebar-item-button::before {
+    background: rgb(148 163 184);
+}
+
+/* ========== Topbar — Minimal, modern ========== */
+.fi-topbar {
+    border-bottom: 1px solid rgb(226 232 240);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.03);
+    min-height: 4rem;
+}
+
+.dark .fi-topbar {
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom-color: rgb(30 41 59);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+/* ========== Main content area ========== */
+.fi-main {
+    background: rgb(241 245 249);
+    padding: 1.5rem;
+    min-height: calc(100vh - 4rem);
+}
+
+.dark .fi-main {
+    background: rgb(2 6 23);
+}
+
+/* ========== Page header ========== */
+.fi-header-heading {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #0f172a;
+    font-size: 1.5rem;
+}
+
+.dark .fi-header-heading {
+    color: rgb(248 250 252);
+}
+
+/* ========== Sections & cards ========== */
+.fi-section-content-ctn {
+    border-radius: var(--fi-admin-radius-lg);
+    box-shadow: var(--fi-admin-shadow);
+    border: 1px solid rgb(226 232 240);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.fi-section-content-ctn:hover {
+    box-shadow: var(--fi-admin-shadow-md);
+}
+
+.fi-section {
+    border-radius: var(--fi-admin-radius-lg);
+}
+
+.fi-section-header {
+    border-radius: var(--fi-admin-radius-lg) var(--fi-admin-radius-lg) 0 0;
+    padding: 1rem 1.25rem;
+}
+
+.fi-section-header-heading {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.dark .fi-section-content-ctn {
+    background: rgb(15 23 42);
+    border-color: rgb(30 41 59);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+.dark .fi-section-content-ctn:hover {
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+/* ========== Tables ========== */
+.fi-ta-ctn {
+    border-radius: var(--fi-admin-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--fi-admin-shadow);
+    border: 1px solid rgb(226 232 240);
+}
+
+.fi-ta-row {
+    transition: background-color 0.12s ease;
+}
+
+.fi-ta-row:hover {
+    background-color: rgb(24 78 119 / 0.05);
+}
+
+.fi-ta-header {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(100 116 139);
+}
+
+.dark .fi-ta-ctn {
+    background: rgb(15 23 42);
+    border-color: rgb(30 41 59);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+.dark .fi-ta-row:hover {
+    background-color: rgb(24 78 119 / 0.15);
+}
+
+.dark .fi-ta-header {
+    color: rgb(148 163 184);
+}
+
+/* ========== Buttons ========== */
+.fi-btn {
+    border-radius: var(--fi-admin-radius);
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.fi-btn-primary {
+    box-shadow: 0 1px 2px rgb(24 78 119 / 0.25);
+}
+
+.fi-btn-primary:hover {
+    box-shadow: 0 2px 4px rgb(24 78 119 / 0.3);
+    transform: translateY(-0.5px);
+}
+
+.fi-btn-success {
+    box-shadow: 0 1px 2px rgb(5 150 105 / 0.25);
+}
+
+.fi-btn-success:hover {
+    box-shadow: 0 2px 4px rgb(5 150 105 / 0.3);
+}
+
+/* ========== Form components ========== */
+.fi-fo-component-ctn {
+    border-radius: var(--fi-admin-radius);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fi-fo-component-ctn:focus-within {
+    box-shadow: 0 0 0 2px rgb(24 78 119 / 0.2);
+}
+
+.fi-input {
+    border-radius: var(--fi-admin-radius);
+}
+
+.fi-fo-field-wrp-label {
+    font-weight: 500;
+    color: rgb(51 65 85);
+}
+
+.dark .fi-fo-field-wrp-label {
+    color: rgb(203 213 225);
+}
+
+/* Repeater */
+.fi-repeater {
+    border-radius: var(--fi-admin-radius);
+}
+
+.fi-repeater-item {
+    border-radius: var(--fi-admin-radius);
+    border: 1px solid rgb(226 232 240);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fi-repeater-item:hover {
+    border-color: rgb(24 78 119 / 0.2);
+}
+
+.dark .fi-repeater-item {
+    border-color: rgb(30 41 59);
+}
+
+.dark .fi-repeater-item:hover {
+    border-color: rgb(24 78 119 / 0.4);
+}
+
+/* ========== Stats / Dashboard widgets ========== */
+.fi-wi-stats-overview-stat {
+    border-radius: var(--fi-admin-radius-lg);
+    overflow: hidden;
+    border: 1px solid rgb(226 232 240);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    box-shadow: var(--fi-admin-shadow-md);
+    transform: translateY(-2px);
+}
+
+.dark .fi-wi-stats-overview-stat {
+    border-color: rgb(30 41 59);
+    background: rgb(15 23 42);
+}
+
+.dark .fi-wi-stats-overview-stat:hover {
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.3);
+}
+
+/* ========== Badges ========== */
+.fi-badge {
+    border-radius: 9999px;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.fi-badge-success {
+    background-color: rgb(5 150 105 / 0.15);
+    color: #047857;
+}
+
+.dark .fi-badge-success {
+    background-color: rgb(5 150 105 / 0.25);
+    color: rgb(52 211 153);
+}
+
+.fi-badge-warning {
+    background-color: rgb(245 158 11 / 0.15);
+    color: #b45309;
+}
+
+.dark .fi-badge-warning {
+    background-color: rgb(245 158 11 / 0.25);
+    color: rgb(253 186 116);
+}
+
+.fi-badge-danger {
+    background-color: rgb(244 63 94 / 0.15);
+    color: #be123c;
+}
+
+.dark .fi-badge-danger {
+    background-color: rgb(244 63 94 / 0.25);
+    color: rgb(251 113 133);
+}
+
+/* ========== Login / Simple page ========== */
+.fi-simple-layout {
+    background: linear-gradient(135deg, rgb(241 245 249) 0%, rgb(226 232 240) 50%, rgb(248 250 252) 100%);
+}
+
+.dark .fi-simple-layout {
+    background: linear-gradient(135deg, rgb(2 6 23) 0%, rgb(15 23 42) 50%, rgb(3 7 18) 100%);
+}
+
+.fi-simple-main {
+    border-radius: 1.25rem !important;
+    box-shadow: 0 4px 24px rgb(0 0 0 / 0.08), 0 1px 3px rgb(0 0 0 / 0.04) !important;
+    border: 1px solid rgb(226 232 240) !important;
+    padding: 2.5rem 2rem !important;
+}
+
+.dark .fi-simple-main {
+    box-shadow: 0 4px 24px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.2) !important;
+    border-color: rgb(30 41 59) !important;
+}
+
+.fi-simple-header-heading {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #184E77 !important;
+}
+
+.dark .fi-simple-header-heading {
+    color: rgb(248 250 252) !important;
+}
+
+.fi-simple-header-subheading {
+    color: rgb(100 116 139) !important;
+}
+
+.dark .fi-simple-header-subheading {
+    color: rgb(148 163 184) !important;
+}
+
+/* ========== Modals ========== */
+.fi-modal-window {
+    border-radius: var(--fi-admin-radius-lg);
+    box-shadow: 0 20px 40px rgb(0 0 0 / 0.12);
+}
+
+.dark .fi-modal-window {
+    box-shadow: 0 20px 40px rgb(0 0 0 / 0.5);
+}
+
+/* ========== Breadcrumbs ========== */
+.fi-breadcrumbs-item {
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.fi-breadcrumbs-item-link:hover {
+    color: #184E77;
+}
+
+.dark .fi-breadcrumbs-item-link:hover {
+    color: rgb(148 163 184);
+}
+
+/* ========== User menu & dropdowns ========== */
+.fi-dropdown-list {
+    border-radius: var(--fi-admin-radius-lg);
+    box-shadow: var(--fi-admin-shadow-md);
+    border: 1px solid rgb(226 232 240);
+}
+
+.dark .fi-dropdown-list {
+    border-color: rgb(30 41 59);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.3);
+}
