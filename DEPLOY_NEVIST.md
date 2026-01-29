@@ -12,7 +12,7 @@ Bu rehber, projeyi **SSH + Git** ile **https://nevist.sonerdurmus.com** adresine
 | **Port**   | 65002             |
 | **Kullanıcı** | u934472865     |
 | **Domain** | https://nevist.sonerdurmus.com |
-| **Repo**   | git@github.com:sonerdurmus-agteks/nev_istanbul_b2b.git |
+| **Repo**   | git@github.com:sonerdrmus/nev_istanbul_b2b.git |
 
 ---
 
@@ -81,7 +81,7 @@ cd ~/domains/nevist.sonerdurmus.com/public_html
 # Mevcut dosyaları temizleyin (index.html vb. varsa)
 # rm -f index.html  vb. — dikkatli olun, gerekirse önce yedek alın
 
-git clone git@github.com:sonerdurmus-agteks/nev_istanbul_b2b.git .
+git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git .
 # Sonundaki nokta (.) "bu klasöre clone et" demek
 ```
 
@@ -89,7 +89,7 @@ git clone git@github.com:sonerdurmus-agteks/nev_istanbul_b2b.git .
 
 ```bash
 cd ~/domains/nevist.sonerdurmus.com/public_html
-git clone git@github.com:sonerdurmus-agteks/nev_istanbul_b2b.git nev_istanbul_b2b
+git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git nev_istanbul_b2b
 cd nev_istanbul_b2b
 ```
 
@@ -200,7 +200,7 @@ php artisan view:cache
 ```bash
 ssh -p 65002 u934472865@82.198.228.144
 cd ~/domains/nevist.sonerdurmus.com/public_html
-git clone git@github.com:sonerdurmus-agteks/nev_istanbul_b2b.git .
+git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git .
 cd src
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
