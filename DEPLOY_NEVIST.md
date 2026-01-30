@@ -85,13 +85,23 @@ git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git .
 # Sonundaki nokta (.) "bu klasöre clone et" demek
 ```
 
+**SSH "Permission denied" alırsanız** sunucuda GitHub SSH key yoktur; **HTTPS** ile clone edin:
+
+```bash
+git clone https://github.com/sonerdrmus/nev_istanbul_b2b.git .
+```
+
+(Repo private ise kullanıcı adı + Personal Access Token sorulur.)
+
 **Seçenek B — Alt dizine clone etmek:**
 
 ```bash
 cd ~/domains/nevist.sonerdurmus.com/public_html
-git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git nev_istanbul_b2b
+git clone https://github.com/sonerdrmus/nev_istanbul_b2b.git nev_istanbul_b2b
 cd nev_istanbul_b2b
 ```
+
+(SSH kullanacaksanız: `git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git nev_istanbul_b2b`)
 
 Aşağıdaki adımlarda Laravel **src** klasörü içinde çalışacağız; Seçenek B kullandıysanız tüm `cd` komutlarında `public_html/nev_istanbul_b2b` altında olduğunuzu varsayın.
 
@@ -200,7 +210,7 @@ php artisan view:cache
 ```bash
 ssh -p 65002 u934472865@82.198.228.144
 cd ~/domains/nevist.sonerdurmus.com/public_html
-git clone git@github.com:sonerdrmus/nev_istanbul_b2b.git .
+git clone https://github.com/sonerdrmus/nev_istanbul_b2b.git .
 cd src
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
