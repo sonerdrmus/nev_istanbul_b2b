@@ -241,7 +241,7 @@ class ProductResource extends Resource
                             ->schema([
                                 Forms\Components\Section::make('1. Varyasyon bilgisi')
                                     ->icon('heroicon-o-tag')
-                                    ->description('Ad, tip ve bağlı varyasyon (zorunlu).')
+                                    ->description('Önce varyasyonun adını ve tipini belirleyin, sonra (gerekirse) hangi varyasyona bağlı olduğunu seçin. Aşağıdaki 2. ve 3. adımlar bu bilgilere göre çalışır.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
                                             ->label('Varyasyon Adı')
@@ -311,7 +311,7 @@ class ProductResource extends Resource
                                     ->columns(2),
                                 Forms\Components\Section::make('2. Seçenekler')
                                     ->icon('heroicon-o-list-bullet')
-                                    ->description('Seçenekler ve fiyat farkları (₺) — zorunlu.')
+                                    ->description('Bu varyasyon BAĞIMSIZ ise buradan seçenekleri ve fiyat farklarını ekleyin. Eğer üst varyasyona bağlamak istiyorsanız sadece 1. adımı doldurun ve 3. adıma geçin.')
                                     ->schema([
                                         Forms\Components\Repeater::make('options_with_prices')
                                     ->label('Seçenekler + Fiyat Farkı (₺)')
@@ -332,9 +332,9 @@ class ProductResource extends Resource
                                             ->directory('variation_options')
                                             ->visibility('public')
                                             ->imagePreviewHeight(60)
-                                            ->maxSize(2048)
-                                            ->nullable()
-                                            ->visible(fn (Get $get) => $get('../../../type') === 'image'),
+                                            ->maxSize(5120) // 5 MB
+                                            ->helperText('En fazla 5 MB, JPG / PNG / WEBP.')
+                                            ->nullable(),
                                         Forms\Components\TextInput::make('price_delta_try')
                                             ->label('Fark (₺)')
                                             ->helperText('Örn: 0, 10.50, -5')
@@ -417,8 +417,8 @@ class ProductResource extends Resource
                                     ->default([])
                                     ->columnSpan(2),
                                 Forms\Components\Repeater::make('options_by_parent')
-                                    ->label('Seçenekler (üst değere göre)')
-                                    ->helperText('Her satırda: üst varyasyondaki bir değer (örn. Erkek) ve ona ait seçenekler (örn. Sarı, Mavi).')
+                                    ->label('3. Bağımlı seçenekler (üst değere göre)')
+                                    ->helperText('Önce bu varyasyonun bağlı olduğu üst varyasyonu yukarıdan seçin. Her satır: üst varyasyondaki bir değer (örn. Erkek) ve bu değere ait alt seçenekler (örn. Sarı, Mavi).')
                                     ->schema([
                                         Forms\Components\Select::make('parent_value')
                                             ->label('Üst değer')
@@ -466,9 +466,9 @@ class ProductResource extends Resource
                                                     ->directory('variation_options')
                                                     ->visibility('public')
                                                     ->imagePreviewHeight(60)
-                                                    ->maxSize(2048)
-                                                    ->nullable()
-                                                    ->visible(fn (Get $get) => $get('../../../../type') === 'image'),
+                                                    ->maxSize(5120) // 5 MB
+                                                    ->helperText('En fazla 5 MB, JPG / PNG / WEBP.')
+                                                    ->nullable(),
                                                 Forms\Components\TextInput::make('price_delta_try')
                                                     ->label('Fark (₺)')
                                                     ->numeric()

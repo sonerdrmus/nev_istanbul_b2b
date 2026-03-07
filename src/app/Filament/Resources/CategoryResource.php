@@ -84,7 +84,6 @@ class CategoryResource extends Resource
                     ->formatStateUsing(fn (Category $record) => str_repeat(' ', $record->depth) . ($record->depth > 0 ? '└ ' : '') . $record->name),
                 Tables\Columns\TextColumn::make('full_path')
                     ->label('Tam Yol')
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('parent.name')
                     ->label('Üst Kategori')

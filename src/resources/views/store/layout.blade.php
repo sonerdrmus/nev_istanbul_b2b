@@ -303,7 +303,8 @@
                 }
             @endphp
 
-            {{-- Menü (açılır): üst kategori -> alt kategoriler (tıklama ile) --}}
+            {{-- Menü (açılır): üst kategori -> alt kategoriler (tıklama ile).
+                 Eğer üst kategorinin alt kategorisi yoksa doğrudan kategori linki olarak davranır. --}}
             <div class="flex items-center gap-2 py-3 overflow-x-auto overflow-y-visible lg:overflow-visible scrollbar-hide relative" id="category-strip">
                 <a href="{{ route('home') }}"
                    class="flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap {{ !request('category') ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}">
@@ -311,14 +312,14 @@
                 </a>
                 @foreach($menuCategories as $parent)
                     <div class="relative flex-shrink-0">
-                        <button type="button"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors {{ $activeParentSlug === $parent->slug ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}"
-                                onclick="toggleCatMenu('cat-menu-{{ $parent->id }}')">
-                            @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-4 h-4'])
-                            {{ $parent->name }}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
                         @if($parent->children->isNotEmpty())
+                            <button type="button"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors {{ $activeParentSlug === $parent->slug ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}"
+                                    onclick="toggleCatMenu('cat-menu-{{ $parent->id }}')">
+                                @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-4 h-4'])
+                                {{ $parent->name }}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
                             <div id="cat-menu-{{ $parent->id }}" class="hidden absolute left-0 top-full mt-2 w-64 py-2 bg-white rounded-xl border border-slate-200 shadow-xl z-50 max-h-[70vh] overflow-y-auto">
                                 <a href="{{ route('home', array_merge(request()->query(), ['parent' => $parent->slug, 'category' => null])) }}"
                                    class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-colors">
@@ -333,6 +334,13 @@
                                     </a>
                                 @endforeach
                             </div>
+                        @else
+                            {{-- Alt kategorisi olmayan kök kategori: doğrudan kategori sayfasına gider --}}
+                            <a href="{{ route('home', array_merge(request()->query(), ['category' => $parent->slug, 'parent' => null])) }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors {{ request('category') === $parent->slug ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}">
+                                @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-4 h-4'])
+                                {{ $parent->name }}
+                            </a>
                         @endif
                     </div>
                 @endforeach
@@ -459,6 +467,12 @@
                                         @endforeach
                                     </div>
                                 </details>
+                            @else
+                                {{-- Alt kategorisi olmayan kök kategori: mobilde tek satır link --}}
+                                <a href="{{ route('home', ['category' => $parent->slug]) }}" class="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors text-slate-800 font-medium">
+                                    @include('store.partials.category-icon', ['category' => $parent])
+                                    {{ $parent->name }}
+                                </a>
                             @endif
                         @endforeach
                     </div>

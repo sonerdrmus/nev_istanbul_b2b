@@ -149,26 +149,44 @@
                         <span class="text-red-600 font-medium">Stokta yok</span>
                     @endif
                 </div>
+            @endif
+        </div>
+    </div>
 
-            @if($canSeePrices && $product->isOnSale() && ($product->stock_quantity === null || (int) $product->stock_quantity > 0))
-                <form action="{{ route('store.cart.add') }}" method="POST" class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+    {{-- Varyasyon seçimi ve sepete ekleme alanını ürün detayının altına taşıdık --}}
+    @if($canSeePrices && $product->isOnSale() && ($product->stock_quantity === null || (int) $product->stock_quantity > 0))
+    <section class="mt-10">
+        <div class="max-w-4xl mx-auto">
+            <div class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-xl">
+                <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary-500 via-sky-500 to-emerald-500"></div>
+                <div class="px-6 pt-5 pb-4 sm:px-8 sm:pt-6 sm:pb-5 border-b border-slate-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a3 3 0 11-6 0 3 3 0 016 0zM4 21v-1a7 7 0 017-7h2a7 7 0 017 7v1"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11h8M8 15h4"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-semibold text-slate-900">Varyasyon Seçimi ve Sipariş</h2>
+                        <p class="text-xs sm:text-sm text-slate-500">Beden / renk gibi seçenekleri belirleyip sipariş adedini seçin.</p>
+                    </div>
+                </div>
+            <form action="{{ route('store.cart.add') }}" method="POST" class="px-6 pb-6 pt-5 sm:px-8 sm:pb-7 sm:pt-6">
+                @csrf
+                <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                    @if($product->variations->isNotEmpty())
-                        <div class="space-y-4 mb-6" id="product-detail-vars">
+                @if($product->variations->isNotEmpty())
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+                        <div class="lg:col-span-2 space-y-4" id="product-detail-vars">
                             @foreach($product->variations as $v)
                                 @if(empty($v->depends_on))
-                                <div class="var-row" data-var-name="{{ $v->name }}" data-var-type="{{ $v->type ?? 'select' }}">
-                                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $v->name }} <span class="text-red-500">*</span></label>
+                                <div class="var-row rounded-2xl border border-slate-200/80 bg-slate-50/60 px-4 py-3.5 sm:px-5 sm:py-4" data-var-name="{{ $v->name }}" data-var-type="{{ $v->type ?? 'select' }}">
+                                    <label class="block text-xs font-semibold text-slate-600 tracking-wide mb-1.5 uppercase">{{ $v->name }} <span class="text-red-500">*</span></label>
                                     @if(($v->type ?? '') === 'color')
                                     <div class="flex flex-wrap gap-2" role="group" aria-label="{{ $v->name }}">
                                         @foreach($v->options ?? [] as $opt)
                                             @php $meta = $v->getOptionMeta($opt); $hex = $meta['color'] ?? null; @endphp
                                             <label class="var-option-color cursor-pointer flex flex-col items-center gap-1 group/opt">
                                                 <input type="radio" name="variations[{{ $v->name }}]" value="{{ $opt }}" class="sr-only peer var-select" required>
-                                                <span class="w-10 h-10 rounded-full border-2 border-slate-300 peer-checked:border-primary-500 peer-checked:ring-2 peer-checked:ring-primary-500/30 group-hover/opt:border-primary-400 transition-all flex-shrink-0 {{ $hex ? '' : 'bg-slate-100' }}" @if($hex) style="background-color: {{ $hex }};" @endif title="{{ $opt }}"></span>
-                                                <span class="text-xs text-slate-600">{{ $opt }}</span>
+                                                <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-slate-300/80 bg-white peer-checked:border-primary-500 peer-checked:ring-2 peer-checked:ring-primary-500/30 group-hover/opt:border-primary-400 transition-all flex-shrink-0 {{ $hex ? '' : 'bg-slate-100' }}" @if($hex) style="background-color: {{ $hex }};" @endif title="{{ $opt }}"></span>
+                                                <span class="text-[11px] sm:text-xs text-slate-600">{{ $opt }}</span>
                                             </label>
                                         @endforeach
                                     </div>
@@ -178,19 +196,19 @@
                                             @php $meta = $v->getOptionMeta($opt); $imgPath = $meta['image'] ?? null; @endphp
                                             <label class="var-option-image cursor-pointer flex flex-col items-center gap-1.5 group/opt">
                                                 <input type="radio" name="variations[{{ $v->name }}]" value="{{ $opt }}" class="sr-only peer var-select" required>
-                                                <span class="w-14 h-14 rounded-xl border-2 border-slate-300 peer-checked:border-primary-500 peer-checked:ring-2 peer-checked:ring-primary-500/30 group-hover/opt:border-primary-400 transition-all overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                                <span class="w-16 h-16 rounded-2xl border-2 border-slate-200/90 bg-slate-50 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm peer-checked:border-primary-500 peer-checked:ring-2 peer-checked:ring-primary-500/30 group-hover/opt:border-primary-400 transition-all">
                                                     @if($imgPath)
                                                         <img src="{{ Storage::url($imgPath) }}" alt="{{ $opt }}" class="w-full h-full object-cover">
                                                     @else
                                                         <span class="text-slate-400 text-xs font-medium">{{ $opt }}</span>
                                                     @endif
                                                 </span>
-                                                <span class="text-xs text-slate-600">{{ $opt }}</span>
+                                                <span class="text-[11px] sm:text-xs text-slate-600">{{ $opt }}</span>
                                             </label>
                                         @endforeach
                                     </div>
                                     @else
-                                    <select name="variations[{{ $v->name }}]" required class="var-select w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                                    <select name="variations[{{ $v->name }}]" required class="var-select w-full rounded-2xl border border-slate-300/80 bg-white px-4 py-2.5 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/15 text-sm">
                                         <option value="">Seçin</option>
                                         @foreach($v->options ?? [] as $opt)
                                             <option value="{{ $opt }}">{{ $opt }}</option>
@@ -199,52 +217,69 @@
                                     @endif
                                 </div>
                                 @else
-                                <div class="var-row var-dependent hidden" data-var-name="{{ $v->name }}" data-depends-on="{{ $v->depends_on }}" data-options-by-parent="{{ json_encode($v->options_by_parent ?? []) }}">
-                                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $v->name }} <span class="text-red-500">*</span></label>
-                                    <select name="variations[{{ $v->name }}]" class="var-select var-dependent-select w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" required disabled>
+                                <div class="var-row var-dependent rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/40 px-4 py-3.5 sm:px-5 sm:py-4 hidden" data-var-name="{{ $v->name }}" data-depends-on="{{ $v->depends_on }}" data-options-by-parent="{{ json_encode($v->options_by_parent ?? []) }}">
+                                    <label class="block text-xs font-semibold text-slate-600 tracking-wide mb-1.5 uppercase">{{ $v->name }} <span class="text-red-500">*</span></label>
+                                    <select name="variations[{{ $v->name }}]" class="var-select var-dependent-select w-full rounded-2xl border border-slate-300/80 bg-white px-4 py-2.5 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/15 text-sm" required disabled>
                                         <option value="">Önce üst seçimi yapın</option>
                                     </select>
                                 </div>
                                 @endif
                             @endforeach
                         </div>
-                    @endif
 
-                    @php $minOrder = $product->getMinimumOrderQuantity(); @endphp
-                    <div class="flex flex-wrap items-end gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Adet</label>
-                            <input type="number" name="quantity" value="{{ $minOrder }}" min="{{ $minOrder }}" max="999" class="w-24 rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
-                            @if($minOrder > 1)
-                                <p class="mt-1 text-xs text-slate-500">Minimum sipariş: {{ $minOrder }} adet</p>
-                            @endif
+                        <div class="lg:col-span-1 w-full rounded-2xl bg-slate-900 text-slate-50 px-4 py-4 sm:px-5 sm:py-5 flex flex-col gap-3 shadow-sm">
+                            @php $minOrder = $product->getMinimumOrderQuantity(); @endphp
+                            <div>
+                                <p class="text-xs font-semibold tracking-wide text-slate-300 uppercase mb-1.5">Sipariş Özeti</p>
+                                <p class="text-xs text-slate-400">Toplam tutar, yukarıdaki fiyat alanında seçtiğiniz varyasyonlara göre anlık güncellenir.</p>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-semibold text-slate-200 mb-1.5 uppercase">Adet</label>
+                                    <input type="number" name="quantity" value="{{ $minOrder }}" min="{{ $minOrder }}" max="999" class="w-full rounded-xl border border-slate-600 bg-slate-900/60 px-3 py-2.5 text-slate-50 placeholder-slate-500 focus:border-primary-300 focus:ring-2 focus:ring-primary-400/40 text-sm">
+                                    @if($minOrder > 1)
+                                        <p class="mt-1 text-[11px] text-slate-400">Minimum sipariş: {{ $minOrder }} adet</p>
+                                    @endif
+                                </div>
+                            </div>
+                            <button type="submit" class="mt-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-400 hover:bg-primary-300 text-slate-900 font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                Sepete Ekle
+                            </button>
                         </div>
-                        <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-semibold shadow-sm hover:shadow transition-all duration-200">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            Sepete Ekle
-                        </button>
                     </div>
-                </form>
-            @elseif($canSeePrices && !$product->isOnSale())
-                <div class="mt-8 p-6 rounded-2xl bg-slate-100 border border-slate-200">
-                    <p class="font-medium text-slate-700">{{ $product->getStatusLabel() }}</p>
-                    <p class="mt-1 text-sm text-slate-600">
-                        @if($productStatus === 'stokta_yok')
-                            Bu ürün şu an stokta bulunmuyor. Stok geldiğinde satışa sunulacaktır.
-                        @else
-                            Bu ürün yakında satışa sunulacaktır.
-                        @endif
-                    </p>
-                </div>
-            @elseif($canSeePrices && $product->stock_quantity !== null && (int) $product->stock_quantity === 0)
-                <div class="mt-8 p-6 rounded-2xl bg-slate-100 border border-slate-200">
-                    <p class="text-red-600 font-medium">Stokta yok</p>
-                    <p class="mt-1 text-sm text-slate-600">Bu ürün şu an satışta değildir. Stok geldiğinde sepete ekleyebilirsiniz.</p>
-                </div>
-            @endif
-            @endif
+                @endif
+
+                
+            </form>
+            </div>
         </div>
-    </div>
+    </section>
+    @elseif($canSeePrices && !$product->isOnSale())
+    <section class="mt-10">
+        <div class="max-w-3xl mx-auto">
+            <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
+                <p class="font-medium text-slate-700">{{ $product->getStatusLabel() }}</p>
+                <p class="mt-1 text-sm text-slate-600">
+                    @if($productStatus === 'stokta_yok')
+                        Bu ürün şu an stokta bulunmuyor. Stok geldiğinde satışa sunulacaktır.
+                    @else
+                        Bu ürün yakında satışa sunulacaktır.
+                    @endif
+                </p>
+            </div>
+        </div>
+    </section>
+    @elseif($canSeePrices && $product->stock_quantity !== null && (int) $product->stock_quantity === 0)
+    <section class="mt-10">
+        <div class="max-w-3xl mx-auto">
+            <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
+                <p class="text-red-600 font-medium">Stokta yok</p>
+                <p class="mt-1 text-sm text-slate-600">Bu ürün şu an satışta değildir. Stok geldiğinde sepete ekleyebilirsiniz.</p>
+            </div>
+        </div>
+    </section>
+    @endif
 
     @if($canSeePrices && $product->variations->isNotEmpty())
     @push('scripts')
