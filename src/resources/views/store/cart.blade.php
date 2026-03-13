@@ -38,31 +38,28 @@
                                     <div class="flex-1 min-w-0">
                                         <p class="text-xs text-primary-600 font-medium">{{ $p->company?->name }}</p>
                                         <h2 class="font-semibold text-slate-900 truncate">{{ $p->name }}</h2>
-                                        @if(!empty($item->variations))
-                                            <p class="text-slate-500 text-sm mt-0.5">{{ implode(', ', array_map(fn($k, $v) => "{$k}: {$v}", array_keys($item->variations), $item->variations)) }}</p>
+                                        @if(!empty($item->variation_data) && is_array($item->variation_data))
+                                            <ul class="mt-1.5 text-sm text-slate-600 space-y-0.5">
+                                                @foreach($item->variation_data as $optName => $optValue)
+                                                    @if($optValue !== null && $optValue !== '')
+                                                        <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $optValue }}</li>
+                                                    @endif
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                        @if(!empty($item->size_quantities) && is_array($item->size_quantities))
+                                            @php $sizeParts = array_filter($item->size_quantities, fn($q) => (int)$q > 0); @endphp
+                                            @if(count($sizeParts) > 0)
+                                                <p class="mt-1 text-xs text-slate-500">Beden dağılımı: @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</p>
+                                            @endif
                                         @endif
                                         @php
-    $deltaTry = (float) ($item->variation_price_delta_total ?? 0);
     $unitTry = (float) ($item->unit_price_try ?? $item->subtotal / max(1, (int) $item->quantity));
     $unitConverted = $selectedCurrency->convertFromTRY($unitTry);
 @endphp
                                         <p class="text-slate-500 text-sm mt-0.5 whitespace-nowrap">
-                                            {{ $selectedCurrency->format($unitConverted) }}
-                                            @if($deltaTry !== 0.0)
-                                                <span class="text-xs text-slate-400">(varyasyon: {{ ($deltaTry > 0 ? '+' : '') . number_format($selectedCurrency->convertFromTRY($deltaTry), 2, ',', '.') }} {{ $selectedCurrency->symbol }})</span>
-                                            @endif
-                                            × <input type="number" name="items[{{ $loop->index }}][quantity]" value="{{ $item->quantity }}" min="{{ $p->getMinimumOrderQuantity() }}" class="w-16 rounded border border-slate-300 px-2 py-1 text-sm inline-block" />
+                                            {{ $selectedCurrency->format($unitConverted) }} × <input type="number" name="items[{{ $loop->index }}][quantity]" value="{{ $item->quantity }}" min="{{ $p->getMinimumOrderQuantity() }}" class="w-16 rounded border border-slate-300 px-2 py-1 text-sm inline-block" />
                                         </p>
-                                        @if(!empty($item->variation_price_breakdown))
-                                            <div class="mt-1 text-xs text-slate-500">
-                                                @foreach($item->variation_price_breakdown as $vName => $pairs)
-                                                    @foreach($pairs as $opt => $d)
-                                                        @php $dConv = $selectedCurrency->convertFromTRY((float) $d); @endphp
-                                                        <span class="inline-block mr-2">{{ $vName }} {{ $opt }}: {{ ($dConv > 0 ? '+' : '') . $selectedCurrency->format($dConv) }}</span>
-                                                    @endforeach
-                                                @endforeach
-                                            </div>
-                                        @endif
                                         <input type="hidden" name="items[{{ $loop->index }}][cart_key]" value="{{ $item->cart_key }}">
                                     </div>
                                     <div class="flex flex-col items-end gap-2">

@@ -10,11 +10,7 @@ class HomeContentSeeder extends Seeder
 {
     public function run(): void
     {
-        if (BannerSlide::count() > 0) {
-            return;
-        }
-
-        BannerSlide::insert([
+        $banners = [
             [
                 'title' => 'Yeni Sezon',
                 'headline' => 'Toptan Tekstil Ürünlerinde Fırsatlar',
@@ -23,9 +19,6 @@ class HomeContentSeeder extends Seeder
                 'button_url' => '/#urunler',
                 'text_align' => 'left',
                 'sort_order' => 0,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'title' => 'Güvenli Alışveriş',
@@ -35,9 +28,6 @@ class HomeContentSeeder extends Seeder
                 'button_url' => '/sepet',
                 'text_align' => 'right',
                 'sort_order' => 1,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'title' => 'B2B Çözümler',
@@ -47,17 +37,17 @@ class HomeContentSeeder extends Seeder
                 'button_url' => '/panel/login',
                 'text_align' => 'center',
                 'sort_order' => 2,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+        ];
 
-        if (HomeSection::count() > 0) {
-            return;
+        foreach ($banners as $data) {
+            BannerSlide::updateOrCreate(
+                ['title' => $data['title']],
+                array_merge($data, ['is_active' => true])
+            );
         }
 
-        HomeSection::insert([
+        $sections = [
             [
                 'label' => 'Kampanya',
                 'title' => 'Üst Giyim',
@@ -65,9 +55,6 @@ class HomeContentSeeder extends Seeder
                 'button_text' => 'İncele',
                 'link_url' => '/?category=tisort',
                 'sort_order' => 0,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'label' => 'Koleksiyon',
@@ -76,10 +63,14 @@ class HomeContentSeeder extends Seeder
                 'button_text' => 'İncele',
                 'link_url' => '/?category=pantolon',
                 'sort_order' => 1,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($sections as $data) {
+            HomeSection::updateOrCreate(
+                ['title' => $data['title'], 'label' => $data['label']],
+                array_merge($data, ['is_active' => true])
+            );
+        }
     }
 }

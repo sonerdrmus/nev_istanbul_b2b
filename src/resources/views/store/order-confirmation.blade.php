@@ -20,29 +20,30 @@
             <div class="p-6 sm:p-8 space-y-6">
                 <div>
                     <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Sipariş Özeti</h2>
-                    <ul class="space-y-2">
+                    <ul class="space-y-3">
                         @foreach($order->items as $item)
-                            <li class="flex justify-between text-sm">
-                                <span class="text-slate-700">
-                                    {{ $item->product_name }} × {{ $item->quantity }}
-                                    @if(!empty($item->variation_data))
-                                        <span class="block text-xs text-slate-500">{{ implode(', ', array_map(fn($k, $v) => "{$k}: {$v}", array_keys($item->variation_data), $item->variation_data)) }}</span>
-                                    @endif
-                                    @if(!empty($item->variation_price_breakdown))
-                                        <span class="block text-xs text-slate-500 mt-0.5">
-                                            @foreach($item->variation_price_breakdown as $vName => $pairs)
-                                                @foreach($pairs as $opt => $d)
-                                                    @php $dConv = $selectedCurrency->convertFromTRY((float) $d); @endphp
-                                                    <span class="inline-block mr-2">{{ $vName }} {{ $opt }}: {{ ($dConv > 0 ? '+' : '') . $selectedCurrency->format($dConv) }}</span>
-                                                @endforeach
-                                            @endforeach
-                                        </span>
-                                    @endif
-                                </span>
-                                @php
+                            <li class="pb-2 border-b border-slate-100 last:border-0">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-700 font-medium">{{ $item->product_name }} × {{ $item->quantity }}</span>
+                                    @php
     $convertedSubtotal = $selectedCurrency->convertFromTRY($item->subtotal);
 @endphp
 <span class="font-medium text-slate-900 whitespace-nowrap">{{ $selectedCurrency->format($convertedSubtotal) }}</span>
+                                </div>
+                                @if(!empty($item->variation_data) && is_array($item->variation_data))
+                                    <ul class="mt-1.5 text-xs text-slate-600 space-y-0.5">
+                                        @foreach($item->variation_data as $optName => $optValue)
+                                            @if($optName === 'size_quantities' && is_array($optValue))
+                                                @php $sizeParts = array_filter($optValue, fn($q) => (int)$q > 0); @endphp
+                                                @if(count($sizeParts) > 0)
+                                                    <li><span class="font-medium text-slate-700">Beden dağılımı:</span> @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</li>
+                                                @endif
+                                            @elseif($optValue !== null && $optValue !== '' && !is_array($optValue))
+                                                <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $optValue }}</li>
+                                            @endif
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </li>
                         @endforeach
                     </ul>

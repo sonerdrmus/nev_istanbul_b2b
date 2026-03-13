@@ -23,8 +23,8 @@ class OrderItem extends Model
         return [
             'price' => 'decimal:2',
             'subtotal' => 'decimal:2',
-            'variation_data' => 'array',
             'variation_price_delta_total' => 'decimal:2',
+            'variation_data' => 'array',
             'variation_price_breakdown' => 'array',
         ];
     }

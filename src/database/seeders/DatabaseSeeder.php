@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     * Sıra: Şirket/Kullanıcı → Para birimi → Vergi → Kategori → Ürün (kategoriye bağlı) → Anasayfa → Footer.
      */
     public function run(): void
     {
@@ -18,8 +19,6 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Demo Şirket', 'is_active' => true]
         );
 
-        // Şifreyi düz metin veriyoruz; User modelindeki 'hashed' cast tek sefer hashleyecek.
-        // updateOrCreate: varsa şifreyi de günceller (yanlış hash ile oluşturulmuşsa düzeltir).
         User::updateOrCreate(
             ['email' => 'admin@admin.com'],
             [
@@ -30,7 +29,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Demo müşteri (panel girişi: customer@demo.com / password)
         User::updateOrCreate(
             ['email' => 'customer@demo.com'],
             [
@@ -41,11 +39,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call(CurrencySeeder::class);
-        $this->call(TaxSeeder::class);
-        $this->call(CategorySeeder::class);
-        $this->call(ProductSeeder::class);
-        $this->call(HomeContentSeeder::class);
-        $this->call(FooterMenuSeeder::class);
+        $this->call([
+            CurrencySeeder::class,
+            TaxSeeder::class,
+            CategorySeeder::class,
+            ProductSeeder::class,
+            SizeTableSeeder::class,
+            HomeContentSeeder::class,
+            FooterMenuSeeder::class,
+        ]);
     }
 }

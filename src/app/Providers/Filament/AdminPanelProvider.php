@@ -8,6 +8,7 @@ use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
 use App\Filament\Resources\HomeSectionResource;
 use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\SizeTableResource;
 use App\Filament\Resources\TaxClassResource;
 use App\Filament\Resources\TaxRateResource;
 use Filament\Http\Middleware\Authenticate;
@@ -148,8 +149,13 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(HomeSectionResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*'))
+                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*'))
                 ->childItems([
+                    NavigationItem::make('Beden tabloları')
+                        ->url(fn (): string => SizeTableResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-table-cells')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Banner Slaytlar')
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-photo')

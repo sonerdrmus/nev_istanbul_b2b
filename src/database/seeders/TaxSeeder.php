@@ -15,7 +15,7 @@ class TaxSeeder extends Seeder
             ['sort_order' => 0]
         );
 
-        TaxRate::firstOrCreate(
+        TaxRate::updateOrCreate(
             [
                 'tax_class_id' => $class->id,
                 'name' => 'KDV %18',

@@ -435,3 +435,27 @@
     border-color: rgb(30 41 59);
     box-shadow: 0 10px 30px rgb(0 0 0 / 0.3);
 }
+
+/* ========== Select / Combobox dropdown — alt div'de kalmaması için z-index ========== */
+.fi-section-content-ctn {
+    overflow: visible;
+}
+.fi-section {
+    overflow: visible;
+}
+.fi-fo-field-wrp {
+    overflow: visible;
+}
+/* Filament Select dropdown panel (choices.js veya native dropdown) */
+[role="listbox"],
+[data-select-target="list"],
+.fi-fo-select-list,
+.filament-select-list,
+[class*="choices__list--dropdown"] {
+    z-index: 9999 !important;
+}
+/* Dropdown wrapper / floating panel */
+[x-float][x-ref="list"],
+[x-transition:enter].absolute {
+    z-index: 9999 !important;
+}

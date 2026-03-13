@@ -25,6 +25,7 @@ class Product extends Model
         'is_active',
         'status',
         'sort_order',
+        'size_table_trigger_variation',
     ];
 
     protected function casts(): array
@@ -124,6 +125,25 @@ class Product extends Model
         return $this->hasMany(ProductVariation::class)->orderBy('sort_order');
     }
 
+    /** Ürün görselleri (sıralı). Liste/öne çıkan için ilk görsel kullanılır. */
+    public function productImages()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    /** Slayt/liste için kullanılacak tüm görsel URL'leri: önce ana görsel, sonra ek görseller. */
+    public function getDisplayImageUrlsAttribute(): array
+    {
+        $urls = [];
+        if ($this->image) {
+            $urls[] = \Illuminate\Support\Facades\Storage::url($this->image);
+        }
+        foreach ($this->productImages as $img) {
+            $urls[] = \Illuminate\Support\Facades\Storage::url($img->path);
+        }
+        return $urls;
+    }
+
     public function productDiscounts()
     {
         return $this->hasMany(ProductDiscount::class)->orderBy('priority')->orderBy('quantity');
@@ -158,43 +178,16 @@ class Product extends Model
         return null;
     }
 
-    public function hasVariations(): bool
+    /** Stok adedi. Stok takibi yoksa (null) sınırsız kabul edilir. */
+    public function getAvailableStock(): int
     {
-        return $this->variations()->exists();
-    }
-
-    /**
-     * Seçilen varyasyon kombinasyonu için stok adedi.
-     * Stok takibi yoksa (null) sınırsız döner. 0 = stokta yok.
-     */
-    public function getAvailableStock(?array $variations = null): int
-    {
-        $variations = $variations ?? [];
-        if (empty($variations)) {
-            return $this->stock_quantity === null ? PHP_INT_MAX : (int) $this->stock_quantity;
-        }
-        $this->loadMissing('variations.optionPrices');
-        $stocks = [];
-        foreach ($variations as $varName => $optionValue) {
-            $variation = $this->variations->firstWhere('name', (string) $varName);
-            if (! $variation) {
-                continue;
-            }
-            $row = $variation->optionPrices->firstWhere('option_value', (string) $optionValue);
-            if ($row !== null && $row->stock_quantity !== null && $row->stock_quantity !== '') {
-                $stocks[] = (int) $row->stock_quantity;
-            }
-        }
-        if ($stocks !== []) {
-            return min($stocks);
-        }
         return $this->stock_quantity === null ? PHP_INT_MAX : (int) $this->stock_quantity;
     }
 
     /** Stokta var mı (en az 1 adet). */
-    public function hasStock(?array $variations = null): bool
+    public function hasStock(): bool
     {
-        return $this->getAvailableStock($variations) > 0;
+        return $this->getAvailableStock() > 0;
     }
 
     /** Sipariş edilebilir minimum miktar (varsayılan 1). */

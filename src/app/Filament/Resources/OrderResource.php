@@ -119,11 +119,6 @@ class OrderResource extends Resource
                                     ->label('Ara Toplam')
                                     ->disabled()
                                     ->prefix('₺'),
-                                Forms\Components\KeyValue::make('variation_data')
-                                    ->label('Varyasyon')
-                                    ->disabled()
-                                    ->keyLabel('Özellik')
-                                    ->valueLabel('Seçim'),
                             ])
                             ->columns(4)
                             ->disabled()

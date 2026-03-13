@@ -329,8 +329,9 @@
                 @php $isComingSoon = ($product->status ?? 'satista') === 'yakinda_gelecek'; @endphp
                 <article class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col h-full">
                     <a href="{{ route('store.product.show', $product) }}" class="relative block aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
-                        @if($product->image)
-                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
+                        @php $thumbPath = $product->image ?? $product->productImages->first()?->path; @endphp
+                        @if($thumbPath)
+                            <img src="{{ Storage::url($thumbPath) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
                         @else
                             <span class="text-slate-300 text-5xl">📦</span>
                         @endif
@@ -366,7 +367,7 @@
                                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span>Yakında satışta</span>
                                     </a>
-                                @elseif($product->variations->isEmpty())
+                                @else
                                     @if($product->stock_quantity === null || (int) $product->stock_quantity > 0)
                                         <form action="{{ route('store.cart.add') }}" method="POST" class="inline-flex flex-shrink-0">
                                             @csrf
@@ -380,12 +381,6 @@
                                     @else
                                         <span class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 font-medium text-sm flex-shrink-0">Stokta yok</span>
                                     @endif
-                                @else
-                                    @php $inStock = $product->stock_quantity === null || (int) $product->stock_quantity > 0; @endphp
-                                    <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl {{ $inStock ? 'bg-primary-500 hover:bg-primary-600 text-white' : 'bg-slate-100 text-slate-600' }} font-medium text-sm shadow-sm transition-all duration-200 flex-shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        {{ $inStock ? 'Ürün Detayı' : 'Stokta yok' }}
-                                    </a>
                                 @endif
                             @else
                                 <p class="text-slate-500 text-sm">Fiyatları görmek için giriş yapın.</p>

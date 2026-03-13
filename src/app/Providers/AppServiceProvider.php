@@ -35,14 +35,15 @@ class AppServiceProvider extends ServiceProvider
             URL::forceRootUrl($appUrl);
         }
 
-        // Livewire geçici yükleme dizini (Repeater içi FileUpload "failed to upload" hatalarını önlemek için)
+        // Livewire geçici yükleme: config'de public + livewire-tmp kullanılıyor (Docker'da yazılabilir)
         $livewireDisk = config('livewire.temporary_file_upload.disk') ?? config('filesystems.default');
         $livewireDir = config('livewire.temporary_file_upload.directory') ?? 'livewire-tmp';
         File::ensureDirectoryExists(Storage::disk($livewireDisk)->path($livewireDir), 0755);
 
-        // Varyasyon görselleri için public dizinler
+        // Varyasyon görselleri ve Livewire temp için public dizinler
         File::ensureDirectoryExists(Storage::disk('public')->path('product_variations'), 0755);
         File::ensureDirectoryExists(Storage::disk('public')->path('variation_options'), 0755);
+        File::ensureDirectoryExists(Storage::disk('public')->path('livewire-tmp'), 0755);
 
         View::composer('store.layout', function ($view) {
             $view->with('menuCategories', Category::treeForMenu());

@@ -19,6 +19,8 @@ services:
       MYSQL_USER: b2b_user
       MYSQL_PASSWORD: secret
       MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - b2b_mysql_data:/var/lib/mysql
     networks:
       - b2b_net
 
@@ -38,3 +40,7 @@ services:
 networks:
   b2b_net:
     driver: bridge
+
+volumes:
+  b2b_mysql_data:
+    driver: local

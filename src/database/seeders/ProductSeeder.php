@@ -6,49 +6,11 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\Currency;
 use App\Models\Product;
-use App\Models\ProductVariation;
+use App\Models\TaxClass;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
 {
-    /** Renk adı => hex (varyasyon option_meta için) */
-    private static function colorHexMap(): array
-    {
-        return [
-            'Sarı' => '#f1c40f',
-            'Mavi' => '#3498db',
-            'Lacivert' => '#2980b9',
-            'Pembe' => '#e91e63',
-            'Mor' => '#9b59b6',
-            'Eflatun' => '#8e44ad',
-            'Siyah' => '#2c3e50',
-            'Beyaz' => '#ecf0f1',
-            'Gri' => '#7f8c8d',
-            'Bordo' => '#c0392b',
-            'Camel' => '#d4a574',
-            'Bej' => '#d7ccc8',
-            'Yeşil' => '#27ae60',
-            'Navy' => '#2980b9',
-            'Kırmızı' => '#c0392b',
-        ];
-    }
-
-    /** Renk varyasyonu için option_meta (option_value => ['color' => hex]) */
-    private static function buildColorOptionMeta(array $optionValues): array
-    {
-        $map = self::colorHexMap();
-        $meta = [];
-        foreach ($optionValues as $val) {
-            $val = trim((string) $val);
-            if ($val === '') {
-                continue;
-            }
-            $hex = $map[$val] ?? '#95a5a6';
-            $meta[$val] = ['color' => $hex];
-        }
-        return $meta;
-    }
-
     public function run(): void
     {
         $company = Company::where('code', 'DEMO')->first();
@@ -66,8 +28,7 @@ class ProductSeeder extends Seeder
                 'price' => 499.99,
                 'sort_order' => 0,
                 'stock_quantity' => 50,
-                'variations' => [],
-            ],
+                            ],
             [
                 'name' => 'Alt Giyim - Örnek Paket',
                 'slug' => 'alt-giyim-ornek-paket',
@@ -76,8 +37,7 @@ class ProductSeeder extends Seeder
                 'price' => 459.99,
                 'sort_order' => 0,
                 'stock_quantity' => 30,
-                'variations' => [],
-            ],
+                            ],
             [
                 'name' => 'Dış Giyim - Örnek Paket',
                 'slug' => 'dis-giyim-ornek-paket',
@@ -86,8 +46,7 @@ class ProductSeeder extends Seeder
                 'price' => 699.99,
                 'sort_order' => 0,
                 'stock_quantity' => 0,
-                'variations' => [],
-            ],
+                            ],
             [
                 'name' => 'Kadın Giyim - Örnek Paket',
                 'slug' => 'kadin-giyim-ornek-paket',
@@ -96,8 +55,7 @@ class ProductSeeder extends Seeder
                 'price' => 549.99,
                 'sort_order' => 0,
                 'stock_quantity' => 25,
-                'variations' => [],
-            ],
+                            ],
             [
                 'name' => 'Aksesuar - Örnek Paket',
                 'slug' => 'aksesuar-ornek-paket',
@@ -106,8 +64,7 @@ class ProductSeeder extends Seeder
                 'price' => 199.99,
                 'sort_order' => 0,
                 'stock_quantity' => null,
-                'variations' => [],
-            ],
+                            ],
             [
                 'name' => 'Klasik Tişört',
                 'slug' => 'klasik-tisort',
@@ -117,7 +74,7 @@ class ProductSeeder extends Seeder
                 'sort_order' => 1,
                 'stock_quantity' => 100,
                 'variations' => [
-                    ['name' => 'Yaka Tipi', 'type' => 'select', 'depends_on' => null, 'options' => ['O yaka', 'V yaka'], 'options_by_parent' => null, 'sort_order' => 1],
+                    ['name' => 'Yaka Tipi', 'type' => 'image', 'depends_on' => null, 'options' => ['O yaka', 'V yaka'], 'options_by_parent' => null, 'sort_order' => 1, 'option_meta' => ['O yaka' => ['image' => 'variation_options/o-yaka.png'], 'V yaka' => ['image' => 'variation_options/v-yaka.png']]],
                     ['name' => 'Erkek/Bayan', 'type' => 'select', 'depends_on' => null, 'options' => ['Erkek', 'Bayan'], 'options_by_parent' => null, 'sort_order' => 2],
                     ['name' => 'Renk', 'type' => 'color', 'depends_on' => 'Erkek/Bayan', 'options' => [], 'options_by_parent' => ['Erkek' => ['Sarı', 'Mavi', 'Lacivert'], 'Bayan' => ['Pembe', 'Mor', 'Eflatun']], 'sort_order' => 3],
                 ],
@@ -329,47 +286,24 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $data) {
-            $variations = $data['variations'];
-            unset($data['variations']);
             $categorySlug = $data['category_slug'] ?? null;
-            unset($data['category_slug']);
+            unset($data['category_slug'], $data['variations']);
 
             $categoryId = $categorySlug ? Category::where('slug', $categorySlug)->value('id') : null;
             $currencyId = Currency::getDefault()?->id;
+            $taxClassId = TaxClass::first()?->id;
 
-            $product = Product::updateOrCreate(
+            Product::updateOrCreate(
                 ['slug' => $data['slug']],
                 array_merge($data, [
                     'company_id' => $company->id,
                     'category_id' => $categoryId,
                     'currency_id' => $currencyId,
+                    'tax_class_id' => $taxClassId,
                     'stock_quantity' => array_key_exists('stock_quantity', $data) ? $data['stock_quantity'] : 10,
                     'is_active' => true,
                 ])
             );
-
-            foreach ($variations as $v) {
-                $optionsByParent = $v['options_by_parent'];
-                unset($v['options_by_parent']);
-                $variation = ProductVariation::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'name' => $v['name'],
-                    ],
-                    array_merge($v, [
-                        'options_by_parent' => $optionsByParent,
-                    ])
-                );
-                if (($v['type'] ?? '') === 'color') {
-                    $optionValues = ! empty($v['options']) ? $v['options'] : [];
-                    if (empty($optionValues) && is_array($optionsByParent)) {
-                        $optionValues = array_values(array_unique(array_merge(...array_values($optionsByParent))));
-                    }
-                    if (! empty($optionValues)) {
-                        $variation->update(['option_meta' => self::buildColorOptionMeta($optionValues)]);
-                    }
-                }
-            }
         }
     }
 }

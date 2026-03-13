@@ -10,9 +10,8 @@ use App\Models\HomeSection;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\ProductVariation;
 use App\Models\ShippingMethod;
-use App\Models\ProductVariationOptionPrice;
+use App\Models\SizeTable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -23,14 +22,9 @@ use Illuminate\View\View;
 
 class StoreController extends Controller
 {
-    private function cartKey(int $productId, array $variations): string
+    private function cartKey(int $productId): string
     {
-        if (empty($variations)) {
-            return (string) $productId;
-        }
-        ksort($variations);
-
-        return $productId . '_' . md5(json_encode($variations));
+        return (string) $productId;
     }
 
     private function getCart(): array
@@ -38,7 +32,7 @@ class StoreController extends Controller
         return session('cart', []);
     }
 
-    /** @return \Illuminate\Support\Collection<int, object{product: Product, quantity: int, subtotal: float, variations: array, cart_key: string}> */
+    /** @return \Illuminate\Support\Collection<int, object{product: Product, quantity: int, subtotal: float, cart_key: string, unit_price_try: float}> */
     private function getCartItems(): \Illuminate\Support\Collection
     {
         $cart = $this->getCart();
@@ -46,7 +40,7 @@ class StoreController extends Controller
             return collect();
         }
         $productIds = array_unique(array_column($cart, 'product_id'));
-        $products = Product::with(['company', 'currency', 'variations.optionPrices'])->whereIn('id', $productIds)->get()->keyBy('id');
+        $products = Product::with(['company', 'currency'])->whereIn('id', $productIds)->get()->keyBy('id');
         $items = collect();
         foreach ($cart as $key => $item) {
             $product = $products->get($item['product_id'] ?? 0);
@@ -54,26 +48,18 @@ class StoreController extends Controller
                 continue;
             }
             $qty = (int) $item['quantity'];
-            $variations = $item['variations'] ?? [];
             $productCurrency = $product->currency ?? Currency::getDefault();
             $customerGroupId = auth()->check() && auth()->user()->company?->customer_group_id
                 ? (int) auth()->user()->company->customer_group_id
                 : 1;
 
-            // Ürün indirimi (miktar / müşteri grubu / tarih): varsa indirimli birim fiyat TL
             $discountUnitTry = $product->getDiscountUnitPriceInTRY($qty, $customerGroupId);
-            $priceInTRY = $discountUnitTry !== null
+            $unitTry = $discountUnitTry !== null
                 ? $discountUnitTry
                 : ($productCurrency && $productCurrency->code !== 'TRY'
                     ? $productCurrency->convertToTRY((float) $product->price)
                     : (float) $product->price);
 
-            $pricing = ProductVariationOptionPrice::forSelection($product, $variations);
-            $deltaTry = (float) ($pricing['delta_total'] ?? 0);
-            $breakdown = (array) ($pricing['breakdown'] ?? []);
-            $unitTry = $priceInTRY + $deltaTry;
-
-            // Müşteri kâr marjı (indirim) uygula
             $discountPercent = $this->getCustomerDiscountPercent();
             if ($discountPercent !== null && $discountPercent > 0) {
                 $unitTry = $unitTry * (1 - $discountPercent / 100);
@@ -82,12 +68,11 @@ class StoreController extends Controller
             $items->push((object) [
                 'product' => $product,
                 'quantity' => $qty,
-                'subtotal' => $unitTry * $qty, // TL cinsinden
-                'variations' => $variations,
+                'subtotal' => $unitTry * $qty,
                 'cart_key' => $key,
-                'variation_price_delta_total' => $deltaTry,
-                'variation_price_breakdown' => $breakdown,
                 'unit_price_try' => $unitTry,
+                'variation_data' => $item['variation_data'] ?? null,
+                'size_quantities' => $item['size_quantities'] ?? null,
             ]);
         }
 
@@ -96,7 +81,7 @@ class StoreController extends Controller
 
     public function index(): View
     {
-        $baseQuery = Product::with(['company', 'category.parent', 'currency', 'variations'])
+        $baseQuery = Product::with(['company', 'category.parent', 'currency', 'productImages'])
             ->active()
             ->visibleInStore();
 
@@ -149,24 +134,6 @@ class StoreController extends Controller
             // İkisi de seçili: zaten visibleInStore = satista + yakinda
         }
 
-        // Renk filtresi (varyasyon adı Renk veya Color, seçenek değeri)
-        $filterColor = request('color');
-        if ($filterColor !== null && $filterColor !== '') {
-            $baseQuery->whereHas('variations', function ($q) use ($filterColor) {
-                $q->whereIn('name', ['Renk', 'Color', 'Renk / Color'])
-                    ->whereJsonContains('options', $filterColor);
-            });
-        }
-
-        // Cinsiyet filtresi (varyasyon adı Cinsiyet, Erkek/Bayan vb., seçenek değeri)
-        $filterCinsiyet = request('cinsiyet');
-        if ($filterCinsiyet !== null && $filterCinsiyet !== '') {
-            $baseQuery->whereHas('variations', function ($q) use ($filterCinsiyet) {
-                $q->whereIn('name', ['Cinsiyet', 'Erkek/Bayan', 'Gender', 'Cinsiyet / Gender'])
-                    ->whereJsonContains('options', $filterCinsiyet);
-            });
-        }
-
         // Sıralama
         $sort = request('sort', 'default');
         match ($sort) {
@@ -211,34 +178,14 @@ class StoreController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Renk ve Cinsiyet filtre seçenekleri (varyasyonlardan benzersiz değerler)
-        $filterColors = ProductVariation::whereHas('product', fn ($q) => $q->active()->visibleInStore())
-            ->whereIn('name', ['Renk', 'Color', 'Renk / Color'])
-            ->get()
-            ->pluck('options')
-            ->flatten()
-            ->unique()
-            ->filter()
-            ->sort()
-            ->values();
-        $filterCinsiyetler = ProductVariation::whereHas('product', fn ($q) => $q->active()->visibleInStore())
-            ->whereIn('name', ['Cinsiyet', 'Erkek/Bayan', 'Gender', 'Cinsiyet / Gender'])
-            ->get()
-            ->pluck('options')
-            ->flatten()
-            ->unique()
-            ->filter()
-            ->sort()
-            ->values();
-
+        $filterColors = collect();
+        $filterCinsiyetler = collect();
         $currentFilters = array_filter([
             'category' => $categorySlug ?: ($parentSlug ?: null),
             'company' => $companyId ?: null,
             'in_stock' => request('in_stock') === '1' ? true : null,
             'status_satista' => $statusSatista === '1' ? true : null,
             'status_yakinda' => $statusYakinda === '1' ? true : null,
-            'color' => $filterColor ?: null,
-            'cinsiyet' => $filterCinsiyet ?: null,
             'q' => $searchQuery ?: null,
         ]);
 
@@ -272,7 +219,27 @@ class StoreController extends Controller
         if (! $product->is_active) {
             abort(404);
         }
-        $product->load(['company', 'category.parent', 'currency', 'variations']);
+        $product->load(['company', 'category.parent', 'currency', 'variations.options', 'productImages']);
+        $variations = $product->variations;
+        $sorted = collect();
+        $remaining = $variations->keyBy('id');
+        while ($remaining->isNotEmpty()) {
+            $added = $remaining->filter(function ($v) use ($sorted) {
+                if (empty($v->depends_on)) {
+                    return true;
+                }
+                return $sorted->contains('name', $v->depends_on);
+            });
+            if ($added->isEmpty()) {
+                $sorted = $sorted->merge($remaining->values());
+                break;
+            }
+            foreach ($added->values() as $v) {
+                $sorted->push($v);
+                $remaining->forget($v->id);
+            }
+        }
+        $product->setRelation('variations', $sorted->values());
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
         $customerGroupId = auth()->check() && auth()->user()->company?->customer_group_id
@@ -285,7 +252,9 @@ class StoreController extends Controller
             session(['store_currency' => $selectedCurrency->code]);
         }
 
-        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId'));
+        $sizeTables = SizeTable::with('columns')->orderBy('sort_order')->get();
+
+        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables'));
     }
 
     /** Header arama için: 3+ karakterde ürün listesi (görsel + isim) JSON döner. */
@@ -337,44 +306,62 @@ class StoreController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'nullable|integer|min:1',
-            'variations' => 'nullable|array',
-            'variations.*' => 'nullable|string|max:255',
+            'variation_data' => 'nullable|string',
+            'size_quantities' => 'nullable|string',
         ]);
-        $product = Product::with('variations.optionPrices')->findOrFail($request->product_id);
+        $product = Product::findOrFail($request->product_id);
         if (! $product->isOnSale()) {
             return redirect()->back()->with('error', 'Bu ürün şu an satışa sunulmuyor.');
         }
-        $variations = array_filter($request->input('variations', []));
-        $availableStock = $product->getAvailableStock($variations);
+        $availableStock = $product->getAvailableStock();
         if ($availableStock < 1) {
             return redirect()->back()->with('error', 'Bu ürün şu an stokta yok.');
         }
         $minOrder = $product->getMinimumOrderQuantity();
-        $qty = (int) ($request->quantity ?: $minOrder);
+        $sizeQuantities = null;
+        if (! empty($request->size_quantities)) {
+            $decoded = json_decode($request->size_quantities, true);
+            if (is_array($decoded)) {
+                $sizeQuantities = array_map('intval', $decoded);
+                $qtyFromSizes = array_sum($sizeQuantities);
+                $qty = $qtyFromSizes;
+                if ($qty < $minOrder) {
+                    return redirect()->back()->with('error', 'Bu ürün için minimum sipariş miktarı ' . $minOrder . ' adettir. Toplam beden adedi: ' . $qty);
+                }
+            }
+        }
+        if ($sizeQuantities === null) {
+            $qty = (int) ($request->quantity ?: $minOrder);
+        }
         if ($qty < $minOrder) {
             return redirect()->back()->with('error', 'Bu ürün için minimum sipariş miktarı ' . $minOrder . ' adettir.');
         }
         if ($qty > $availableStock) {
             return redirect()->back()->with('error', 'Yeterli stok yok. Maksimum ' . $availableStock . ' adet ekleyebilirsiniz.');
         }
-        foreach ($product->variations as $v) {
-            if ($v->type === 'select') {
-                if (empty($variations[$v->name])) {
-                    return redirect()->back()->with('error', "Lütfen \"{$v->name}\" seçin.");
-                }
-                if (! empty($v->depends_on)) {
-                    $allowed = $v->getOptionsForParentValue($variations[$v->depends_on] ?? null);
-                    if (! in_array($variations[$v->name], $allowed, true)) {
-                        return redirect()->back()->with('error', "\"{$v->name}\" için geçersiz seçim.");
-                    }
-                }
-            }
-            if ($v->type === 'checkbox' && isset($variations[$v->name])) {
-                $opts = empty($v->depends_on) ? ($v->options ?? []) : $v->getOptionsForParentValue($variations[$v->depends_on] ?? null);
-                $variations[$v->name] = in_array($variations[$v->name], $opts, true) ? $variations[$v->name] : ($opts[0] ?? 'Var');
+        $variationData = null;
+        if (! empty($request->variation_data)) {
+            $decoded = json_decode($request->variation_data, true);
+            if (is_array($decoded) && ! empty($decoded)) {
+                $variationData = $decoded;
             }
         }
-        $key = $this->cartKey((int) $product->id, $variations);
+
+        // Varyasyonu olan ürünlerde tüm (kök) varyasyonların seçilmesi zorunlu
+        $product->load('variations');
+        $rootVariations = $product->variations->filter(fn ($v) => empty($v->depends_on))->pluck('name')->unique()->values();
+        if ($rootVariations->isNotEmpty()) {
+            if (empty($variationData) || ! is_array($variationData)) {
+                return redirect()->back()->with('error', 'Bu ürünü sepete eklemek için lütfen tüm seçenekleri belirleyin (renk, beden vb.).');
+            }
+            foreach ($rootVariations as $variationName) {
+                if (! isset($variationData[$variationName]) || (string) $variationData[$variationName] === '') {
+                    return redirect()->back()->with('error', 'Lütfen "' . $variationName . '" seçeneğini belirleyin.');
+                }
+            }
+        }
+
+        $key = $this->cartKey((int) $product->id);
         $cart = $this->getCart();
         if (isset($cart[$key])) {
             $cart[$key]['quantity'] += $qty;
@@ -382,8 +369,13 @@ class StoreController extends Controller
             $cart[$key] = [
                 'product_id' => $product->id,
                 'quantity' => $qty,
-                'variations' => $variations,
             ];
+        }
+        if ($variationData !== null) {
+            $cart[$key]['variation_data'] = $variationData;
+        }
+        if ($sizeQuantities !== null) {
+            $cart[$key]['size_quantities'] = $sizeQuantities;
         }
         session(['cart' => $cart]);
 
@@ -516,27 +508,19 @@ class StoreController extends Controller
             ]);
 
             foreach ($cartItems as $item) {
-                $productCurrency = $item->product->currency ?? Currency::getDefault();
-                // Ürün birim fiyatını TL'ye çevir
-                $priceInTRY = $productCurrency && $productCurrency->code !== 'TRY'
-                    ? $productCurrency->convertToTRY((float) $item->product->price)
-                    : (float) $item->product->price;
-                $deltaTry = (float) ($item->variation_price_delta_total ?? 0);
-                $subtotal = (float) $item->subtotal;
-                $variationData = ! empty($item->variations) ? (array) $item->variations : null;
-                $breakdown = isset($item->variation_price_breakdown) && is_array($item->variation_price_breakdown)
-                    ? $item->variation_price_breakdown
-                    : null;
+                $unitTry = (float) $item->unit_price_try;
+                $variationData = $item->variation_data ?? [];
+                if (! empty($item->size_quantities)) {
+                    $variationData['size_quantities'] = $item->size_quantities;
+                }
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product->id,
                     'product_name' => (string) $item->product->name,
-                    'price' => round($priceInTRY + $deltaTry, 2),
+                    'price' => round($unitTry, 2),
                     'quantity' => (int) $item->quantity,
-                    'subtotal' => round($subtotal, 2),
-                    'variation_data' => $variationData,
-                    'variation_price_delta_total' => round($deltaTry, 2),
-                    'variation_price_breakdown' => $breakdown,
+                    'subtotal' => round((float) $item->subtotal, 2),
+                    'variation_data' => ! empty($variationData) ? $variationData : null,
                 ]);
             }
 

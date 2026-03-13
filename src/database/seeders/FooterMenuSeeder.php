@@ -41,10 +41,10 @@ class FooterMenuSeeder extends Seeder
                 'type' => FooterMenuGroup::TYPE_MENU,
                 'sort_order' => 20,
                 'items' => [
-                    ['label' => 'Delivery information & costs', 'url' => '#', 'sort_order' => 1],
-                    ['label' => 'Paperless billing', 'url' => '#', 'sort_order' => 2],
-                    ['label' => 'Returns', 'url' => '#', 'sort_order' => 3],
-                    ['label' => 'Ralawise worldwide distribution', 'url' => '#', 'sort_order' => 4],
+                    ['label' => 'Teslimat bilgisi ve maliyetler', 'url' => '#', 'sort_order' => 1],
+                    ['label' => 'Faturasız ödeme', 'url' => '#', 'sort_order' => 2],
+                    ['label' => 'İade', 'url' => '#', 'sort_order' => 3],
+                    ['label' => 'Dağıtım ağı', 'url' => '#', 'sort_order' => 4],
                 ],
             ],
             [

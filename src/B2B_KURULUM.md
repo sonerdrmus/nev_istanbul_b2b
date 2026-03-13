@@ -2,7 +2,7 @@
 
 ## Yapılanlar
 
-- **Admin panel** (`/admin`): Şirket, kullanıcı (müşteri), ürün ve sipariş yönetimi. Sadece admin ürün ekleyebilir/düzenleyebilir. Ürünlere dinamik varyasyonlar (Renk, Beden vb.) tanımlanabilir (combobox, checkbox; seçenekler serbest).
+- **Admin panel** (`/admin`): Şirket, kullanıcı (müşteri), ürün ve sipariş yönetimi. Sadece admin ürün ekleyebilir/düzenleyebilir.
 - **Müşteri paneli** (`/panel`): Müşteriler (şirkete bağlı, admin olmayan kullanıcılar) burada sadece mağazaya gidip ürünleri görüntüleyebilir ve sipariş verebilir; ürün ekleme/çıkarma yok.
 - **E-ticaret** (http://localhost:8010): Ana sayfa ürün listesi, sepet, sipariş oluşturma. Ürünler herkese görünür; fiyatlar ve sepete ekleme/sipariş sadece giriş yapmış müşterilere açıktır. Misafir ürünleri görür ama fiyat görmez; Giriş Yap ile müşteri paneline gidip giriş yaptıktan sonra fiyat görür ve sipariş verebilir. Ödeme yöntemi: **sadece Havale / EFT**. Sepete ekle → Ödemeye geç → Sipariş tamamla → Onay sayfasında havale bilgisi veya “e-posta ile iletilecek” mesajı.
 - **Şirket / Kullanıcı**: Admin şirket ve kullanıcı (müşteri) CRUD; sadece `is_admin = true` olanlar `/admin`, diğerleri `/panel` kullanır.
@@ -54,6 +54,8 @@ Kurulumdan sonra `php artisan migrate` tekrar çalıştırılabilir; `change()` 
 
 **.env** içinde giriş sayfası ve asset URL'leri doğru çalışsın diye: `APP_URL=http://localhost:8010` (port ile). CSS/JS hâlâ bozuksa `ASSET_URL=http://localhost:8010` ekleyin.
 
+**Dosya yükleme (419 / 401):** Tarayıcı adres çubuğundaki adres, `.env` içindeki `APP_URL` ile **birebir aynı** olmalı (host ve port). Örneğin `APP_URL=http://localhost:8010` ise sayfayı **http://localhost:8010/admin** ile açın; **http://127.0.0.1:8010** kullanmayın (farklı host imza doğrulamasını bozar, 401 hatası verir). `SESSION_DOMAIN` boş bırakın. Hata alırsanız sayfayı yenileyip tekrar giriş yapıp yüklemeyi deneyin.
+
 ## İlk giriş
 
 **Önce `php artisan db:seed` çalıştırın;** aksi halde kullanıcı yoktur ve e-posta/şifre kabul edilmez.
@@ -83,7 +85,7 @@ Oluşturulan kullanıcıya sonradan admin yetkisi vermek için veritabanında `u
 - **B2B Yönetimi** grubu:
 - **Şirketler**: Şirket ekleme/düzenleme, kod, aktif/pasif, kâr marjı (%)
 - **Kullanıcılar**: Müşteri (kullanıcı) ekleme, giriş bilgisi (e-posta/şifre), şirket atama, admin checkbox. Şirket atanmış kullanıcıda "Kâr marjı (indirim) %" alanı ile o şirketin mağaza indirim oranı düzenlenir (bayi talebi onaylanan müşteriler için buradan kâr marjı verilir).
-- **Ürünler**: Ürün ekleme/düzenleme; her ürüne dinamik varyasyonlar (örn. Renk, Beden) — combobox/checkbox, seçenekler serbest
+- **Ürünler**: Ürün ekleme/düzenleme (temel bilgi, SEO, fiyat, indirim kuralları)
 - **Siparişler**: Tüm siparişlerin listesi ve detayı
 
 **Müşteri paneli** (`/panel`):
@@ -105,9 +107,9 @@ Oluşturulan kullanıcıya sonradan admin yetkisi vermek için veritabanında `u
 - `companies`: name, code, is_active, profit_margin_percentage (müşteri indirim %)
 - `users`: company_id (nullable), is_admin (boolean)
 - `products`: company_id, name, slug, description, price, image, is_active, sort_order
-- `product_variations`: product_id, name (Renk, Beden vb.), type (select/checkbox), options (JSON dizi), sort_order
+- (Varyasyon tabloları kaldırıldı.)
 - `orders`: order_number, customer_name, customer_email, customer_phone, customer_address, payment_method (havale), status, total, notes
-- `order_items`: order_id, product_id, product_name, price, quantity, subtotal, variation_data (JSON, seçilen varyasyonlar)
+- `order_items`: order_id, product_id, product_name, price, quantity, subtotal
 
 ## E-ticaret: Havale bilgisi
 

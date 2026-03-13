@@ -8,11 +8,13 @@ use App\Models\Currency;
 use App\Models\TaxClass;
 use App\Models\CustomerGroup;
 use App\Models\Product;
+use App\Models\ProductVariationOption;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
+use Livewire\Livewire;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -36,6 +38,7 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Hidden::make('_product_id'),
                 Forms\Components\Tabs::make('Ürün Formu')
                     ->columnSpanFull()
                     ->persistTabInQueryString()
@@ -144,12 +147,37 @@ class ProductResource extends Resource
                                             ->nullable()
                                             ->columnSpan(1),
                                         Forms\Components\FileUpload::make('image')
-                                            ->label('Görsel')
+                                            ->label('Ana görsel (liste / öne çıkan)')
                                             ->image()
                                             ->directory('products')
                                             ->visibility('public')
                                             ->imagePreviewHeight('200')
                                             ->nullable()
+                                            ->columnSpanFull(),
+                                        Forms\Components\Repeater::make('productImages')
+                                            ->relationship()
+                                            ->label('Ek görseller (ürün sayfasında slayt)')
+                                            ->reorderable()
+                                            ->reorderableWithButtons()
+                                            ->defaultItems(0)
+                                            ->addActionLabel('Görsel ekle')
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => isset($state['path']) ? 'Görsel' : null)
+                                            ->schema([
+                                                Forms\Components\FileUpload::make('path')
+                                                    ->label('Görsel')
+                                                    ->image()
+                                                    ->directory('products')
+                                                    ->visibility('public')
+                                                    ->imagePreviewHeight(120)
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('sort_order')
+                                                    ->label('Sıra')
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->default(0)
+                                                    ->columnSpanFull(),
+                                            ])
                                             ->columnSpanFull(),
                                         Forms\Components\Toggle::make('is_active')
                                             ->label('Yayında')
@@ -227,392 +255,160 @@ class ProductResource extends Resource
                         Forms\Components\Tabs\Tab::make('Varyasyonlar')
                             ->icon('heroicon-o-squares-2x2')
                             ->schema([
-                                Forms\Components\Section::make()
-                                    ->description('Sırayı sürükleyip bırakarak değiştirebilirsiniz. Bağlı varyasyon: önce üst varyasyonu ekleyin, sonra "Bağlı olduğu varyasyon"dan seçin.')
+                                Forms\Components\Section::make('Varyasyonlar')
+                                    ->description('Renk, beden vb. varyasyonlar tanımlayın. Her varyasyonun altına birden fazla seçenek ekleyebilir ve seçeneklere görsel yükleyebilirsiniz.')
                                     ->schema([
                                         Forms\Components\Repeater::make('variations')
-                            ->relationship()
-                            ->reorderable()
-                            ->reorderableWithButtons()
-                            ->defaultItems(0)
-                            ->addActionLabel('Varyasyon Ekle')
-                            ->collapsible()
-                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
-                            ->schema([
-                                Forms\Components\Section::make('1. Varyasyon bilgisi')
-                                    ->icon('heroicon-o-tag')
-                                    ->description('Önce varyasyonun adını ve tipini belirleyin, sonra (gerekirse) hangi varyasyona bağlı olduğunu seçin. Aşağıdaki 2. ve 3. adımlar bu bilgilere göre çalışır.')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label('Varyasyon Adı')
-                                            ->placeholder('Örn: Renk, Beden, Erkek/Bayan')
-                                            ->required()
-                                            ->maxLength(100)
-                                            ->columnSpan(1),
-                                        Forms\Components\Select::make('type')
-                                            ->label('Tip')
-                                            ->options([
-                                                'select' => 'Açılır liste',
-                                                'checkbox' => 'Checkbox',
-                                                'color' => 'Renk (sembol)',
-                                                'image' => 'Resim',
-                                            ])
-                                            ->default('select')
-                                            ->required()
-                                            ->live()
-                                            ->columnSpan(1),
-                                        Forms\Components\Select::make('depends_on')
-                                            ->label('Bağlı olduğu varyasyon')
-                                            ->placeholder('Bağımsız')
-                                            ->options(function (Get $get): array {
-                                                $items = $get('../../variations') ?? [];
-                                                $names = collect($items)->pluck('name')->filter()->unique()->values()->all();
-                                                return array_combine($names, $names) ?: [];
-                                            })
-                                            ->helperText('Önce üst varyasyonu ekleyin, sonra buradan seçin.')
-                                            ->nullable()
-                                            ->live()
-                                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                                if (! filled($state)) {
-                                                    return;
-                                                }
-                                                $variations = $get('../../variations') ?? [];
-                                                $parent = collect($variations)->first(fn ($v) => ($v['name'] ?? null) === $state);
-                                                $parentOptions = collect($parent['options_with_prices'] ?? [])
-                                                    ->pluck('option_value')
-                                                    ->filter()
-                                                    ->values()
-                                                    ->all();
-                                                $existingRows = collect($get('options_by_parent') ?? [])->keyBy(fn ($r) => (string) ($r['parent_value'] ?? ''));
-                                                $rows = [];
-                                                foreach ($parentOptions as $pv) {
-                                                    $existing = $existingRows->get((string) $pv);
-                                                    $rows[] = [
-                                                        'parent_value' => (string) $pv,
-                                                        'options' => is_array($existing['options'] ?? null) ? $existing['options'] : [],
-                                                    ];
-                                                }
-                                                $set('options_by_parent', $rows);
-                                                $set('options_with_prices', []);
-                                                $set('options', []);
-                                            })
-                                            ->columnSpanFull(),
-                                        Forms\Components\FileUpload::make('image')
-                                            ->label('Varyasyon görseli (opsiyonel)')
-                                            ->image()
-                                            ->disk('public')
-                                            ->directory('product_variations')
-                                            ->visibility('public')
-                                            ->imagePreviewHeight(80)
-                                            ->maxSize(5120)
-                                            ->nullable()
-                                            ->columnSpanFull(),
-                                    ])
-                                    ->columns(2),
-                                Forms\Components\Section::make('2. Seçenekler')
-                                    ->icon('heroicon-o-list-bullet')
-                                    ->description('Bu varyasyon BAĞIMSIZ ise buradan seçenekleri ve fiyat farklarını ekleyin. Eğer üst varyasyona bağlamak istiyorsanız sadece 1. adımı doldurun ve 3. adıma geçin.')
-                                    ->schema([
-                                        Forms\Components\Repeater::make('options_with_prices')
-                                    ->label('Seçenekler + Fiyat Farkı (₺)')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('option_value')
-                                            ->label('Seçenek')
-                                            ->required()
-                                            ->maxLength(255),
-                                        Forms\Components\TextInput::make('option_color')
-                                            ->label('Renk (hex)')
-                                            ->placeholder('#ff0000')
-                                            ->maxLength(20)
-                                            ->visible(fn (Get $get) => $get('../../../type') === 'color'),
-                                        Forms\Components\FileUpload::make('option_image')
-                                            ->label('Örnek görsel')
-                                            ->image()
-                                            ->disk('public')
-                                            ->directory('variation_options')
-                                            ->visibility('public')
-                                            ->imagePreviewHeight(60)
-                                            ->maxSize(5120) // 5 MB
-                                            ->helperText('En fazla 5 MB, JPG / PNG / WEBP.')
-                                            ->nullable(),
-                                        Forms\Components\TextInput::make('price_delta_try')
-                                            ->label('Fark (₺)')
-                                            ->helperText('Örn: 0, 10.50, -5')
-                                            ->numeric()
-                                            ->default(0),
-                                        Forms\Components\TextInput::make('stock_quantity')
-                                            ->label('Stok (opsiyonel)')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->integer()
-                                            ->nullable(),
-                                    ])
-                                    ->columns(2)
-                                    ->defaultItems(0)
-                                    ->addActionLabel('Seçenek Ekle')
-                                    ->visible(fn (Get $get) => ! filled($get('depends_on')))
-                                    ->required(fn (Get $get) => ! filled($get('depends_on')))
-                                    ->afterStateHydrated(function (Set $set, Get $get, $state) {
-                                        $variationId = $get('id');
-                                        $optionValues = $get('options') ?? [];
-                                        $optionValues = is_array($optionValues) ? $optionValues : [];
-
-                                        $priceMap = [];
-                                        $stockMap = [];
-                                        $optionMeta = [];
-                                        if ($variationId) {
-                                            $rows = \App\Models\ProductVariationOptionPrice::query()
-                                                ->where('product_variation_id', $variationId)
-                                                ->get();
-                                            $priceMap = $rows->pluck('price_delta_try', 'option_value')->all();
-                                            $stockMap = $rows->pluck('stock_quantity', 'option_value')->all();
-                                            $variation = \App\Models\ProductVariation::find($variationId);
-                                            $optionMeta = $variation?->option_meta ?? [];
-                                        }
-
-                                        if (! empty($optionValues)) {
-                                            $opts = collect($optionValues)->map(function ($val) use ($priceMap, $stockMap, $optionMeta) {
-                                                $val = (string) $val;
-                                                $meta = is_array($optionMeta) && isset($optionMeta[$val]) ? $optionMeta[$val] : [];
-                                                $meta = is_array($meta) ? $meta : [];
-                                                $stock = isset($stockMap[$val]) ? (int) $stockMap[$val] : null;
-                                                return [
-                                                    'option_value' => $val,
-                                                    'option_color' => $meta['color'] ?? null,
-                                                    'option_image' => $meta['image'] ?? null,
-                                                    'price_delta_try' => isset($priceMap[$val]) ? (float) $priceMap[$val] : 0.0,
-                                                    'stock_quantity' => $stock !== null && $stock !== '' ? (int) $stock : null,
-                                                ];
-                                            })->all();
-
-                                            $set('options_with_prices', $opts);
-                                            $set('options', collect($opts)->pluck('option_value')->filter()->values()->all());
-                                            return;
-                                        }
-
-                                        // Eğer options boşsa ve state doluysa (örneğin tasarım değişikliği sonrası),
-                                        // mevcut state'ten migrate et (eski davranışın emniyetli versiyonu)
-                                        if (is_array($state) && ! empty($state)) {
-                                            $opts = collect($state)->map(fn ($row) => [
-                                                'option_value' => (string) ($row['option_value'] ?? ''),
-                                                'option_color' => $row['option_color'] ?? null,
-                                                'option_image' => $row['option_image'] ?? null,
-                                                'price_delta_try' => (float) ($row['price_delta_try'] ?? 0),
-                                                'stock_quantity' => isset($row['stock_quantity']) && $row['stock_quantity'] !== '' && $row['stock_quantity'] !== null ? (int) $row['stock_quantity'] : null,
-                                            ])->filter(fn ($row) => $row['option_value'] !== '')->values()->all();
-
-                                            $set('options_with_prices', $opts);
-                                            $set('options', collect($opts)->pluck('option_value')->filter()->values()->all());
-                                        }
-                                    })
-                                    ->afterStateUpdated(function (Set $set, $state) {
-                                        $vals = collect(is_array($state) ? $state : [])->pluck('option_value')->filter()->values()->all();
-                                        $set('options', $vals);
-                                    })
-                                    ->columnSpan(2),
-
-                                // DB'ye yazılacak asıl seçenekler (backward compatible)
-                                Forms\Components\Hidden::make('options')
-                                    ->dehydrated()
-                                    ->default([])
-                                    ->columnSpan(2),
-                                Forms\Components\Repeater::make('options_by_parent')
-                                    ->label('3. Bağımlı seçenekler (üst değere göre)')
-                                    ->helperText('Önce bu varyasyonun bağlı olduğu üst varyasyonu yukarıdan seçin. Her satır: üst varyasyondaki bir değer (örn. Erkek) ve bu değere ait alt seçenekler (örn. Sarı, Mavi).')
-                                    ->schema([
-                                        Forms\Components\Select::make('parent_value')
-                                            ->label('Üst değer')
-                                            ->placeholder('Üst seçenek seçin')
-                                            ->options(function (Get $get): array {
-                                                $dependsOn = $get('../../../depends_on');
-                                                if (! filled($dependsOn)) {
-                                                    return [];
-                                                }
-                                                $variations = $get('../../../../variations') ?? [];
-                                                $parent = collect($variations)->first(fn ($v) => ($v['name'] ?? null) === $dependsOn);
-                                                if (! $parent) {
-                                                    return [];
-                                                }
-                                                $vals = collect($parent['options_with_prices'] ?? [])
-                                                    ->pluck('option_value')
-                                                    ->filter()
-                                                    ->unique()
-                                                    ->values()
-                                                    ->all();
-                                                if (empty($vals)) {
-                                                    $vals = is_array($parent['options'] ?? null) ? $parent['options'] : [];
-                                                }
-                                                $vals = array_values(array_unique(array_filter($vals)));
-                                                return $vals ? array_combine($vals, $vals) : [];
-                                            })
-                                            ->searchable()
-                                            ->required(),
-                                        Forms\Components\Repeater::make('options')
-                                            ->label('Seçenekler + Fiyat Farkı (₺)')
+                                            ->relationship()
+                                            ->reorderable()
+                                            ->reorderableWithButtons()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? 'Varyasyon')
+                                            ->addActionLabel('Varyasyon ekle')
                                             ->schema([
-                                                Forms\Components\TextInput::make('option_value')
-                                                    ->label('Seçenek')
+                                                Forms\Components\TextInput::make('name')
+                                                    ->label('Varyasyon adı')
+                                                    ->placeholder('Örn: Renk, Beden')
                                                     ->required()
-                                                    ->maxLength(255),
-                                                Forms\Components\TextInput::make('option_color')
-                                                    ->label('Renk (hex)')
-                                                    ->placeholder('#ff0000')
-                                                    ->maxLength(20)
-                                                    ->visible(fn (Get $get) => $get('../../../../type') === 'color'),
-                                                Forms\Components\FileUpload::make('option_image')
-                                                    ->label('Örnek görsel')
-                                                    ->image()
-                                                    ->disk('public')
-                                                    ->directory('variation_options')
-                                                    ->visibility('public')
-                                                    ->imagePreviewHeight(60)
-                                                    ->maxSize(5120) // 5 MB
-                                                    ->helperText('En fazla 5 MB, JPG / PNG / WEBP.')
-                                                    ->nullable(),
-                                                Forms\Components\TextInput::make('price_delta_try')
-                                                    ->label('Fark (₺)')
-                                                    ->numeric()
-                                                    ->default(0),
-                                                Forms\Components\TextInput::make('stock_quantity')
-                                                    ->label('Stok (opsiyonel)')
+                                                    ->maxLength(255)
+                                                    ->columnSpan(1),
+                                                Forms\Components\Select::make('type')
+                                                    ->label('Tip')
+                                                    ->options([
+                                                        'select' => 'Select',
+                                                        'color' => 'Renk',
+                                                        'image' => 'Görsel',
+                                                    ])
+                                                    ->default('select')
+                                                    ->required()
+                                                    ->columnSpan(1),
+                                                Forms\Components\Select::make('depends_on')
+                                                    ->label('Bağlı olduğu varyasyon')
+                                                    ->placeholder('Bağımsız (boş bırakın)')
+                                                    ->options(function (Get $get): array {
+                                                        $component = Livewire::current();
+                                                        if ($component && method_exists($component, 'getRecord')) {
+                                                            $record = $component->getRecord();
+                                                            if ($record instanceof Product && $record->exists) {
+                                                                return $record->variations()->orderBy('sort_order')->pluck('name', 'name')->all();
+                                                            }
+                                                        }
+                                                        $productId = $get('_product_id') ?? $get('id');
+                                                        if ($productId && $product = Product::find($productId)) {
+                                                            return $product->variations()->orderBy('sort_order')->pluck('name', 'name')->all();
+                                                        }
+                                                        $variations = $get('variations');
+                                                        if (is_array($variations)) {
+                                                            $out = [];
+                                                            foreach (collect($variations)->pluck('name')->filter()->unique() as $n) {
+                                                                if ($n !== null && $n !== '') {
+                                                                    $out[$n] = $n;
+                                                                }
+                                                            }
+                                                            return $out;
+                                                        }
+                                                        return [];
+                                                    })
+                                                    ->searchable()
+                                                    ->live()
+                                                    ->nullable()
+                                                    ->helperText('Bu varyasyon hangi varyasyona bağlı? Önce üst varyasyonu ekleyin; kendi adınızı seçmeyin.')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('sort_order')
+                                                    ->label('Sıra')
                                                     ->numeric()
                                                     ->minValue(0)
-                                                    ->integer()
-                                                    ->nullable(),
+                                                    ->default(0)
+                                                    ->columnSpan(1),
+                                                Forms\Components\Repeater::make('options')
+                                                    ->relationship()
+                                                    ->reorderable()
+                                                    ->reorderableWithButtons()
+                                                    ->collapsible()
+                                                    ->itemLabel(fn (array $state): ?string => $state['option_value'] ?? 'Seçenek')
+                                                    ->addActionLabel('Seçenek ekle')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('option_value')
+                                                            ->label('Seçenek değeri')
+                                                            ->placeholder('Örn: Kırmızı, XL')
+                                                            ->required()
+                                                            ->maxLength(255)
+                                                            ->columnSpan(1),
+                                                        Forms\Components\TextInput::make('option_color')
+                                                            ->label('Renk (hex)')
+                                                            ->placeholder('#ff0000')
+                                                            ->maxLength(20)
+                                                            ->nullable()
+                                                            ->columnSpan(1),
+                                                        Forms\Components\FileUpload::make('option_image')
+                                                            ->label('Görsel')
+                                                            ->image()
+                                                            ->directory('variation_options')
+                                                            ->visibility('public')
+                                                            ->imagePreviewHeight(80)
+                                                            ->nullable()
+                                                            ->columnSpanFull(),
+                                                        Forms\Components\Select::make('option_image_size')
+                                                            ->label('Görsel boyutu (ürün sayfasında)')
+                                                            ->options([
+                                                                'small' => 'Küçük',
+                                                                'medium' => 'Orta',
+                                                                'large' => 'Büyük',
+                                                            ])
+                                                            ->default('medium')
+                                                            ->nullable()
+                                                            ->helperText('Varyasyon görseli mağaza ürün sayfasında bu boyutta gösterilir.')
+                                                            ->columnSpan(1),
+                                                        Forms\Components\TextInput::make('price_delta')
+                                                            ->label('Fiyat farkı (₺)')
+                                                            ->numeric()
+                                                            ->default(0)
+                                                            ->step(0.01)
+                                                            ->columnSpan(1),
+                                                        Forms\Components\TextInput::make('stock_quantity')
+                                                            ->label('Stok miktarı')
+                                                            ->numeric()
+                                                            ->minValue(0)
+                                                            ->integer()
+                                                            ->nullable()
+                                                            ->columnSpan(1),
+                                                        Forms\Components\Select::make('parent_option_ids')
+                                                            ->label('Bağlı seçenekler (üst varyasyondan)')
+                                                            ->multiple()
+                                                            ->options(function (Get $get): array {
+                                                                $component = Livewire::current();
+                                                                $productId = null;
+                                                                if ($component && method_exists($component, 'getRecord')) {
+                                                                    $record = $component->getRecord();
+                                                                    if ($record instanceof Product && $record->exists) {
+                                                                        $productId = $record->getKey();
+                                                                    }
+                                                                }
+                                                                $productId = $productId ?? $get('_product_id') ?? $get('id');
+                                                                if (! $productId) {
+                                                                    return [];
+                                                                }
+                                                                return ProductVariationOption::query()
+                                                                    ->whereHas('variation', fn ($q) => $q->where('product_id', $productId))
+                                                                    ->with('variation')
+                                                                    ->orderBy('sort_order')
+                                                                    ->get()
+                                                                    ->mapWithKeys(fn ($o) => [$o->id => ($o->variation ? $o->variation->name . ' — ' : '') . $o->option_value])
+                                                                    ->all();
+                                                            })
+                                                            ->searchable()
+                                                            ->live()
+                                                            ->nullable()
+                                                            ->helperText('Bu seçenek hangi üst varyasyon seçenek(ler)ine bağlı? Birden fazla seçebilirsiniz.')
+                                                            ->columnSpanFull(),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->columnSpanFull(),
                                             ])
                                             ->columns(2)
-                                            ->defaultItems(0)
-                                            ->addActionLabel('Seçenek Ekle')
-                                            ->reorderable(false)
-                                            ->collapsible(),
-                                    ])
-                                    ->columns(2)
-                                    ->defaultItems(0)
-                                    ->addActionLabel('Satır Ekle')
-                                    ->visible(fn (Get $get) => filled($get('depends_on')))
-                                    ->formatStateUsing(function ($state) {
-                                        if ($state === null || (is_array($state) && empty($state))) {
-                                            return [];
-                                        }
-                                        $state = is_object($state) ? (array) $state : $state;
-                                        if (! is_array($state)) {
-                                            return [];
-                                        }
-                                        // Zaten form list formatı: [{"parent_value":"Erkek","options":[...]}, ...]
-                                        if (array_is_list($state) && isset($state[0]) && is_array($state[0]) && array_key_exists('parent_value', $state[0])) {
-                                            return $state;
-                                        }
-                                        // DB object format: {"Erkek": ["Sarı", "Mavi"], "Kadın": [...]} -> Form list
-                                        $list = [];
-                                        foreach ($state as $parentValue => $options) {
-                                            if (is_numeric((string) $parentValue)) {
-                                                continue;
-                                            }
-                                            $pvStr = is_scalar($parentValue) ? (string) $parentValue : '';
-                                            if ($pvStr === '') {
-                                                continue;
-                                            }
-                                            $opts = array_map(function ($o) {
-                                                if (is_array($o)) {
-                                                    return $o;
-                                                }
-                                                return ['option_value' => is_scalar($o) ? (string) $o : '', 'price_delta_try' => 0];
-                                            }, (array) $options);
-                                            $list[] = ['parent_value' => $pvStr, 'options' => $opts];
-                                        }
-                                        return $list;
-                                    })
-                                    ->afterStateHydrated(function (Set $set, Get $get, $state) {
-                                        $variationId = $get('../../id');
-                                        if (! $variationId || ! is_array($state)) {
-                                            return;
-                                        }
-                                        $priceRows = \App\Models\ProductVariationOptionPrice::query()
-                                            ->where('product_variation_id', $variationId)
-                                            ->get();
-                                        $priceMap = $priceRows->pluck('price_delta_try', 'option_value')->all();
-                                        $stockMap = $priceRows->pluck('stock_quantity', 'option_value')->all();
-                                        $variation = \App\Models\ProductVariation::find($variationId);
-                                        $optionMeta = $variation?->option_meta ?? [];
-
-                                        // Object format (DB): {"Erkek": ["S","M","L"], "Kadın": ["36","38"]}
-                                        $rows = [];
-                                        $mapOpt = function ($o) use ($priceMap, $stockMap, $optionMeta) {
-                                            $raw = is_array($o) ? ($o['option_value'] ?? null) : $o;
-                                            if ($raw === null) {
-                                                $raw = is_array($o) ? ($o[0] ?? '') : $o;
-                                            }
-                                            $val = is_scalar($raw) ? (string) $raw : '';
-                                            $val = trim($val);
-                                            $delta = isset($priceMap[$val]) ? (float) $priceMap[$val] : (float) (is_array($o) && isset($o['price_delta_try']) ? $o['price_delta_try'] : 0);
-                                            $stock = isset($stockMap[$val]) ? (int) $stockMap[$val] : (is_array($o) && isset($o['stock_quantity']) && $o['stock_quantity'] !== '' && $o['stock_quantity'] !== null ? (int) $o['stock_quantity'] : null);
-                                            $meta = is_array($optionMeta) && isset($optionMeta[$val]) ? $optionMeta[$val] : [];
-                                            $meta = is_array($meta) ? $meta : [];
-                                            return [
-                                                'option_value' => $val,
-                                                'option_color' => $meta['color'] ?? (is_array($o) ? ($o['option_color'] ?? null) : null),
-                                                'option_image' => $meta['image'] ?? (is_array($o) ? ($o['option_image'] ?? null) : null),
-                                                'price_delta_try' => $delta,
-                                                'stock_quantity' => $stock,
-                                            ];
-                                        };
-                                        $filterEmptyOptions = function (array $opts) use ($mapOpt): array {
-                                            $mapped = array_map($mapOpt, $opts);
-                                            return array_values(array_filter($mapped, fn ($r) => isset($r['option_value']) && trim((string) $r['option_value']) !== ''));
-                                        };
-                                        if (! array_is_list($state) || ! isset($state[0]['parent_value'])) {
-                                            foreach ($state as $pv => $opts) {
-                                                if (is_numeric((string) $pv)) {
-                                                    continue;
-                                                }
-                                                $pvStr = is_scalar($pv) ? (string) $pv : '';
-                                                if ($pvStr === '' || trim($pvStr) === '') {
-                                                    continue;
-                                                }
-                                                $opts = is_array($opts) ? $opts : [];
-                                                $filtered = $filterEmptyOptions($opts);
-                                                if (empty($filtered)) {
-                                                    continue;
-                                                }
-                                                $rows[] = [
-                                                    'parent_value' => trim($pvStr),
-                                                    'options' => $filtered,
-                                                ];
-                                            }
-                                        } else {
-                                            foreach ($state as $row) {
-                                                $pv = $row['parent_value'] ?? null;
-                                                $opts = $row['options'] ?? [];
-                                                $pvStr = is_scalar($pv) ? (string) $pv : '';
-                                                if ($pvStr === '' || trim($pvStr) === '') {
-                                                    continue;
-                                                }
-                                                $filtered = $filterEmptyOptions(is_array($opts) ? $opts : []);
-                                                if (empty($filtered)) {
-                                                    continue;
-                                                }
-                                                $rows[] = [
-                                                    'parent_value' => trim($pvStr),
-                                                    'options' => $filtered,
-                                                ];
-                                            }
-                                        }
-
-                                        if (! empty($rows)) {
-                                            $set('options_by_parent', $rows);
-                                        }
-                                    })
-                                    ->columnSpan(2),
-                                Forms\Components\TextInput::make('sort_order')
-                                    ->label('Sıra')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->hidden(),
+                                            ->columnSpanFull(),
                                     ]),
-                            ])
-                            ->columnSpanFull(),
-                                    ]),
-                                ]),
+                            ]),
                     ]),
             ]);
     }
@@ -623,6 +419,7 @@ class ProductResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
                     ->label('Görsel')
+                    ->getStateUsing(fn ($record) => $record->productImages->first()?->path ?? $record->image)
                     ->circular()
                     ->defaultImageUrl(fn () => asset('images/logo.png')),
                 Tables\Columns\TextColumn::make('company.name')
@@ -674,13 +471,9 @@ class ProductResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Yayında')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('variations_count')
-                    ->label('Varyasyon')
-                    ->counts('variations')
-                    ->badge()
-                    ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray'),
             ])
             ->defaultSort('name')
+            ->modifyQueryUsing(fn ($query) => $query->with('productImages'))
             ->filters([
                 Tables\Filters\SelectFilter::make('company_id')
                     ->label('Şirket')
@@ -723,4 +516,5 @@ class ProductResource extends Resource
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
+
 }
