@@ -263,3 +263,9 @@ Yol, Hostinger’daki gerçek yol ile değiştirilmelidir (panelde veya SSH’da
   `.env` içindeki `DB_*` değerlerini ve Hostinger’da veritabanı kullanıcısının bu veritabanına yetkili olduğunu kontrol edin. Paylaşımlı hosting’de bazen `DB_HOST` farklı olur (panelde yazanı kullanın).
 
 Bu adımlarla projeyi Hostinger’da yayına alabilirsiniz. Hosting planınız (Shared / Business / VPS) ve PHP sürümüne göre paneldeki menü isimleri hafifçe farklı olabilir; Hostinger destek dokümanlarından “document root” ve “cron” bölümlerine de bakabilirsiniz.
+
+MYSQL EXPORT
+docker exec filament_b2b_db mysqldump -u b2b_user -psecret --no-tablespaces new_istanbul_b2b > nev_istanbul_yedek.sql
+
+git push
+cd "/Users/sonerdurmus/Projects/Development/B2B Nev İstanbul/new_istanbul_b2b" && git status && git push
