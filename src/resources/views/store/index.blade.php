@@ -1,5 +1,7 @@
 @extends('store.layout')
 
+@section('store_content_full_width', '1')
+
 @section('title', 'Ürünler')
 
 @section('hero')
@@ -122,19 +124,14 @@
 
 @section('content')
     @php
-        $currentFilters = $currentFilters ?? [];
-        $filterCategories = $filterCategories ?? collect();
-        $filterCompanies = $filterCompanies ?? collect();
-        $hasFilters = count($currentFilters) > 0;
         $filterUrl = function ($overrides = []) {
             $params = array_merge(request()->only(['category', 'parent', 'company', 'in_stock', 'status_satista', 'status_yakinda', 'color', 'cinsiyet', 'q', 'sort', 'per_page']), $overrides);
             $params = array_filter($params, fn ($v) => $v !== null && $v !== '');
             return route('home', $params);
         };
-        $filterColors = $filterColors ?? collect();
-        $filterCinsiyetler = $filterCinsiyetler ?? collect();
     @endphp
 
+    <div class="max-w-7xl mx-auto w-full">
     <div class="mb-6" id="urunler">
         @if($currentCategory)
             <nav class="flex items-center gap-2 text-sm text-slate-500 mb-3">
@@ -151,148 +148,9 @@
         <p class="mt-2 text-slate-600">İhtiyacınız olan ürünleri sepetinize ekleyin, havale ile güvenle sipariş verin.</p>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-8 lg:gap-10">
-        {{-- Sol: Filtre paneli --}}
-        <aside class="lg:w-64 xl:w-72 flex-shrink-0">
-            <div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden sticky top-24">
-                <div class="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-slate-900">Filtrele</h2>
-                    @if($hasFilters)
-                        <a href="{{ route('home') }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Tümünü temizle</a>
-                    @endif
-                </div>
-                <div class="p-4 space-y-6">
-                    {{-- Toggle: Stokta var --}}
-                    <div>
-                        <a href="{{ $filterUrl(['in_stock' => request('in_stock') === '1' ? null : '1']) }}" class="flex items-center justify-between gap-3 py-2 rounded-lg transition-colors {{ request('in_stock') === '1' ? 'bg-primary-50 text-primary-700' : 'hover:bg-slate-50 text-slate-700' }}">
-                            <span class="text-sm font-medium">Stokta var</span>
-                            <span class="relative inline-flex h-6 w-10 flex-shrink-0 rounded-full transition-colors {{ request('in_stock') === '1' ? 'bg-primary-500' : 'bg-slate-200' }}">
-                                <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5 top-0.5 absolute {{ request('in_stock') === '1' ? 'translate-x-4' : '' }}"></span>
-                            </span>
-                        </a>
-                    </div>
-                    {{-- Toggle: Satışta --}}
-                    <div>
-                        <a href="{{ $filterUrl(['status_satista' => request('status_satista') === '1' ? null : '1']) }}" class="flex items-center justify-between gap-3 py-2 rounded-lg transition-colors {{ request('status_satista') === '1' ? 'bg-primary-50 text-primary-700' : 'hover:bg-slate-50 text-slate-700' }}">
-                            <span class="text-sm font-medium">Satışta</span>
-                            <span class="relative inline-flex h-6 w-10 flex-shrink-0 rounded-full transition-colors {{ request('status_satista') === '1' ? 'bg-primary-500' : 'bg-slate-200' }}">
-                                <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5 top-0.5 absolute {{ request('status_satista') === '1' ? 'translate-x-4' : '' }}"></span>
-                            </span>
-                        </a>
-                    </div>
-                    {{-- Toggle: Yakında gelecek --}}
-                    <div>
-                        <a href="{{ $filterUrl(['status_yakinda' => request('status_yakinda') === '1' ? null : '1']) }}" class="flex items-center justify-between gap-3 py-2 rounded-lg transition-colors {{ request('status_yakinda') === '1' ? 'bg-amber-50 text-amber-800' : 'hover:bg-slate-50 text-slate-700' }}">
-                            <span class="text-sm font-medium">Yakında gelecek</span>
-                            <span class="relative inline-flex h-6 w-10 flex-shrink-0 rounded-full transition-colors {{ request('status_yakinda') === '1' ? 'bg-amber-500' : 'bg-slate-200' }}">
-                                <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5 top-0.5 absolute {{ request('status_yakinda') === '1' ? 'translate-x-4' : '' }}"></span>
-                            </span>
-                        </a>
-                    </div>
-
-                    {{-- Açılır: Kategori --}}
-                    @if($filterCategories->isNotEmpty())
-                        <div class="border-t border-slate-100 pt-4">
-                            <details class="group" {{ ($currentCategory || request('category') || request('parent')) ? 'open' : '' }}>
-                                <summary class="flex items-center justify-between cursor-pointer list-none py-1 text-sm font-semibold text-slate-800">
-                                    <span>Kategori</span>
-                                    <svg class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </summary>
-                                <ul class="mt-3 space-y-0.5">
-                                    <li>
-                                        <a href="{{ $filterUrl(['category' => null, 'parent' => null]) }}" class="block py-2 px-3 rounded-lg text-sm {{ !request('category') && !request('parent') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">Tüm kategoriler</a>
-                                    </li>
-                                    @foreach($filterCategories as $root)
-                                        <li>
-                                            <a href="{{ $filterUrl(['category' => $root->slug, 'parent' => null]) }}" class="block py-2 px-3 rounded-lg text-sm {{ (request('category') === $root->slug || request('parent') === $root->slug) ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">{{ $root->name }}</a>
-                                            @if($root->children->isNotEmpty())
-                                                <ul class="ml-3 mt-0.5 space-y-0.5 border-l border-slate-200 pl-3">
-                                                    @foreach($root->children as $child)
-                                                        <li>
-                                                            <a href="{{ $filterUrl(['category' => $child->slug, 'parent' => null]) }}" class="block py-1.5 px-2 rounded-lg text-sm {{ request('category') === $child->slug ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">{{ $child->name }}</a>
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            @endif
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </details>
-                        </div>
-                    @endif
-
-                    {{-- Açılır: Marka / Firma --}}
-                    @if($filterCompanies->isNotEmpty())
-                        <div class="border-t border-slate-100 pt-4">
-                            <details class="group" {{ request('company') ? 'open' : '' }}>
-                                <summary class="flex items-center justify-between cursor-pointer list-none py-1 text-sm font-semibold text-slate-800">
-                                    <span>Marka / Firma</span>
-                                    <svg class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </summary>
-                                <ul class="mt-3 space-y-0.5 max-h-48 overflow-y-auto">
-                                    <li>
-                                        <a href="{{ $filterUrl(['company' => null]) }}" class="block py-2 px-3 rounded-lg text-sm {{ !request('company') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">Tümü</a>
-                                    </li>
-                                    @foreach($filterCompanies as $company)
-                                        <li>
-                                            <a href="{{ $filterUrl(['company' => $company->id]) }}" class="block py-2 px-3 rounded-lg text-sm {{ (string)request('company') === (string)$company->id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">{{ $company->name }}</a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </details>
-                        </div>
-                    @endif
-
-                    {{-- Açılır: Cinsiyet --}}
-                    @if($filterCinsiyetler->isNotEmpty())
-                        <div class="border-t border-slate-100 pt-4">
-                            <details class="group" {{ request('cinsiyet') ? 'open' : '' }}>
-                                <summary class="flex items-center justify-between cursor-pointer list-none py-1 text-sm font-semibold text-slate-800">
-                                    <span>Cinsiyet</span>
-                                    <svg class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </summary>
-                                <ul class="mt-3 space-y-0.5">
-                                    <li>
-                                        <a href="{{ $filterUrl(['cinsiyet' => null]) }}" class="block py-2 px-3 rounded-lg text-sm {{ !request('cinsiyet') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">Tümü</a>
-                                    </li>
-                                    @foreach($filterCinsiyetler as $val)
-                                        <li>
-                                            <a href="{{ $filterUrl(['cinsiyet' => $val]) }}" class="block py-2 px-3 rounded-lg text-sm {{ request('cinsiyet') === $val ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">{{ $val }}</a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </details>
-                        </div>
-                    @endif
-
-                    {{-- Açılır: Renk --}}
-                    @if($filterColors->isNotEmpty())
-                        <div class="border-t border-slate-100 pt-4">
-                            <details class="group" {{ request('color') ? 'open' : '' }}>
-                                <summary class="flex items-center justify-between cursor-pointer list-none py-1 text-sm font-semibold text-slate-800">
-                                    <span>Renk</span>
-                                    <svg class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                </summary>
-                                <ul class="mt-3 space-y-0.5 max-h-48 overflow-y-auto">
-                                    <li>
-                                        <a href="{{ $filterUrl(['color' => null]) }}" class="block py-2 px-3 rounded-lg text-sm {{ !request('color') ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">Tümü</a>
-                                    </li>
-                                    @foreach($filterColors as $val)
-                                        <li>
-                                            <a href="{{ $filterUrl(['color' => $val]) }}" class="block py-2 px-3 rounded-lg text-sm {{ request('color') === $val ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">{{ $val }}</a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </details>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </aside>
-
-        {{-- Sağ: Ürün listesi + sıralama / sayfa --}}
-        <div class="flex-1 min-w-0">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div class="min-w-0 w-full">
+        {{-- Ürün listesi + sıralama / sayfa (sol filtre kaldırıldı; kategori layout üst şeridinden) --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <p class="text-slate-600 text-sm">{{ $products->total() }} ürün bulundu</p>
                 <div class="flex flex-wrap items-center gap-3">
                     <label class="flex items-center gap-2 text-sm text-slate-700">
@@ -324,7 +182,7 @@
             <p class="text-slate-500 text-sm mt-1">Tüm ürünlere göz atmak için <a href="{{ route('home') }}" class="text-primary-600 hover:underline">Tümünü temizle</a> veya <a href="{{ route('home') }}" class="text-primary-600 hover:underline">buraya tıklayın</a>.</p>
         </div>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 sm:gap-5 md:gap-6">
             @foreach($products as $product)
                 @php $isComingSoon = ($product->status ?? 'satista') === 'yakinda_gelecek'; @endphp
                 <article class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col h-full">
@@ -369,15 +227,10 @@
                                     </a>
                                 @else
                                     @if($product->stock_quantity === null || (int) $product->stock_quantity > 0)
-                                        <form action="{{ route('store.cart.add') }}" method="POST" class="inline-flex flex-shrink-0">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm shadow-sm hover:shadow transition-all duration-200">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                                Sepete Ekle
-                                            </button>
-                                        </form>
+                                        <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm shadow-sm hover:shadow transition-all duration-200 flex-shrink-0">
+                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                            Varyasyon Belirle
+                                        </a>
                                     @else
                                         <span class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 font-medium text-sm flex-shrink-0">Stokta yok</span>
                                     @endif
@@ -398,7 +251,7 @@
                 </div>
             @endif
         @endif
-        </div>
+    </div>
     </div>
 
 @endsection

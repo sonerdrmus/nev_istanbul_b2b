@@ -30,6 +30,37 @@ class EditProduct extends EditRecord
     {
         unset($data['_product_id']);
 
+        // Seçili mevcut görsel yerine yeni yüklenen varsa DB alanına onu yaz.
+        if (! empty($data['image_upload'])) {
+            $upload = $data['image_upload'];
+            $path = is_array($upload) ? ($upload[0] ?? null) : $upload;
+            if (is_string($path) && trim($path) !== '') {
+                $data['image'] = $path;
+            }
+        }
+        unset($data['image_upload']);
+
+        // Varyasyon seçeneklerinde: option_image_upload varsa option_image'ı onunla güncelle.
+        if (! empty($data['variations']) && is_array($data['variations'])) {
+            foreach ($data['variations'] as &$variation) {
+                if (empty($variation['options']) || ! is_array($variation['options'])) {
+                    continue;
+                }
+
+                foreach ($variation['options'] as &$opt) {
+                    if (! empty($opt['option_image_upload'])) {
+                        $upload = $opt['option_image_upload'];
+                        $path = is_array($upload) ? ($upload[0] ?? null) : $upload;
+                        if (is_string($path) && trim($path) !== '') {
+                            $opt['option_image'] = $path;
+                        }
+                    }
+                    unset($opt['option_image_upload']);
+                }
+            }
+            unset($variation, $opt);
+        }
+
         return $data;
     }
 }

@@ -1,5 +1,7 @@
 @extends('store.layout')
 
+@section('store_content_full_width', '1')
+
 @section('title', $product->meta_title ?: $product->name)
 
 @push('meta')
@@ -28,12 +30,33 @@
         <span class="text-slate-900 font-medium truncate max-w-[200px] sm:max-w-none">{{ $product->name }}</span>
     </nav>
 
-    @php $hasVariations = $product->variations->isNotEmpty(); @endphp
+    @php
+        $hasVariations = $product->variations->isNotEmpty();
+        $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
+        $normalPriceTry = null;
+        $baseTry = null;
+        $baseConverted = null;
+        $hasProductDiscount = false;
+        if ($canSeePrices && $selectedCurrency) {
+            $normalPriceTry = $product->getPriceInTRY($customerDiscountPercent ?? null);
+            $discountUnitTry = $product->getDiscountUnitPriceInTRY(1, $customerGroupId ?? 1);
+            $hasProductDiscount = $discountUnitTry !== null && $discountUnitTry < $normalPriceTry;
+            if ($hasProductDiscount) {
+                $discountedPriceTry = $discountUnitTry * (1 - ($customerDiscountPercent ?? 0) / 100);
+                $baseTry = $discountedPriceTry;
+            } else {
+                $baseTry = $normalPriceTry;
+            }
+            $baseConverted = $selectedCurrency->convertFromTRY($baseTry);
+        }
+    @endphp
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        {{-- Görsel slayt --}}
+    {{-- Sol: sütun genişliği görsele sıkı (auto + sabit genişlik); sağ kalan alan (1fr). Geniş boş sütun kalmaz. --}}
+    <div class="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-6 xl:gap-8 items-start">
+        {{-- Sol: ürün görseli (büyük ekranda scroll ile sabit / sticky) --}}
         @php $displayImages = $product->display_image_urls; @endphp
-        <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square max-h-[400px] lg:max-h-none lg:aspect-square relative">
+        <div class="w-full max-w-[30.8rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[19.8rem] xl:w-[22rem] 2xl:w-[34.2rem] shrink-0 lg:sticky lg:top-24 lg:z-[1] lg:self-start">
+        <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square max-h-[400px] lg:max-h-[min(88vh,572px)] lg:aspect-square relative shadow-2xl shadow-slate-300/30 ring-1 ring-slate-200/70 w-full">
             @if(count($displayImages) > 0)
                 <div id="product-gallery" class="relative w-full h-full flex items-center justify-center cursor-zoom-in" role="region" aria-label="Ürün görselleri" title="Büyütmek için tıklayın">
                     @foreach($displayImages as $idx => $url)
@@ -168,7 +191,78 @@
         @endpush
         @endif
 
-        <div>
+        @if($canSeePrices && $hasVariations && $product->isOnSale())
+            {{-- Seçilen seçenekler özeti: ürün görselinin altında --}}
+            <div id="variation-summary-wrap" class="mt-4 lg:mt-5 p-4 sm:p-5 rounded-xl border border-slate-200/90 bg-white shadow-sm">
+                <p class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    </span>
+                    Seçilen seçenekler
+                </p>
+                <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
+                    <table class="w-full text-sm border-collapse" aria-label="Seçilen varyasyonlar ve adet">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200">
+                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Seçenek</th>
+                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Değer</th>
+                                <th scope="col" class="text-right font-semibold text-slate-700 py-2.5 px-3">Fiyat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variation-summary-tbody">
+                            <tr>
+                                <td colspan="3" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p id="variation-summary-warning" class="mt-3 text-sm text-amber-700 font-medium hidden" role="alert">
+                    Sepete eklemek için tüm seçenekleri belirleyin.
+                </p>
+                <div id="variation-confirm-wrap" class="mt-4 hidden">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <input type="checkbox" id="variation-confirm-checkbox" name="variation_confirmed" value="1" form="add-to-cart-form" class="mt-1 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">Seçimlerimi onaylıyorum, sepete ekleyebilirim.</span>
+                    </label>
+                </div>
+                <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+                        <span class="text-sm font-semibold text-slate-600">Ürün Fiyatı:</span>
+                        <div class="text-right">
+                            <span id="product-base-price" class="text-sm font-semibold text-slate-700">
+                                {{ $selectedCurrency->format($baseConverted) }}
+                            </span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-600">Varyasyon Tutarı:</span>
+                        <div class="text-right">
+                            <span id="product-variation-delta" class="text-sm font-semibold text-slate-600">
+                                {{ $selectedCurrency->format(0) }}
+                            </span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-600">Toplam Sipariş Tutarı:</span>
+                        <div class="text-right">
+                            <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                                {{ $selectedCurrency->format($baseConverted) }}
+                            </span>
+                        </div>
+                        @if($hasProductDiscount)
+                            <span></span>
+                            <span class="text-right text-xs text-slate-400 line-through">
+                                {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry)) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                <button type="submit" id="add-to-cart-btn" form="add-to-cart-form" class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span id="add-to-cart-btn-label">Seçenekleri belirleyin, ardından onaylayın.</span>
+                </button>
+            </div>
+        @endif
+        </div>
+
+        {{-- Sağ: başlık, fiyat, açıklama ve sipariş / varyasyon alanı (sayfa ile birlikte kayar) --}}
+        <div class="min-w-0">
             @if($product->company)
                 <p class="text-xs font-medium text-primary-600 uppercase tracking-wider mb-1">{{ $product->company->name }}</p>
             @endif
@@ -194,54 +288,7 @@
                 </div>
             @endif
 
-            @if($canSeePrices)
-                @php
-                    $productCurrency = $product->currency ?? \App\Models\Currency::getDefault();
-                    $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
-                    $normalPriceTry = $product->getPriceInTRY($customerDiscountPercent ?? null);
-                    $discountUnitTry = $product->getDiscountUnitPriceInTRY(1, $customerGroupId ?? 1);
-                    $hasProductDiscount = $discountUnitTry !== null && $discountUnitTry < $normalPriceTry;
-                    if ($hasProductDiscount) {
-                        $discountedPriceTry = $discountUnitTry * (1 - ($customerDiscountPercent ?? 0) / 100);
-                        $baseTry = $discountedPriceTry;
-                        $discountPercentDisplay = $normalPriceTry > 0 ? round((($normalPriceTry - $baseTry) / $normalPriceTry) * 100) : 0;
-                    } else {
-                        $baseTry = $normalPriceTry;
-                        $discountPercentDisplay = 0;
-                    }
-                    $baseConverted = $selectedCurrency->convertFromTRY($baseTry);
-                @endphp
-                <div class="mt-4 {{ $hasProductDiscount ? 'p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60' : '' }}">
-                    @if($hasProductDiscount)
-                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-emerald-500 text-white shadow-sm">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                                %{{ $discountPercentDisplay }} İndirim
-                            </span>
-                            <span class="text-sm text-emerald-700/90">Bu üründe indirim uygulanıyor</span>
-                        </div>
-                        <div class="flex flex-wrap items-baseline gap-3">
-                            <span class="text-xl text-slate-400 line-through whitespace-nowrap" aria-hidden="true">
-                                {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry)) }}
-                            </span>
-                            <p class="text-2xl font-bold text-slate-900 whitespace-nowrap">
-                                <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}">
-                                    {{ $selectedCurrency->format($baseConverted) }}
-                                </span>
-                            </p>
-                        </div>
-                    @else
-                        <p class="text-2xl font-bold text-slate-900 whitespace-nowrap">
-                            <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}">
-                                {{ $selectedCurrency->format($baseConverted) }}
-                            </span>
-                        </p>
-                    @endif
-                </div>
-                @if(!empty($customerDiscountPercent))
-                    <p class="mt-1 text-sm text-slate-600">Müşteri indiriminiz: %{{ number_format($customerDiscountPercent, 0, ',', '.') }}</p>
-                @endif
-            @else
+            @if(!$canSeePrices)
                 <p class="mt-4 text-slate-500 text-sm">Fiyatları görmek ve sipariş vermek için giriş yapmanız gerekmektedir.</p>
             @endif
 
@@ -263,17 +310,15 @@
                     @endif
                 </div>
             @endif
-        </div>
-    </div>
 
     @if($canSeePrices && $product->isOnSale() && ($product->stock_quantity === null || (int) $product->stock_quantity > 0))
     @php
         $minOrder = $product->getMinimumOrderQuantity();
         $availableStock = $product->stock_quantity !== null ? (int) $product->stock_quantity : 999999;
     @endphp
-    <section class="mt-10">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="Sipariş ve seçenekler">
         <div class="max-w-full">
-            <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl border border-slate-200 bg-slate-50 p-6" id="add-to-cart-form" data-available-stock="{{ $availableStock }}" data-size-table-trigger-variation="{{ e($product->size_table_trigger_variation ?? '') }}">
+            <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5 lg:p-6 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}" data-size-table-trigger-variation="{{ e($product->size_table_trigger_variation ?? '') }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 @if($hasVariations)
@@ -284,7 +329,7 @@
                 {{-- Normal adet alanı (varyasyon yoksa hemen göster, varyasyon varsa tüm seçenekler seçilince göster) --}}
                 <div id="quantity-simple-wrap" class="{{ $hasVariations ? 'hidden' : '' }}">
                     <label class="block font-semibold text-slate-700 mb-2">Adet</label>
-                    <input type="number" name="quantity" id="quantity-input" value="{{ $minOrder }}" min="{{ $minOrder }}" max="{{ $availableStock }}" class="w-full max-w-xs rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                    <input type="number" name="quantity" id="quantity-input" value="{{ $minOrder }}" min="{{ $minOrder }}" max="{{ $availableStock }}" class="w-full max-w-xs sm:max-w-sm lg:max-w-md rounded-xl border border-slate-300 px-4 py-3.5 lg:px-5 lg:py-4 text-base text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
                     @if($minOrder > 1)
                         <p class="mt-1 text-sm text-slate-500">Minimum sipariş: {{ $minOrder }} adet</p>
                     @endif
@@ -312,45 +357,45 @@
                         $totalSteps = count($variationSteps);
                         $sizeTables = $sizeTables ?? collect();
                     @endphp
-                    <section class="mt-6 w-full" aria-labelledby="variations-heading">
-                        <div class="rounded-2xl lg:rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 shadow-sm overflow-hidden">
-                            <div class="px-4 sm:px-6 lg:px-8 py-5 lg:py-6 border-b border-slate-200/80 bg-white/80">
-                                <h2 id="variations-heading" class="text-xl sm:text-2xl font-semibold text-slate-800 tracking-tight flex items-center gap-3">
-                                    <span class="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
-                                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    <section class="mt-3 lg:mt-4 w-full" aria-labelledby="variations-heading">
+                        <div class="rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 shadow-sm overflow-hidden ring-1 ring-slate-200/30">
+                            <div class="px-4 sm:px-5 lg:px-6 py-3.5 lg:py-4 border-b border-slate-200/70 bg-white/95">
+                                <h2 id="variations-heading" class="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-800 tracking-tight flex items-center gap-2.5">
+                                    <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
+                                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                                     </span>
                                     Seçenekleri belirleyin
                                 </h2>
-                                <p class="mt-1.5 text-base text-slate-500">Adım adım yukarıdan aşağıya seçenekleri belirleyin.</p>
+                                <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">Adım adım seçenekleri belirleyin.</p>
                             </div>
-                            <div id="product-variations" class="variation-steps-container px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+                            <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
                                 @foreach($variationSteps as $stepIndex => $variation)
                                     @php $isDependent = !empty($variation->depends_on); @endphp
-                                    <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-5' }} {{ $isDependent ? 'dependent-variation-block' : '' }}"
+                                    <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-3 lg:mt-4' }} {{ $isDependent ? 'dependent-variation-block' : '' }}"
                                          data-variation-name="{{ $variation->name }}"
                                          data-depends-on="{{ $variation->depends_on ?? '' }}"
                                          data-step-index="{{ $stepIndex }}"
                                          @if($isDependent) style="display: none;" @endif>
-                                        <div class="variation-timeline-cell flex flex-col items-center w-12 shrink-0 pt-[0.95rem] sm:pt-4">
-                                            <span class="variation-step-num flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4 ring-white bg-slate-200 text-slate-600 shadow-sm z-10 transition-colors duration-300">{{ $stepIndex + 1 }}</span>
-                                            <div class="w-0.5 flex-1 min-h-[8px] -mt-1 -mb-5 pb-5 bg-slate-200 rounded-full self-center" aria-hidden="true"></div>
+                                        <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
+                                            <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10 transition-colors duration-300">{{ $stepIndex + 1 }}</span>
+                                            <div class="w-0.5 flex-1 min-h-[6px] -mt-0.5 -mb-4 pb-4 bg-slate-200 rounded-full self-center" aria-hidden="true"></div>
                                         </div>
-                                        <div class="variation-step-card flex-1 min-w-0 rounded-2xl border-2 border-slate-200 bg-white overflow-hidden transition-all duration-300 -ml-px">
-                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-3 text-left py-3.5 sm:py-4 px-4 sm:px-5 bg-slate-50/80 hover:bg-slate-100/80 border-b border-slate-100 transition-colors {{ $stepIndex === 0 ? 'bg-primary-50/80 border-primary-100' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $stepIndex }}" aria-label="{{ $variation->name }} seçin">
-                                                <span class="variation-step-name text-base sm:text-lg font-semibold text-slate-800">{{ $variation->name }}</span>
+                                        <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
+                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $stepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $stepIndex }}" aria-label="{{ $variation->name }} seçin">
+                                                <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ $variation->name }}</span>
                                                 <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                             </button>
-                                            <div class="variation-step-summary hidden flex items-center justify-between gap-3 px-4 py-3 bg-slate-50/50 border-b border-slate-100">
+                                            <div class="variation-step-summary hidden flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
                                                 <div class="flex items-center gap-2 min-w-0">
                                                     <span class="text-slate-500 text-sm">{{ $variation->name }}:</span>
                                                     <span class="variation-step-summary-value font-medium text-slate-800">—</span>
                                                 </div>
                                                 <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">Değiştir</button>
                                             </div>
-                                            <div class="variation-step-full p-4 sm:p-5 {{ $stepIndex > 0 ? 'hidden' : '' }}">
-                                                <div class="flex flex-wrap gap-3 sm:gap-4 product-variation-options">
+                                            <div class="variation-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4 {{ $stepIndex > 0 ? 'hidden' : '' }}">
+                                                <div class="flex flex-wrap gap-2.5 sm:gap-3 lg:gap-3.5 product-variation-options">
                                     @foreach($variation->options as $option)
-                                        @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all'; @endphp
+                                        @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
                                         @if($variation->type === 'color' && $option->option_color)
                                             <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" title="{{ $option->option_value }}">
@@ -369,7 +414,7 @@
                                                 <span class="text-sm font-medium text-slate-600 mt-2 w-full {{ $labelMaxW }} text-center break-words leading-tight">{{ $option->option_value }}</span>
                                             </button>
                                         @else
-                                            <button type="button" class="{{ $optionClasses }} px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl text-base font-medium text-slate-700" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}">{{ $option->option_value }}</button>
+                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}">{{ $option->option_value }}</button>
                                         @endif
                                     @endforeach
                                                 </div>
@@ -378,17 +423,17 @@
                                     </div>
                                 @endforeach
                                 {{-- Son step: Beden Tablosu (sadece burada) --}}
-                                <div class="variation-step-panel flex flex-row gap-0 mt-5" data-step-index="{{ $totalSteps }}">
-                                    <div class="variation-timeline-cell flex flex-col items-center w-12 shrink-0 pt-[0.95rem] sm:pt-4">
-                                        <span class="variation-step-num flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4 ring-white bg-slate-200 text-slate-600 shadow-sm z-10">{{ $totalSteps + 1 }}</span>
+                                <div class="variation-step-panel flex flex-row gap-0 mt-3 lg:mt-4" data-step-index="{{ $totalSteps }}">
+                                    <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
+                                        <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10">{{ $totalSteps + 1 }}</span>
                                     </div>
-                                    <div class="variation-step-card flex-1 min-w-0 rounded-2xl border-2 border-slate-200 bg-white overflow-hidden -ml-px">
-                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-3 text-left py-3.5 sm:py-4 px-4 sm:px-5 bg-slate-50/80 hover:bg-slate-100/80 border-b border-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $totalSteps }}" aria-label="Beden tablosu">
-                                            <span class="variation-step-name text-base sm:text-lg font-semibold text-slate-800">Beden tablosu</span>
+                                    <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden -ml-px shadow-sm">
+                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $totalSteps }}" aria-label="Beden tablosu">
+                                            <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">Beden tablosu</span>
                                             <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                         </button>
                                         {{-- İçerik sadece tüm varyasyonlar seçildikten sonra görünür; hangi tablo gösterileceği JS ile güncellenir --}}
-                                        <div class="variation-step-full size-table-step-content p-4 sm:p-5 hidden">
+                                        <div class="variation-step-full size-table-step-content p-3.5 sm:p-4 lg:px-5 lg:py-4 hidden">
                                             @foreach($sizeTables as $sizeTable)
                                             <div id="{{ $sizeTable->slug }}-size-table-wrap" class="hidden mt-4 first:mt-0 size-table-wrap" data-slug="{{ $sizeTable->slug }}" data-trigger-variation="{{ e($sizeTable->trigger_variation_name ?? '') }}" data-trigger-value="{{ e($sizeTable->trigger_option_value ?? '') }}">
                                                 <p class="text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4 flex items-center gap-2">
@@ -450,46 +495,44 @@
                         <img id="variation-lightbox-image" src="" alt="" class="relative z-10 max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl">
                     </div>
 
-                    {{-- Seçilen seçenekler özeti: sepete ekle butonunun hemen üstünde, beden/adet + onay checkbox --}}
-                    <div id="variation-summary-wrap" class="mt-6 p-4 rounded-xl border border-slate-200 bg-white">
-                        <p class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                            </span>
-                            Seçilen seçenekler
-                        </p>
-                        <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
-                            <table class="w-full text-sm border-collapse" aria-label="Seçilen varyasyonlar ve adet">
-                                <thead>
-                                    <tr class="bg-slate-100 border-b border-slate-200">
-                                        <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Seçenek</th>
-                                        <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Değer</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="variation-summary-tbody">
-                                    <tr>
-                                        <td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p id="variation-summary-warning" class="mt-3 text-sm text-amber-700 font-medium hidden" role="alert">
-                            Sepete eklemek için tüm seçenekleri belirleyin.
-                        </p>
-                        <div id="variation-confirm-wrap" class="mt-4 hidden">
-                            <label class="flex items-start gap-3 cursor-pointer group">
-                                <input type="checkbox" id="variation-confirm-checkbox" name="variation_confirmed" value="1" class="mt-1 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                                <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">Seçimlerimi onaylıyorum, sepete ekleyebilirim.</span>
-                            </label>
-                        </div>
-                    </div>
                 @endif
 
-                <button type="submit" id="add-to-cart-btn" class="mt-6 w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                    @if($hasVariations) disabled @endif>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    {{ $hasVariations ? 'Seçimlerinizi onaylayıp sepete ekleyin' : 'Sepete Ekle' }}
-                </button>
+                @if(!$hasVariations)
+                    @if($canSeePrices && $baseTry !== null)
+                        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+                            <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+                                <span class="text-sm font-semibold text-slate-600">Ürün Fiyatı:</span>
+                                <div class="text-right">
+                                    <span class="text-sm font-semibold text-slate-700">
+                                        {{ $selectedCurrency->format($baseConverted) }}
+                                    </span>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-600">Varyasyon Toplam Tutarı:</span>
+                                <div class="text-right">
+                                    <span class="text-sm font-semibold text-slate-600">
+                                        {{ $selectedCurrency->format(0) }}
+                                    </span>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-600">Toplam Ürün Fiyatı:</span>
+                                <div class="text-right">
+                                    <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                                        {{ $selectedCurrency->format($baseConverted) }}
+                                    </span>
+                                </div>
+                                @if($hasProductDiscount)
+                                    <span></span>
+                                    <span class="text-right text-xs text-slate-400 line-through">
+                                        {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry)) }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                    <button type="submit" id="add-to-cart-btn" class="mt-4 lg:mt-5 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        Sepete Ekle
+                    </button>
+                @endif
             </form>
 
             {{-- Modern uyarı dialog: minimum sipariş vb. --}}
@@ -513,8 +556,8 @@
         </div>
     </section>
     @elseif($canSeePrices && !$product->isOnSale())
-    <section class="mt-10">
-        <div class="max-w-3xl mx-auto">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="Satış durumu">
+        <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
                 <p class="font-medium text-slate-700">{{ $product->getStatusLabel() }}</p>
                 <p class="mt-1 text-sm text-slate-600">
@@ -528,8 +571,8 @@
         </div>
     </section>
     @elseif($canSeePrices && $product->stock_quantity !== null && (int) $product->stock_quantity === 0)
-    <section class="mt-10">
-        <div class="max-w-3xl mx-auto">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="Stok bilgisi">
+        <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
                 <p class="text-red-600 font-medium">Stokta yok</p>
                 <p class="mt-1 text-sm text-slate-600">Bu ürün şu an satışta değildir. Stok geldiğinde sepete ekleyebilirsiniz.</p>
@@ -537,6 +580,9 @@
         </div>
     </section>
     @endif
+
+        </div>
+    </div>
 
     @if($canSeePrices && $hasVariations)
         @push('head')
@@ -574,15 +620,19 @@
                             var name = (panel.getAttribute('data-variation-name') || '').trim();
                             if (!name) return;
                             var value = '';
+                            var delta = 0;
+                            var sel = panel.querySelector('.product-option.option-selected');
+                            if (sel && sel.style.display !== 'none') {
+                                delta = parseFloat(sel.getAttribute('data-price-delta')) || 0;
+                            }
                             var summary = panel.querySelector('.variation-step-summary');
                             var summaryVal = panel.querySelector('.variation-step-summary-value');
                             if (summary && summaryVal && !summary.classList.contains('hidden')) {
                                 value = (summaryVal.textContent || '').trim();
                             } else {
-                                var sel = panel.querySelector('.product-option.option-selected');
                                 if (sel && sel.style.display !== 'none') value = (sel.getAttribute('data-option') || '').trim();
                             }
-                            if (value && value !== '—') list.push({ name: name, value: value });
+                            if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta });
                         });
                         return list;
                     }
@@ -600,8 +650,18 @@
                     function updatePriceAndInput() {
                         var delta = getDeltaTotal();
                         var totalTry = baseTry + delta;
+                        var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
+                        var deltaConverted = code === 'TRY' ? delta : delta * rate;
                         var converted = code === 'TRY' ? totalTry : totalTry * rate;
                         priceEl.textContent = formatPrice(converted);
+                        var basePriceEl = document.getElementById('product-base-price');
+                        if (basePriceEl) {
+                            basePriceEl.textContent = formatPrice(baseConverted);
+                        }
+                        var variationDeltaEl = document.getElementById('product-variation-delta');
+                        if (variationDeltaEl) {
+                            variationDeltaEl.textContent = (deltaConverted > 0 ? '+ ' : (deltaConverted < 0 ? '- ' : '')) + formatPrice(Math.abs(deltaConverted));
+                        }
                         variationInput.value = JSON.stringify(getSelectedOptions());
                     }
 
@@ -709,24 +769,32 @@
                         var ordered = getSelectedOptionsInStepOrder();
                         var sizeInfo = getSizeQuantities();
                         var rows = [];
+                        function formatDelta(deltaTry) {
+                            var delta = parseFloat(deltaTry) || 0;
+                            if (delta === 0) return '—';
+                            var absVal = Math.abs(delta);
+                            var converted = code === 'TRY' ? absVal : absVal * rate;
+                            var sign = delta > 0 ? '+' : '-';
+                            return sign + ' ' + formatPrice(converted);
+                        }
                         ordered.forEach(function(item) {
-                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td></tr>');
+                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td><td class="py-2.5 px-3 text-right text-slate-600">' + escapeHtml(formatDelta(item.priceDelta)) + '</td></tr>');
                         });
                         if (ordered.length > 0) {
                             if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
                                 Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                     var qty = sizeInfo.sizeQuantities[size];
                                     if (qty > 0) {
-                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">Beden ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' adet</td></tr>');
+                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">Beden ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
                                     }
                                 });
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Toplam adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Toplam adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
                             } else {
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
-                            tbody.innerHTML = '<tr><td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="3" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td></tr>';
                         }
                         var confirmWrap = document.getElementById('variation-confirm-wrap');
                         if (confirmWrap) {
@@ -738,17 +806,16 @@
                         var allSelected = allVisibleVariationsSelected();
                         var confirmed = !confirmCheckbox || confirmCheckbox.checked;
                         var canSubmit = allSelected && confirmed;
+                        var btnLabel = document.getElementById('add-to-cart-btn-label');
                         if (warningEl) {
                             warningEl.classList.toggle('hidden', allSelected);
                         }
                         if (btn) {
                             btn.disabled = !canSubmit;
-                            if (allSelected && !confirmed) {
-                                btn.textContent = 'Seçimlerinizi onaylayıp sepete ekleyin';
-                            } else if (!allSelected) {
-                                btn.textContent = 'Seçenekleri belirleyin, ardından onaylayın';
-                            } else {
-                                btn.textContent = 'Sepete Ekle';
+                            if (btnLabel) {
+                                btnLabel.textContent = canSubmit
+                                    ? 'Sepete Ekle'
+                                    : 'Seçenekleri belirleyin, ardından onaylayın.';
                             }
                         }
                         if (allSelected) {

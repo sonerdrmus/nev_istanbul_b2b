@@ -167,29 +167,7 @@ class StoreController extends Controller
             $homeSections = HomeSection::forHome()->get();
         }
 
-        // Filtre paneli verileri: kategoriler (ağaç) ve firmalar (ürünü olan)
-        $filterCategories = Category::with(['children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
-            ->active()
-            ->roots()
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-        $filterCompanies = \App\Models\Company::whereHas('products', fn ($q) => $q->active()->visibleInStore())
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        $filterColors = collect();
-        $filterCinsiyetler = collect();
-        $currentFilters = array_filter([
-            'category' => $categorySlug ?: ($parentSlug ?: null),
-            'company' => $companyId ?: null,
-            'in_stock' => request('in_stock') === '1' ? true : null,
-            'status_satista' => $statusSatista === '1' ? true : null,
-            'status_yakinda' => $statusYakinda === '1' ? true : null,
-            'q' => $searchQuery ?: null,
-        ]);
-
-        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeSections', 'filterCategories', 'filterCompanies', 'filterColors', 'filterCinsiyetler', 'currentFilters'));
+        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeSections'));
     }
 
     /** Giriş yapmış müşterinin şirketindeki kâr marjı (indirim) yüzdesi; yoksa null */

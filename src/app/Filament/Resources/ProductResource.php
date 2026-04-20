@@ -9,6 +9,7 @@ use App\Models\TaxClass;
 use App\Models\CustomerGroup;
 use App\Models\Product;
 use App\Models\ProductVariationOption;
+use Illuminate\Support\Facades\Storage;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -34,6 +35,48 @@ class ProductResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
+    /**
+     * `storage/app/public/<directory>` altında bulunan görselleri listeler.
+     * Select için:
+     * - value (key): disk üzerindeki göreli path (örn: `products/abc.jpg`)
+     * - label: dosya adı
+     */
+    protected static function getPublicImageSelectOptions(string $directory): array
+    {
+        $cacheKey = 'public-image-options:' . $directory;
+        static $cache = [];
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+
+        $paths = Storage::disk('public')->files($directory);
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
+        $options = collect($paths)
+            ->filter(function (string $path) use ($allowed) {
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                return in_array($ext, $allowed, true);
+            })
+            ->sort()
+            ->mapWithKeys(function (string $path) {
+                $label = basename($path);
+                $url = asset('storage/' . $path);
+
+                // Filament Select dropdown içinde thumbnail göstermek için HTML label.
+                // Search performansı için label sade tutulur.
+                $html = '<div class="flex items-center gap-2">'
+                    . '<img src="' . e($url) . '" alt="' . e($label) . '" class="w-7 h-7 rounded-md object-cover border border-slate-200" />'
+                    . '<span class="text-sm leading-tight break-all">' . e($label) . '</span>'
+                    . '</div>';
+
+                return [$path => $html];
+            })
+            ->all();
+
+        $cache[$cacheKey] = $options;
+        return $options;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -56,12 +99,30 @@ class ProductResource extends Resource
                                             ->preload()
                                             ->columnSpan(1),
                                         Forms\Components\Select::make('category_id')
-                                            ->label('Alt Kategori')
-                                            ->options(fn () => Category::whereNotNull('parent_id')->with('parent')->orderBy('sort_order')->orderBy('name')->get()->mapWithKeys(fn ($c) => [$c->id => $c->parent?->name . ' › ' . $c->name])->all())
+                                            ->label('Kategori')
+                                            ->helperText('Ana veya alt kategori seçilebilir. Liste, üst › alt tam yolunu gösterir.')
+                                            ->relationship(
+                                                'category',
+                                                'name',
+                                                fn ($query) => $query
+                                                    ->with('parentRecursive')
+                                                    ->orderBy('sort_order')
+                                                    ->orderBy('name'),
+                                            )
+                                            ->getOptionLabelFromRecordUsing(fn (Category $record): string => $record->full_path)
                                             ->searchable()
                                             ->preload()
                                             ->placeholder('Kategori seçin')
                                             ->nullable()
+                                            ->columnSpan(1),
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->label('Kategori / listede sıra')
+                                            ->helperText('Mağaza kategori ve ürün listelerinde düşük sayı önce gösterilir (aynı kategorideki ürünler arasında).')
+                                            ->numeric()
+                                            ->integer()
+                                            ->minValue(0)
+                                            ->default(0)
+                                            ->required()
                                             ->columnSpan(1),
                                         Forms\Components\Select::make('tax_class_id')
                                             ->label('Vergi Sınıfı')
@@ -146,12 +207,22 @@ class ProductResource extends Resource
                                             ->integer()
                                             ->nullable()
                                             ->columnSpan(1),
-                                        Forms\Components\FileUpload::make('image')
+                                        Forms\Components\Select::make('image')
                                             ->label('Ana görsel (liste / öne çıkan)')
+                                            ->options(fn () => self::getPublicImageSelectOptions('products'))
+                                            ->allowHtml()
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder('Görsel seçin')
+                                            ->nullable()
+                                            ->columnSpanFull(),
+                                        Forms\Components\FileUpload::make('image_upload')
+                                            ->label('Yeni görsel yükle')
                                             ->image()
                                             ->directory('products')
                                             ->visibility('public')
-                                            ->imagePreviewHeight('200')
+                                            ->imagePreviewHeight(200)
+                                            ->maxFiles(1)
                                             ->nullable()
                                             ->columnSpanFull(),
                                         Forms\Components\Repeater::make('productImages')
@@ -340,12 +411,22 @@ class ProductResource extends Resource
                                                             ->maxLength(20)
                                                             ->nullable()
                                                             ->columnSpan(1),
-                                                        Forms\Components\FileUpload::make('option_image')
-                                                            ->label('Görsel')
+                                                        Forms\Components\Select::make('option_image')
+                                                            ->label('Görsel (mevcut)')
+                                                            ->options(fn () => self::getPublicImageSelectOptions('variation_options'))
+                                                            ->allowHtml()
+                                                            ->searchable()
+                                                            ->preload()
+                                                            ->placeholder('Görsel seçin')
+                                                            ->nullable()
+                                                            ->columnSpanFull(),
+                                                        Forms\Components\FileUpload::make('option_image_upload')
+                                                            ->label('Yeni görsel yükle')
                                                             ->image()
                                                             ->directory('variation_options')
                                                             ->visibility('public')
                                                             ->imagePreviewHeight(80)
+                                                            ->maxFiles(1)
                                                             ->nullable()
                                                             ->columnSpanFull(),
                                                         Forms\Components\Select::make('option_image_size')
@@ -430,6 +511,10 @@ class ProductResource extends Resource
                     ->label('Kategori')
                     ->formatStateUsing(fn ($state, $record) => $record?->category ? ($record->category->parent ? $record->category->parent->name . ' › ' : '') . $record->category->name : '—')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Liste sırası')
+                    ->sortable()
+                    ->alignEnd(),
                 Tables\Columns\TextColumn::make('taxClass.title')
                     ->label('Vergi Sınıfı')
                     ->placeholder('—')
@@ -472,7 +557,7 @@ class ProductResource extends Resource
                     ->label('Yayında')
                     ->boolean(),
             ])
-            ->defaultSort('name')
+            ->defaultSort('sort_order', 'asc')
             ->modifyQueryUsing(fn ($query) => $query->with('productImages'))
             ->filters([
                 Tables\Filters\SelectFilter::make('company_id')

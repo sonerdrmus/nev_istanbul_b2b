@@ -47,11 +47,29 @@
         .bottom-nav-active { color: #155fb3; }
         .dropdown.open .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0) translateX(-50%); }
         details[open] > .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        /* Anasayfa mega: ayrıntılar head stack sonrası blokta (!important + display:none) */
         /* Kategori şeridi menüleri JS ile açılır (hidden sınıfı) */
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
     @stack('head')
+    {{-- Mega panel: Tailwind CDN’den sonra — kapalıyken display:none flex min-width kırılmasını kesin önler --}}
+    <style>
+        #home-mega-nav-bar .home-mega-panel-shell:not(.is-open) {
+            display: none !important;
+        }
+        #home-mega-nav-bar .home-mega-panel-shell.is-open {
+            display: block !important;
+            position: fixed;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            max-height: min(72vh, 22rem);
+            max-width: min(100vw - 1.5rem, 62rem);
+            transform: translateY(0);
+            transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col pb-20 lg:pb-0">
     {{-- Topbar: ÜCRETSİZ KARGO + Kurlar + Para birimi seçici --}}
@@ -104,7 +122,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-3 sm:gap-4 h-14 sm:h-16">
                 <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center gap-2">
-                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-18 sm:h-12 w-auto">
+                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-9 sm:h-11 w-auto object-contain">
                 </a>
 
                 <div class="flex-1 min-w-0 max-w-xl mx-2 sm:mx-4 relative" id="header-search-wrap">
@@ -284,92 +302,9 @@
     </script>
     @endif
 
-    {{-- Kategori menü şeridi (header altı) --}}
-    @isset($menuCategories)
-    <div class="bg-white border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            @php
-                $activeParentSlug = request('parent');
-                $activeChildSlug = request('category');
-                if (! $activeParentSlug && $activeChildSlug) {
-                    foreach ($menuCategories as $p) {
-                        foreach ($p->children as $c) {
-                            if ($c->slug === $activeChildSlug) {
-                                $activeParentSlug = $p->slug;
-                                break 2;
-                            }
-                        }
-                    }
-                }
-            @endphp
-
-            {{-- Menü (açılır): üst kategori -> alt kategoriler (tıklama ile).
-                 Eğer üst kategorinin alt kategorisi yoksa doğrudan kategori linki olarak davranır. --}}
-            <div class="flex items-center gap-2 py-3 overflow-x-auto overflow-y-visible lg:overflow-visible scrollbar-hide relative" id="category-strip">
-                <a href="{{ route('home') }}"
-                   class="flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors whitespace-nowrap {{ !request('category') ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}">
-                    Tüm Ürünler
-                </a>
-                @foreach($menuCategories as $parent)
-                    <div class="relative flex-shrink-0">
-                        @if($parent->children->isNotEmpty())
-                            <button type="button"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors {{ $activeParentSlug === $parent->slug ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}"
-                                    onclick="toggleCatMenu('cat-menu-{{ $parent->id }}')">
-                                @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-4 h-4'])
-                                {{ $parent->name }}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                            </button>
-                            <div id="cat-menu-{{ $parent->id }}" class="hidden absolute left-0 top-full mt-2 w-64 py-2 bg-white rounded-xl border border-slate-200 shadow-xl z-50 max-h-[70vh] overflow-y-auto">
-                                <a href="{{ route('home', array_merge(request()->query(), ['parent' => $parent->slug, 'category' => null])) }}"
-                                   class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-colors">
-                                    @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-5 h-5'])
-                                    {{ $parent->name }} (Tümü)
-                                </a>
-                                @foreach($parent->children as $child)
-                                    <a href="{{ route('home', array_merge(request()->query(), ['parent' => $parent->slug, 'category' => $child->slug])) }}"
-                                       class="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors {{ $activeChildSlug === $child->slug ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700' }}">
-                                        @include('store.partials.category-icon', ['category' => $child])
-                                        {{ $child->name }}
-                                    </a>
-                                @endforeach
-                            </div>
-                        @else
-                            {{-- Alt kategorisi olmayan kök kategori: doğrudan kategori sayfasına gider --}}
-                            <a href="{{ route('home', array_merge(request()->query(), ['category' => $parent->slug, 'parent' => null])) }}"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors {{ request('category') === $parent->slug ? 'bg-primary-50 text-primary-700' : 'text-slate-700 hover:bg-slate-100' }}">
-                                @include('store.partials.category-icon', ['category' => $parent, 'size' => 'w-4 h-4'])
-                                {{ $parent->name }}
-                            </a>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-
-            <script>
-            (function () {
-                window.toggleCatMenu = function (id) {
-                    var menu = document.getElementById(id);
-                    if (!menu) return;
-                    // close others
-                    document.querySelectorAll('#category-strip [id^="cat-menu-"]').forEach(function (el) {
-                        if (el.id !== id) el.classList.add('hidden');
-                    });
-                    menu.classList.toggle('hidden');
-                };
-                // outside click closes
-                document.addEventListener('click', function (e) {
-                    var strip = document.getElementById('category-strip');
-                    if (!strip) return;
-                    if (strip.contains(e.target)) return;
-                    document.querySelectorAll('#category-strip [id^="cat-menu-"]').forEach(function (el) {
-                        el.classList.add('hidden');
-                    });
-                });
-            })();
-            </script>
-        </div>
-    </div>
+    {{-- Anasayfa üst kategori şeridi: Tüm Ürünler + Tişört, Bags, … mega menü --}}
+    @isset($homeMegaNav)
+        @include('store.partials.home-mega-nav-strip')
     @endisset
 
     @if(session('success'))
@@ -390,7 +325,10 @@
 
     @yield('hero')
 
-    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 w-full">
+    @php
+        $storeMainFullWidth = \Illuminate\Support\Facades\View::hasSection('store_content_full_width');
+    @endphp
+    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 {{ $storeMainFullWidth ? '' : 'max-w-7xl mx-auto' }}">
         @yield('content')
     </main>
 
