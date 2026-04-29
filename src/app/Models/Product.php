@@ -25,6 +25,8 @@ class Product extends Model
         'is_active',
         'status',
         'sort_order',
+        'show_on_home',
+        'home_showcase_order',
         'size_table_trigger_variation',
     ];
 
@@ -34,6 +36,8 @@ class Product extends Model
             'price' => 'decimal:2',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'show_on_home' => 'boolean',
+            'home_showcase_order' => 'integer',
         ];
     }
 

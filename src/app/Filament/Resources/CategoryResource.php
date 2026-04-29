@@ -63,6 +63,14 @@ class CategoryResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
+                        Forms\Components\FileUpload::make('image_path')
+                            ->label('Anasayfa görseli')
+                            ->image()
+                            ->directory('categories')
+                            ->visibility('public')
+                            ->imagePreviewHeight('200')
+                            ->helperText('Yüklerseniz anasayfada (slider altında) bu kategori için kart olarak gösterilir. Boş bırakılabilir.')
+                            ->nullable(),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -94,6 +102,12 @@ class CategoryResource extends Resource
                     ->label('Slug')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\ImageColumn::make('image_path')
+                    ->label('Görsel')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->height(48)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Ürün')
                     ->counts('products')

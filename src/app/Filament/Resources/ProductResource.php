@@ -147,6 +147,24 @@ class ProductResource extends Resource
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2),
+                                Forms\Components\Section::make('Anasayfa vitrin (kategoriler bölümü)')
+                                    ->description('Açıksa anasayfada kategori kartlarıyla aynı alanda yalnızca ürün görseli ve adı gösterilir; tıklanınca ürün detayına gider. Görsel için ana ürün görseli veya galerideki ilk görsel kullanılır.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('show_on_home')
+                                            ->label('Anasayfa vitrininde göster')
+                                            ->default(false)
+                                            ->inline(false),
+                                        Forms\Components\TextInput::make('home_showcase_order')
+                                            ->label('Vitrinde sıra')
+                                            ->helperText('Düşük sayı önce listelenir (kategori kartlarından sonra gelen ürünler arasında).')
+                                            ->numeric()
+                                            ->integer()
+                                            ->minValue(0)
+                                            ->default(0)
+                                            ->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsible(),
                             ]),
                         Forms\Components\Tabs\Tab::make('SEO')
                             ->icon('heroicon-o-magnifying-glass')
@@ -515,6 +533,15 @@ class ProductResource extends Resource
                     ->label('Liste sırası')
                     ->sortable()
                     ->alignEnd(),
+                Tables\Columns\IconColumn::make('show_on_home')
+                    ->label('Ana vitrin')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('home_showcase_order')
+                    ->label('Vitrin sırası')
+                    ->sortable()
+                    ->alignEnd()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('taxClass.title')
                     ->label('Vergi Sınıfı')
                     ->placeholder('—')
@@ -573,6 +600,8 @@ class ProductResource extends Resource
                     ->placeholder('Tümü'),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Yayında'),
+                Tables\Filters\TernaryFilter::make('show_on_home')
+                    ->label('Anasayfa vitrin'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()

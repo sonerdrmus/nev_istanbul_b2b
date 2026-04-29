@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             TaxSeeder::class,
             CategorySeeder::class,
             ProductSeeder::class,
+            BulkCatalogSeeder::class,
             SizeTableSeeder::class,
             HomeContentSeeder::class,
             FooterMenuSeeder::class,

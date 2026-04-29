@@ -6,7 +6,6 @@ use App\Models\BankAccount;
 use App\Models\BannerSlide;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\HomeSection;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -18,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class StoreController extends Controller
@@ -32,6 +32,49 @@ class StoreController extends Controller
         return session('cart', []);
     }
 
+    /**
+     * Aynı beden etiketi birden fazla tabloda varsa, tablo sort_order + kolon sırasına göre ilk eşleşen çarpan kullanılır.
+     *
+     * @return array<string, float> size_value => multiplier
+     */
+    private function buildSizeValueMultiplierMap(): array
+    {
+        if (! Schema::hasColumn('size_table_columns', 'price_multiplier')) {
+            return [];
+        }
+        $map = [];
+        $tables = SizeTable::with(['columns' => fn ($q) => $q->orderBy('sort_order')->orderBy('id')])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+        foreach ($tables as $table) {
+            foreach ($table->columns as $col) {
+                if (! array_key_exists($col->size_value, $map)) {
+                    $m = (float) ($col->price_multiplier ?? 1);
+                    $map[$col->size_value] = max(0.0, $m);
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /** Beden adetleriyle fiyat ağırlığı: Σ(adet × çarpan). */
+    private function sizePricingWeightFromQuantities(array $sizeQuantities, array $multiplierMap): float
+    {
+        $w = 0.0;
+        foreach ($sizeQuantities as $label => $qty) {
+            $q = (int) $qty;
+            if ($q <= 0) {
+                continue;
+            }
+            $m = $multiplierMap[(string) $label] ?? 1.0;
+            $w += $q * $m;
+        }
+
+        return $w;
+    }
+
     /** @return \Illuminate\Support\Collection<int, object{product: Product, quantity: int, subtotal: float, cart_key: string, unit_price_try: float}> */
     private function getCartItems(): \Illuminate\Support\Collection
     {
@@ -42,6 +85,7 @@ class StoreController extends Controller
         $productIds = array_unique(array_column($cart, 'product_id'));
         $products = Product::with(['company', 'currency'])->whereIn('id', $productIds)->get()->keyBy('id');
         $items = collect();
+        $sizeMultiplierMap = $this->buildSizeValueMultiplierMap();
         foreach ($cart as $key => $item) {
             $product = $products->get($item['product_id'] ?? 0);
             if (! $product || ($item['quantity'] ?? 0) < 1) {
@@ -65,10 +109,18 @@ class StoreController extends Controller
                 $unitTry = $unitTry * (1 - $discountPercent / 100);
             }
 
+            $sizeQuantities = $item['size_quantities'] ?? null;
+            $pricingWeight = $qty;
+            if (is_array($sizeQuantities) && $sizeQuantities !== [] && $sizeMultiplierMap !== []) {
+                $pricingWeight = $this->sizePricingWeightFromQuantities($sizeQuantities, $sizeMultiplierMap);
+            } elseif (is_array($sizeQuantities) && $sizeQuantities !== [] && $sizeMultiplierMap === []) {
+                $pricingWeight = (float) array_sum(array_map('intval', $sizeQuantities));
+            }
+
             $items->push((object) [
                 'product' => $product,
                 'quantity' => $qty,
-                'subtotal' => $unitTry * $qty,
+                'subtotal' => $unitTry * $pricingWeight,
                 'cart_key' => $key,
                 'unit_price_try' => $unitTry,
                 'variation_data' => $item['variation_data'] ?? null,
@@ -161,13 +213,32 @@ class StoreController extends Controller
         }
 
         $bannerSlides = collect();
-        $homeSections = collect();
+        $homeCategoryShowcase = collect();
+        $homeProductShowcase = collect();
         if (! $currentCategory) {
             $bannerSlides = BannerSlide::forHome()->get();
-            $homeSections = HomeSection::forHome()->get();
+            if (Schema::hasColumn('categories', 'image_path')) {
+                $homeCategoryShowcase = Category::query()
+                    ->active()
+                    ->whereNotNull('image_path')
+                    ->where('image_path', '!=', '')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get();
+            }
+            if (Schema::hasColumn('products', 'show_on_home')) {
+                $homeProductShowcase = Product::query()
+                    ->active()
+                    ->visibleInStore()
+                    ->where('show_on_home', true)
+                    ->with(['productImages' => fn ($q) => $q->orderBy('sort_order')->orderBy('id')])
+                    ->orderBy('home_showcase_order')
+                    ->orderBy('name')
+                    ->get();
+            }
         }
 
-        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeSections'));
+        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeCategoryShowcase', 'homeProductShowcase'));
     }
 
     /** Giriş yapmış müşterinin şirketindeki kâr marjı (indirim) yüzdesi; yoksa null */

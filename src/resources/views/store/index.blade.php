@@ -1,8 +1,29 @@
 @extends('store.layout')
 
+@php
+    $showHomeProductSection = $currentCategory
+        || trim((string) (request('q') ?? '')) !== ''
+        || request()->filled('company')
+        || request('in_stock') === '1'
+        || request()->filled('status_satista')
+        || request()->filled('status_yakinda')
+        || request()->filled('color')
+        || request()->filled('cinsiyet')
+        || (request()->filled('sort') && request('sort') !== 'default')
+        || (request()->filled('per_page') && (int) request('per_page') !== 12)
+        || request()->filled('category')
+        || request()->filled('parent');
+    $filterUrl = function ($overrides = []) {
+        $params = array_merge(request()->only(['category', 'parent', 'company', 'in_stock', 'status_satista', 'status_yakinda', 'color', 'cinsiyet', 'q', 'sort', 'per_page']), $overrides);
+        $params = array_filter($params, fn ($v) => $v !== null && $v !== '');
+
+        return route('home', $params);
+    };
+@endphp
+
 @section('store_content_full_width', '1')
 
-@section('title', 'Ürünler')
+@section('title', $currentCategory ? ($currentCategory->name . ' Ürünleri') : ($showHomeProductSection ? 'Ürünler' : 'Ana Sayfa'))
 
 @section('hero')
     @if(!$currentCategory)
@@ -65,6 +86,55 @@
     </script>
     @endif
 
+    @php
+        $homeShowcaseHasCategories = isset($homeCategoryShowcase) && $homeCategoryShowcase->isNotEmpty();
+        $homeShowcaseHasProducts = isset($homeProductShowcase) && $homeProductShowcase->isNotEmpty();
+    @endphp
+    @if($homeShowcaseHasCategories || $homeShowcaseHasProducts)
+    <div class="w-full bg-white border-b border-slate-200 py-8 sm:py-10" aria-label="Kategori ve ürün vitrinleri">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">
+                @if($homeShowcaseHasCategories && $homeShowcaseHasProducts)
+                    Kategoriler ve ürünler
+                @elseif($homeShowcaseHasProducts)
+                    Ürünler
+                @else
+                    Kategoriler
+                @endif
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
+                @foreach($homeCategoryShowcase ?? [] as $cat)
+                    <a href="{{ route('home', ['category' => $cat->slug]) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
+                        <div class="relative aspect-[4/3] bg-slate-200 overflow-hidden">
+                            <img src="{{ Storage::url($cat->image_path) }}" alt="{{ $cat->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" width="400" height="300">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                        </div>
+                        <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
+                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $cat->name }}</span>
+                        </div>
+                    </a>
+                @endforeach
+                @foreach($homeProductShowcase ?? [] as $product)
+                    @php $vitrinThumb = $product->image ?? $product->productImages->first()?->path; @endphp
+                    <a href="{{ route('store.product.show', $product) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
+                        <div class="relative aspect-[4/3] bg-slate-200 overflow-hidden flex items-center justify-center">
+                            @if($vitrinThumb)
+                                <img src="{{ Storage::url($vitrinThumb) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" width="400" height="300">
+                            @else
+                                <span class="text-slate-400 text-5xl select-none" aria-hidden="true">📦</span>
+                            @endif
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                        </div>
+                        <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
+                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $product->name }}</span>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Promo banner strip (ikon + metin) --}}
     <div class="w-full bg-white border-b border-slate-200 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,37 +170,11 @@
         </div>
     </div>
 
-    {{-- Anasayfa alanları (admin'den yönetilen kampanya kutuları) --}}
-    @if($homeSections->isNotEmpty())
-    <div class="w-full bg-slate-50 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                @foreach($homeSections as $section)
-                <a href="{{ $section->link_url ?: '#' }}" class="group block relative overflow-hidden rounded-2xl min-h-[180px] sm:min-h-[200px] p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 @if(!$section->image_path) {{ $loop->index % 2 === 0 ? 'bg-gradient-to-br from-primary-600 to-primary-800' : 'bg-gradient-to-br from-slate-700 to-slate-900' }} @endif"
-                   @if($section->image_path) style="background-image: url('{{ Storage::url($section->image_path) }}'); background-size: cover; background-position: center;" @endif>
-                    @if($section->image_path)<div class="absolute inset-0 bg-black/50"></div>@else<div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>@endif
-                    <span class="relative {{ $loop->index % 2 === 0 ? 'text-primary-100' : 'text-slate-300' }} text-xs font-bold uppercase tracking-widest">{{ $section->label ?: 'Kampanya' }}</span>
-                    <h3 class="relative mt-2 text-2xl sm:text-3xl font-bold text-white">{{ $section->title }}</h3>
-                    @if($section->subtitle)<p class="relative mt-1 text-white/90 text-sm sm:text-base">{{ $section->subtitle }}</p>@endif
-                    @if($section->button_text)<span class="relative inline-flex items-center gap-1 mt-4 text-white font-semibold text-sm group-hover:gap-2 transition-all">{{ $section->button_text }} <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></span>@endif
-                </a>
-                @endforeach
-            </div>
-        </div>
-    </div>
-    @endif
     @endif
 @endsection
 
 @section('content')
-    @php
-        $filterUrl = function ($overrides = []) {
-            $params = array_merge(request()->only(['category', 'parent', 'company', 'in_stock', 'status_satista', 'status_yakinda', 'color', 'cinsiyet', 'q', 'sort', 'per_page']), $overrides);
-            $params = array_filter($params, fn ($v) => $v !== null && $v !== '');
-            return route('home', $params);
-        };
-    @endphp
-
+    @if($showHomeProductSection)
     <div class="max-w-7xl mx-auto w-full">
     <div class="mb-6" id="urunler">
         @if($currentCategory)
@@ -253,5 +297,9 @@
         @endif
     </div>
     </div>
+    @else
+        {{-- Eski kampanya linkleri (/#urunler) için hedef; görünür ürün listesi yok --}}
+        <div id="urunler" class="sr-only" aria-hidden="true"></div>
+    @endif
 
 @endsection

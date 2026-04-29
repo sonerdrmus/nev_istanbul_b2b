@@ -6,7 +6,6 @@ use App\Filament\Resources\BannerSlideResource;
 use App\Filament\Resources\CategoryResource;
 use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
-use App\Filament\Resources\HomeSectionResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SizeTableResource;
 use App\Filament\Resources\TaxClassResource;
@@ -147,7 +146,6 @@ class AdminPanelProvider extends PanelProvider
                 ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
                 ->sort(4)
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(HomeSectionResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*'))
@@ -160,10 +158,6 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-photo')
                         ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')),
-                    NavigationItem::make('Anasayfa Alanları')
-                        ->url(fn (): string => HomeSectionResource::getUrl(panel: $panelId))
-                        ->icon('heroicon-o-squares-2x2')
-                        ->isActiveWhen(fn (): bool => request()->routeIs(HomeSectionResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Footer Menü')
                         ->url(fn (): string => FooterMenuGroupResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-squares-2x2')

@@ -33,6 +33,7 @@
     @php
         $hasVariations = $product->variations->isNotEmpty();
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
+        $minOrderProduct = $product->getMinimumOrderQuantity();
         $normalPriceTry = null;
         $baseTry = null;
         $baseConverted = null;
@@ -206,12 +207,11 @@
                             <tr class="bg-slate-100 border-b border-slate-200">
                                 <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Seçenek</th>
                                 <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Değer</th>
-                                <th scope="col" class="text-right font-semibold text-slate-700 py-2.5 px-3">Fiyat</th>
                             </tr>
                         </thead>
                         <tbody id="variation-summary-tbody">
                             <tr>
-                                <td colspan="3" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td>
+                                <td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -233,24 +233,15 @@
                                 {{ $selectedCurrency->format($baseConverted) }}
                             </span>
                         </div>
-                        <span class="text-sm font-semibold text-slate-600">Varyasyon Tutarı:</span>
-                        <div class="text-right">
-                            <span id="product-variation-delta" class="text-sm font-semibold text-slate-600">
-                                {{ $selectedCurrency->format(0) }}
-                            </span>
-                        </div>
                         <span class="text-sm font-semibold text-slate-600">Toplam Sipariş Tutarı:</span>
                         <div class="text-right">
-                            <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
-                                {{ $selectedCurrency->format($baseConverted) }}
+                            <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                                {{ $selectedCurrency->format($selectedCurrency->convertFromTRY(0)) }}
                             </span>
+                            @if($hasProductDiscount)
+                                <div id="product-price-strike" class="hidden mt-0.5 text-right text-xs text-slate-400 line-through"></div>
+                            @endif
                         </div>
-                        @if($hasProductDiscount)
-                            <span></span>
-                            <span class="text-right text-xs text-slate-400 line-through">
-                                {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry)) }}
-                            </span>
-                        @endif
                     </div>
                 </div>
                 <button type="submit" id="add-to-cart-btn" form="add-to-cart-form" class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed" disabled>
@@ -455,7 +446,7 @@
                                                                 <td class="font-medium text-slate-700 py-3 px-3">Sipariş adeti</td>
                                                                 @foreach($sizeTable->columns as $col)
                                                                     <td class="py-2 px-1 text-center">
-                                                                        <input type="number" name="{{ $sizeTable->slug }}_size_qty_{{ $col->size_value }}" data-size="{{ $col->size_value }}" min="0" max="999" value="0" class="size-table-input {{ $sizeTable->slug }}-size-input w-full max-w-[72px] mx-auto rounded-lg border border-slate-300 px-2 py-2 text-center text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30">
+                                                                        <input type="number" name="{{ $sizeTable->slug }}_size_qty_{{ $col->size_value }}" data-size="{{ $col->size_value }}" data-price-multiplier="{{ number_format((float) ($col->price_multiplier ?? 1), 4, '.', '') }}" min="0" max="999" value="0" class="size-table-input {{ $sizeTable->slug }}-size-input w-full max-w-[72px] mx-auto rounded-lg border border-slate-300 px-2 py-2 text-center text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30">
                                                                     </td>
                                                                 @endforeach
                                                             </tr>
@@ -507,24 +498,17 @@
                                         {{ $selectedCurrency->format($baseConverted) }}
                                     </span>
                                 </div>
-                                <span class="text-sm font-semibold text-slate-600">Varyasyon Toplam Tutarı:</span>
-                                <div class="text-right">
-                                    <span class="text-sm font-semibold text-slate-600">
-                                        {{ $selectedCurrency->format(0) }}
-                                    </span>
-                                </div>
                                 <span class="text-sm font-semibold text-slate-600">Toplam Ürün Fiyatı:</span>
                                 <div class="text-right">
-                                    <span id="product-price" data-base-try="{{ $baseTry }}" data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
-                                        {{ $selectedCurrency->format($baseConverted) }}
+                                    <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                                        {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($baseTry * $minOrderProduct)) }}
                                     </span>
+                                    @if($hasProductDiscount)
+                                        <div id="product-price-strike" class="mt-0.5 text-right text-xs text-slate-400 line-through">
+                                            {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry * $minOrderProduct)) }}
+                                        </div>
+                                    @endif
                                 </div>
-                                @if($hasProductDiscount)
-                                    <span></span>
-                                    <span class="text-right text-xs text-slate-400 line-through">
-                                        {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($normalPriceTry)) }}
-                                    </span>
-                                @endif
                             </div>
                         </div>
                     @endif
@@ -590,7 +574,7 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     var priceEl = document.getElementById('product-price');
                     var variationInput = document.getElementById('variation-data-input');
-                    if (!priceEl || !variationInput) return;
+                    if (!priceEl) return;
 
                     var baseTry = parseFloat(priceEl.getAttribute('data-base-try')) || 0;
                     var rate = parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1;
@@ -648,21 +632,39 @@
                     }
 
                     function updatePriceAndInput() {
+                        if (!priceEl) return;
                         var delta = getDeltaTotal();
-                        var totalTry = baseTry + delta;
+                        var unitTry = baseTry + delta;
+                        var sizeInfo = getSizeQuantities();
+                        var qty = Math.max(0, parseInt(sizeInfo.total, 10) || 0);
+                        var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
+                            ? Math.max(0, sizeInfo.pricingWeight)
+                            : qty;
+                        var lineTry = unitTry * pricingWeight;
                         var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
-                        var deltaConverted = code === 'TRY' ? delta : delta * rate;
-                        var converted = code === 'TRY' ? totalTry : totalTry * rate;
-                        priceEl.textContent = formatPrice(converted);
+                        var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
+                        priceEl.textContent = formatPrice(lineConverted);
                         var basePriceEl = document.getElementById('product-base-price');
                         if (basePriceEl) {
                             basePriceEl.textContent = formatPrice(baseConverted);
                         }
-                        var variationDeltaEl = document.getElementById('product-variation-delta');
-                        if (variationDeltaEl) {
-                            variationDeltaEl.textContent = (deltaConverted > 0 ? '+ ' : (deltaConverted < 0 ? '- ' : '')) + formatPrice(Math.abs(deltaConverted));
+                        var strikeEl = document.getElementById('product-price-strike');
+                        if (strikeEl) {
+                            var normalAttr = priceEl.getAttribute('data-normal-try');
+                            var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
+                            if (qty > 0 && !isNaN(normalTry) && normalTry > unitTry) {
+                                var oldLineTry = (normalTry + delta) * pricingWeight;
+                                var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
+                                strikeEl.textContent = formatPrice(oldConverted);
+                                strikeEl.classList.remove('hidden');
+                            } else {
+                                strikeEl.textContent = '';
+                                strikeEl.classList.add('hidden');
+                            }
                         }
-                        variationInput.value = JSON.stringify(getSelectedOptions());
+                        if (variationInput) {
+                            variationInput.value = JSON.stringify(getSelectedOptions());
+                        }
                     }
 
                     function getSelectedOptionIdInVariation(variationName) {
@@ -728,21 +730,32 @@
                     function getSizeQuantities() {
                         var sizeQuantities = {};
                         var total = 0;
+                        var pricingWeight = 0;
                         var activeWrap = document.querySelector('.size-table-wrap:not(.hidden)');
                         if (activeWrap) {
                             activeWrap.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
                                 var size = inp.getAttribute('data-size');
                                 var val = parseInt(inp.value, 10) || 0;
-                                if (size) { sizeQuantities[size] = val; total += val; }
+                                var mult = parseFloat(inp.getAttribute('data-price-multiplier'));
+                                if (isNaN(mult) || mult < 0) mult = 1;
+                                if (size) {
+                                    sizeQuantities[size] = val;
+                                    total += val;
+                                    pricingWeight += val * mult;
+                                }
                             });
-                            return { sizeQuantities: sizeQuantities, total: total };
+                            return { sizeQuantities: sizeQuantities, total: total, pricingWeight: pricingWeight };
+                        }
+                        var simpleWrap = document.getElementById('quantity-simple-wrap');
+                        if (simpleWrap && simpleWrap.classList.contains('hidden')) {
+                            return { sizeQuantities: null, total: 0, pricingWeight: 0, simple: false };
                         }
                         var quantityInput = document.getElementById('quantity-input');
                         if (quantityInput) {
                             total = parseInt(quantityInput.value, 10) || 0;
-                            return { sizeQuantities: null, total: total, simple: true };
+                            return { sizeQuantities: null, total: total, pricingWeight: total, simple: true };
                         }
-                        return { sizeQuantities: null, total: 0, simple: true };
+                        return { sizeQuantities: null, total: 0, pricingWeight: 0, simple: true };
                     }
 
                     function updateSizeTotalDisplays() {
@@ -761,40 +774,34 @@
 
                     function updateVariationSummaryAndButton() {
                         updateSizeTotalDisplays();
+                        if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
+                        updatePriceAndInput();
                         var tbody = document.getElementById('variation-summary-tbody');
                         var warningEl = document.getElementById('variation-summary-warning');
                         var btn = document.getElementById('add-to-cart-btn');
                         var confirmCheckbox = document.getElementById('variation-confirm-checkbox');
-                        if (!tbody) return;
                         var ordered = getSelectedOptionsInStepOrder();
                         var sizeInfo = getSizeQuantities();
+                        if (!tbody) return;
                         var rows = [];
-                        function formatDelta(deltaTry) {
-                            var delta = parseFloat(deltaTry) || 0;
-                            if (delta === 0) return '—';
-                            var absVal = Math.abs(delta);
-                            var converted = code === 'TRY' ? absVal : absVal * rate;
-                            var sign = delta > 0 ? '+' : '-';
-                            return sign + ' ' + formatPrice(converted);
-                        }
                         ordered.forEach(function(item) {
-                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td><td class="py-2.5 px-3 text-right text-slate-600">' + escapeHtml(formatDelta(item.priceDelta)) + '</td></tr>');
+                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td></tr>');
                         });
                         if (ordered.length > 0) {
                             if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
                                 Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                     var qty = sizeInfo.sizeQuantities[size];
                                     if (qty > 0) {
-                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">Beden ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
+                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">Beden ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' adet</td></tr>');
                                     }
                                 });
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Toplam adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Toplam adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
                             } else {
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td><td class="py-2.5 px-3 text-right text-slate-400">—</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
-                            tbody.innerHTML = '<tr><td colspan="3" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td></tr>';
                         }
                         var confirmWrap = document.getElementById('variation-confirm-wrap');
                         if (confirmWrap) {
@@ -844,7 +851,6 @@
                             var parentId = getSelectedOptionIdInVariation(dependsOn);
                             filterDependentVariation(block, parentId);
                         });
-                        updatePriceAndInput();
                         updateSizeTableVisibility();
                         updateVariationSummaryAndButton();
                     }
@@ -1209,6 +1215,51 @@
                     document.addEventListener('keydown', function(ev) {
                         if (ev.key === 'Escape' && warningDialog && !warningDialog.classList.contains('hidden')) closeProductWarningDialog();
                     });
+                });
+            </script>
+        @endpush
+    @elseif($canSeePrices && !$hasVariations)
+        @push('head')
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var priceEl = document.getElementById('product-price');
+                    var quantityInput = document.getElementById('quantity-input');
+                    if (!priceEl || !quantityInput) return;
+
+                    var baseTry = parseFloat(priceEl.getAttribute('data-base-try')) || 0;
+                    var rate = parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1;
+                    var symbol = priceEl.getAttribute('data-currency-symbol') || '₺';
+                    var code = priceEl.getAttribute('data-currency-code') || 'TRY';
+
+                    function formatPrice(num) {
+                        if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
+                        return symbol + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+                    }
+
+                    function updateSimpleLineTotal() {
+                        var qty = Math.max(0, parseInt(quantityInput.value, 10) || 0);
+                        var lineTry = baseTry * qty;
+                        var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
+                        priceEl.textContent = formatPrice(lineConverted);
+                        var strikeEl = document.getElementById('product-price-strike');
+                        if (strikeEl) {
+                            var normalAttr = priceEl.getAttribute('data-normal-try');
+                            var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
+                            if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
+                                var oldLineTry = normalTry * qty;
+                                var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
+                                strikeEl.textContent = formatPrice(oldConverted);
+                                strikeEl.classList.remove('hidden');
+                            } else {
+                                strikeEl.textContent = '';
+                                strikeEl.classList.add('hidden');
+                            }
+                        }
+                    }
+
+                    quantityInput.addEventListener('input', updateSimpleLineTotal);
+                    quantityInput.addEventListener('change', updateSimpleLineTotal);
+                    updateSimpleLineTotal();
                 });
             </script>
         @endpush

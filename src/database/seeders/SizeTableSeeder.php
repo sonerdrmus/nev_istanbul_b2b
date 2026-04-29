@@ -52,6 +52,7 @@ class SizeTableSeeder extends Seeder
                 $table->columns()->create([
                     'size_value' => $sizeValue,
                     'sort_order' => $i,
+                    'price_multiplier' => 1,
                 ]);
             }
         }

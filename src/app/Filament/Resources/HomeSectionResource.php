@@ -31,6 +31,11 @@ class HomeSectionResource extends Resource
         return 8;
     }
 
+    public static function canViewAny(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

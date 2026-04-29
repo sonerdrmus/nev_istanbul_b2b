@@ -103,7 +103,7 @@ class SizeTableResource extends Resource
                     ])
                     ->columns(2),
                 Forms\Components\Section::make('Beden kolonları')
-                    ->description('Tabloda gösterilecek beden kolonları (XS, S, M veya 98, 104 vb.). Sırayı değiştirmek için sürükleyin.')
+                    ->description('Tabloda gösterilecek beden kolonları (XS, S, M veya 98, 104 vb.). Sırayı değiştirmek için sürükleyin. Çarpan miktarı: birim ürün fiyatı ile çarpılır; sipariş satır tutarı Σ(adet × birim fiyat × çarpan) olarak hesaplanır (varsayılan 1).')
                     ->schema([
                         Forms\Components\Repeater::make('columns')
                             ->relationship()
@@ -122,8 +122,16 @@ class SizeTableResource extends Resource
                                     ->numeric()
                                     ->default(0)
                                     ->minValue(0),
+                                Forms\Components\TextInput::make('price_multiplier')
+                                    ->label('Çarpan miktarı')
+                                    ->helperText('Birim fiyat ile çarpılır. Örn: 0,90 — o beden satırı adet × (fiyat × 0,90).')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(0)
+                                    ->step(0.0001)
+                                    ->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->defaultItems(0),
                     ]),
             ]);

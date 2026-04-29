@@ -10,7 +10,15 @@ class SizeTableColumn extends Model
         'size_table_id',
         'size_value',
         'sort_order',
+        'price_multiplier',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'price_multiplier' => 'decimal:4',
+        ];
+    }
 
     public function sizeTable()
     {
