@@ -8,6 +8,8 @@ class ProductVariationOption extends Model
 {
     protected $fillable = [
         'product_variation_id',
+        'interface_color_variation_id',
+        'interface_fabric_type_variation_id',
         'option_value',
         'option_color',
         'option_image',
@@ -45,6 +47,16 @@ class ProductVariationOption extends Model
     public function variation()
     {
         return $this->belongsTo(ProductVariation::class, 'product_variation_id');
+    }
+
+    public function interfaceColorVariation()
+    {
+        return $this->belongsTo(InterfaceColorVariation::class, 'interface_color_variation_id');
+    }
+
+    public function interfaceFabricTypeVariation()
+    {
+        return $this->belongsTo(InterfaceFabricTypeVariation::class, 'interface_fabric_type_variation_id');
     }
 
     public function parentOption()

@@ -78,6 +78,15 @@ class CategoryResource extends Resource
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktif')
                             ->default(true),
+                        Forms\Components\Toggle::make('show_in_top_menu')
+                            ->label('Üst menüde göster')
+                            ->helperText('Açarsanız bu kategori mağaza üst kategori menüsünde görünür.')
+                            ->default(false),
+                        Forms\Components\TextInput::make('top_menu_sort_order')
+                            ->label('Üst menü sırası')
+                            ->numeric()
+                            ->default(0)
+                            ->helperText('Üst menüye özel sıralama. Küçük değerler önce görünür.'),
                     ]),
             ]);
     }
@@ -119,6 +128,14 @@ class CategoryResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
+                Tables\Columns\IconColumn::make('show_in_top_menu')
+                    ->label('Üst Menü')
+                    ->boolean()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('top_menu_sort_order')
+                    ->label('Üst Menü Sırası')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->filters([
@@ -128,6 +145,8 @@ class CategoryResource extends Resource
                     ->placeholder('Tümü'),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Aktif'),
+                Tables\Filters\TernaryFilter::make('show_in_top_menu')
+                    ->label('Üst menüde göster'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

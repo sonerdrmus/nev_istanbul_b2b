@@ -6,12 +6,80 @@ use Illuminate\Database\Eloquent\Model;
 
 class DealerRequest extends Model
 {
+    public const BUSINESS_PROFILES = [
+        'printer',
+        'embroiderer',
+        'garment_manufacturer',
+        'promotional_product_distributor',
+        'retailer',
+        'other',
+    ];
+
+    public const INTEREST_AREA_KEYS = [
+        'fashion',
+        'sports',
+        'workwear',
+        'corporate',
+        'hospitality',
+        'education',
+        'outerwear',
+        'merchandise',
+        'gifting',
+        'other',
+    ];
+
+    /** @var array<string, string> */
+    public const BUSINESS_PROFILE_LABELS = [
+        'printer' => 'Matbaa / baskı',
+        'embroiderer' => 'Nakış',
+        'garment_manufacturer' => 'Konfeksiyon / giysi üreticisi',
+        'promotional_product_distributor' => 'Promosyon ürün distribütörü',
+        'retailer' => 'Perakendeci',
+        'other' => 'Diğer',
+    ];
+
+    /** @var array<string, string> */
+    public const INTEREST_AREA_LABELS = [
+        'fashion' => 'Moda',
+        'sports' => 'Spor',
+        'workwear' => 'İş kıyafeti',
+        'corporate' => 'Kurumsal',
+        'hospitality' => 'Otel & ikram',
+        'education' => 'Eğitim',
+        'outerwear' => 'Dış giyim',
+        'merchandise' => 'Promosyon ürünleri',
+        'gifting' => 'Hediyelik',
+        'other' => 'Diğer',
+    ];
+
     protected $fillable = [
         'full_name',
+        'first_name',
+        'last_name',
         'tc_no',
         'email',
         'phone',
+        'mobile_phone',
         'address',
+        'business_name',
+        'address_line_1',
+        'address_line_2',
+        'city',
+        'postcode',
+        'country',
+        'business_type',
+        'limited_company_name',
+        'company_registration_number',
+        'vat_reg_number',
+        'website',
+        'facebook',
+        'instagram',
+        'twitter',
+        'linkedin',
+        'business_profile',
+        'interest_areas',
+        'how_heard_about_us',
+        'terms_accepted',
         'document_pdf_path',
         'document_jpeg_path',
         'status',
@@ -25,7 +93,35 @@ class DealerRequest extends Model
     {
         return [
             'approved_at' => 'datetime',
+            'interest_areas' => 'array',
+            'terms_accepted' => 'boolean',
         ];
+    }
+
+    public function applicantDisplayName(): string
+    {
+        $fromParts = trim((string) $this->first_name.' '.(string) $this->last_name);
+
+        return $fromParts !== '' ? $fromParts : (string) $this->full_name;
+    }
+
+    public function businessProfileLabel(): ?string
+    {
+        $key = $this->business_profile;
+
+        return $key ? (self::BUSINESS_PROFILE_LABELS[$key] ?? $key) : null;
+    }
+
+    public function interestAreasLabelled(): string
+    {
+        $keys = $this->interest_areas ?? [];
+        if (! is_array($keys) || $keys === []) {
+            return '';
+        }
+
+        return collect($keys)
+            ->map(fn ($k) => self::INTEREST_AREA_LABELS[(string) $k] ?? (string) $k)
+            ->implode(', ');
     }
 
     public function approver()

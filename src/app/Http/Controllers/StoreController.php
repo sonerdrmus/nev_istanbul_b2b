@@ -259,7 +259,7 @@ class StoreController extends Controller
     /** Giriş yapmış bayi için izin verilen para birimleri; misafir veya admin için tüm aktif para birimleri. */
     private function getCurrenciesForCurrentUser(): Collection
     {
-        return Currency::forCurrentUser();
+        return Currency::forCurrentUserWithTcmbSpot();
     }
 
     /** Ürün detay sayfası — misafirler de görebilir */
@@ -360,11 +360,11 @@ class StoreController extends Controller
         ]);
         $product = Product::findOrFail($request->product_id);
         if (! $product->isOnSale()) {
-            return redirect()->back()->with('error', 'Bu ürün şu an satışa sunulmuyor.');
+            return redirect()->back()->with('error', __('store.flash.product_not_for_sale'));
         }
         $availableStock = $product->getAvailableStock();
         if ($availableStock < 1) {
-            return redirect()->back()->with('error', 'Bu ürün şu an stokta yok.');
+            return redirect()->back()->with('error', __('store.flash.out_of_stock'));
         }
         $minOrder = $product->getMinimumOrderQuantity();
         $sizeQuantities = null;
@@ -375,7 +375,7 @@ class StoreController extends Controller
                 $qtyFromSizes = array_sum($sizeQuantities);
                 $qty = $qtyFromSizes;
                 if ($qty < $minOrder) {
-                    return redirect()->back()->with('error', 'Bu ürün için minimum sipariş miktarı ' . $minOrder . ' adettir. Toplam beden adedi: ' . $qty);
+                    return redirect()->back()->with('error', __('store.flash.min_qty_sizes', ['min' => $minOrder, 'qty' => $qty]));
                 }
             }
         }
@@ -383,10 +383,10 @@ class StoreController extends Controller
             $qty = (int) ($request->quantity ?: $minOrder);
         }
         if ($qty < $minOrder) {
-            return redirect()->back()->with('error', 'Bu ürün için minimum sipariş miktarı ' . $minOrder . ' adettir.');
+            return redirect()->back()->with('error', __('store.flash.min_qty', ['min' => $minOrder]));
         }
         if ($qty > $availableStock) {
-            return redirect()->back()->with('error', 'Yeterli stok yok. Maksimum ' . $availableStock . ' adet ekleyebilirsiniz.');
+            return redirect()->back()->with('error', __('store.flash.max_stock', ['max' => $availableStock]));
         }
         $variationData = null;
         if (! empty($request->variation_data)) {
@@ -401,11 +401,11 @@ class StoreController extends Controller
         $rootVariations = $product->variations->filter(fn ($v) => empty($v->depends_on))->pluck('name')->unique()->values();
         if ($rootVariations->isNotEmpty()) {
             if (empty($variationData) || ! is_array($variationData)) {
-                return redirect()->back()->with('error', 'Bu ürünü sepete eklemek için lütfen tüm seçenekleri belirleyin (renk, beden vb.).');
+                return redirect()->back()->with('error', __('store.flash.select_all_options'));
             }
             foreach ($rootVariations as $variationName) {
                 if (! isset($variationData[$variationName]) || (string) $variationData[$variationName] === '') {
-                    return redirect()->back()->with('error', 'Lütfen "' . $variationName . '" seçeneğini belirleyin.');
+                    return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                 }
             }
         }
@@ -432,7 +432,7 @@ class StoreController extends Controller
             return response()->json(['ok' => true, 'cart_count' => collect($cart)->sum('quantity')]);
         }
 
-        return redirect()->route('store.cart')->with('success', 'Ürün sepete eklendi.');
+        return redirect()->route('store.cart')->with('success', __('store.flash.cart_added'));
     }
 
     public function updateCart(Request $request)
@@ -453,7 +453,10 @@ class StoreController extends Controller
                 $minOrder = $product ? $product->getMinimumOrderQuantity() : 1;
                 if ($qty > 0) {
                     if ($qty < $minOrder) {
-                        return redirect()->route('store.cart')->with('error', '"' . ($product?->name ?? 'Ürün') . '" için minimum sipariş miktarı ' . $minOrder . ' adettir.');
+                        return redirect()->route('store.cart')->with('error', __('store.flash.min_qty_named', [
+                            'name' => $product?->name ?? __('store.generic.product'),
+                            'min' => $minOrder,
+                        ]));
                     }
                     $cart[$key]['quantity'] = $qty;
                 } else {
@@ -463,7 +466,7 @@ class StoreController extends Controller
         }
         session(['cart' => $cart]);
 
-        return redirect()->route('store.cart')->with('success', 'Sepet güncellendi.');
+        return redirect()->route('store.cart')->with('success', __('store.flash.cart_updated'));
     }
 
     public function removeFromCart(Request $request, string $cartKey)
@@ -472,14 +475,14 @@ class StoreController extends Controller
         unset($cart[$cartKey]);
         session(['cart' => $cart]);
 
-        return redirect()->route('store.cart')->with('success', 'Ürün sepetten çıkarıldı.');
+        return redirect()->route('store.cart')->with('success', __('store.flash.cart_removed'));
     }
 
     public function checkout(): View|\Illuminate\Http\RedirectResponse
     {
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
-            return redirect()->route('home')->with('info', 'Sepetiniz boş.');
+            return redirect()->route('home')->with('info', __('store.flash.cart_empty'));
         }
         $cartTotal = $cartItems->sum('subtotal');
         $cartCount = $cartItems->sum('quantity');
@@ -501,7 +504,7 @@ class StoreController extends Controller
     {
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
-            return redirect()->route('home')->with('error', 'Sepetiniz boş.');
+            return redirect()->route('home')->with('error', __('store.flash.cart_empty_checkout'));
         }
 
         $shippingMethods = ShippingMethod::active()->orderBy('sort_order')->get();
@@ -584,7 +587,7 @@ class StoreController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $errorMessage = 'Sipariş oluşturulurken bir hata oluştu.';
+            $errorMessage = __('store.flash.order_error');
             if (config('app.debug')) {
                 $errorMessage .= ' ' . $e->getMessage();
             }
@@ -592,7 +595,7 @@ class StoreController extends Controller
             return redirect()->route('store.checkout')->with('error', $errorMessage)->withInput();
         }
 
-        return redirect()->route('store.order-confirmation', $order)->with('success', 'Siparişiniz alındı.');
+        return redirect()->route('store.order-confirmation', $order)->with('success', __('store.flash.order_placed'));
     }
 
     public function orderConfirmation(Order $order): View
@@ -619,10 +622,10 @@ class StoreController extends Controller
 
         if (Auth::guard('web')->attempt($request->only('email', 'password'), (bool) $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('home'))->with('success', 'Giriş yaptınız.');
+            return redirect()->intended(route('home'))->with('success', __('store.flash.login_ok'));
         }
 
-        return back()->withErrors(['email' => 'E-posta veya şifre hatalı.'])->withInput($request->only('email'))->with('open_login_modal', true);
+        return back()->withErrors(['email' => __('store.login_failed')])->withInput($request->only('email'))->with('open_login_modal', true);
     }
 
     /** Bayi başvuru sayfası: Neden Bayi + form. */

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\TcmbExchangeRateService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -64,6 +65,18 @@ class Currency extends Model
     {
         return static::where('is_default', true)->first()
             ?? static::active()->orderBy('sort_order')->first();
+    }
+
+    /**
+     * Aktif kullanıcıya göre para birimleri; USD/EUR kurları TCMB today.xml ile (kısa cache) güncellenir.
+     *
+     * @return Collection<int, self>
+     */
+    public static function forCurrentUserWithTcmbSpot(): Collection
+    {
+        $base = static::forCurrentUser();
+
+        return app(TcmbExchangeRateService::class)->mergeUsdEurInto($base);
     }
 
     /** Mağazada giriş yapmış bayi için izin verilen para birimleri; misafir veya admin için tüm aktif para birimleri. */

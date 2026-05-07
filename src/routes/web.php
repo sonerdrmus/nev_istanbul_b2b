@@ -1,20 +1,36 @@
 <?php
 
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\DealerRequestController;
 use App\Models\Currency;
+use App\Services\TcmbExchangeRateService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/api/store/search-products', [StoreController::class, 'searchProducts'])->name('api.store.search-products');
 
-Route::get('/api/exchange-rates', function () {
+Route::get('/api/exchange-rates', function (TcmbExchangeRateService $tcmb) {
+    $tcmbRates = $tcmb->getUsdEurCached();
+
     $rates = Currency::active()
         ->where('code', '!=', 'TRY')
         ->orderBy('sort_order')
         ->get(['code', 'exchange_rate'])
-        ->mapWithKeys(fn ($c) => [$c->code => (float) $c->exchange_rate]);
-    return response()->json($rates->all());
+        ->mapWithKeys(function ($c) use ($tcmbRates) {
+            $code = strtoupper((string) $c->code);
+
+            return [$c->code => (float) ($tcmbRates[$code] ?? $c->exchange_rate)];
+        })
+        ->all();
+
+    $maxAge = max(10, (int) config('services.tcmb.cache_ttl_seconds', 45));
+
+    return response()
+        ->json($rates)
+        ->header('Cache-Control', 'public, max-age='.$maxAge);
 })->name('api.exchange-rates');
+
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('/', [StoreController::class, 'index'])->name('home');
 Route::get('/urun/{product}', [StoreController::class, 'showProduct'])->name('store.product.show');

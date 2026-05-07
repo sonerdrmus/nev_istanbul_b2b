@@ -5,9 +5,9 @@ namespace App\Providers;
 use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Models\Product;
 use App\Models\FooterMenuGroup;
 use App\Models\FooterSetting;
-use App\Models\Product;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -48,52 +48,22 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('store.layout', function ($view) {
             $view->with('menuCategories', Category::treeForMenu());
-
-            $homeMegaSlugs = ['tisort', 'bags', 'towels', 'hats', 'socks', 'aprons'];
-            $homeMegaLabels = [
-                'tisort' => 'Tişört',
-                'bags' => 'Bags',
-                'towels' => 'Towels',
-                'hats' => 'Hats',
-                'socks' => 'Socks',
-                'aprons' => 'Aprons',
-            ];
-            $homeMegaCategories = Category::query()
-                ->active()
-                ->whereIn('slug', $homeMegaSlugs)
-                ->with(['children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
-                ->get()
-                ->keyBy('slug');
-            $homeMegaNav = [];
-            foreach ($homeMegaSlugs as $slug) {
-                $category = $homeMegaCategories->get($slug);
-                $categoryIds = collect([$category?->id])
-                    ->merge($category?->children?->pluck('id') ?? [])
-                    ->filter()
-                    ->values();
-
-                $featuredProducts = collect();
-                if ($categoryIds->isNotEmpty()) {
-                    $featuredProducts = Product::query()
-                        ->active()
-                        ->visibleInStore()
-                        ->whereIn('category_id', $categoryIds)
-                        ->with(['currency', 'productImages'])
-                        ->orderBy('sort_order')
-                        ->orderByDesc('id')
-                        ->limit(8)
-                        ->get();
-                }
-
-                $homeMegaNav[] = [
-                    'slug' => $slug,
-                    'label' => $homeMegaLabels[$slug] ?? $slug,
-                    'category' => $category,
-                    'products' => $featuredProducts,
-                ];
+            $topMenuCategories = Category::topMenuForStore();
+            $topMenuCategoryProducts = collect();
+            foreach ($topMenuCategories as $tmCat) {
+                $ids = $tmCat->categoryIdsForProductListing();
+                $topMenuCategoryProducts[$tmCat->id] = Product::query()
+                    ->active()
+                    ->visibleInStore()
+                    ->whereIn('category_id', $ids)
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->limit(15)
+                    ->get(['id', 'name', 'slug']);
             }
-            $view->with('homeMegaNav', $homeMegaNav);
-            $currencies = Currency::forCurrentUser();
+            $view->with('topMenuCategories', $topMenuCategories);
+            $view->with('topMenuCategoryProducts', $topMenuCategoryProducts);
+            $currencies = Currency::forCurrentUserWithTcmbSpot();
             $code = request('currency', session('store_currency', 'TRY'));
             $selectedCurrency = $currencies->firstWhere('code', $code) ?? $currencies->first() ?? Currency::getDefault();
             if ($selectedCurrency) {

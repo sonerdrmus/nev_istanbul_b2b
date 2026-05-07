@@ -96,6 +96,7 @@ class CopyProductVariationsToCategoryProducts extends Command
                             'type' => $oldVar->type,
                             'depends_on' => $oldVar->depends_on,
                             'sort_order' => (int) $oldVar->sort_order,
+                            'replace_main_gallery_image' => (bool) ($oldVar->replace_main_gallery_image ?? false),
                         ]);
                         $variationMap[$oldVar->id] = $newVar;
                     }

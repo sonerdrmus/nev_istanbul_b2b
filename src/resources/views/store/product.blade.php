@@ -15,11 +15,11 @@
 
 @section('content')
     <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4">
-        <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">Ana Sayfa</a>
+        <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">{{ __('store.product.home') }}</a>
         <span>/</span>
         @if($product->category)
             @if($product->category->parent)
-                <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">Ürünler</a>
+                <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">{{ __('store.product.breadcrumb_products') }}</a>
                 <span>/</span>
                 <span class="text-slate-700">{{ $product->category->parent->name }} › {{ $product->category->name }}</span>
             @else
@@ -59,36 +59,36 @@
         <div class="w-full max-w-[30.8rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[19.8rem] xl:w-[22rem] 2xl:w-[34.2rem] shrink-0 lg:sticky lg:top-24 lg:z-[1] lg:self-start">
         <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square max-h-[400px] lg:max-h-[min(88vh,572px)] lg:aspect-square relative shadow-2xl shadow-slate-300/30 ring-1 ring-slate-200/70 w-full">
             @if(count($displayImages) > 0)
-                <div id="product-gallery" class="relative w-full h-full flex items-center justify-center cursor-zoom-in" role="region" aria-label="Ürün görselleri" title="Büyütmek için tıklayın">
+                <div id="product-gallery" class="relative w-full h-full flex items-center justify-center cursor-zoom-in" role="region" aria-label="{{ __('store.product.gallery_aria') }}" title="{{ __('store.product.zoom_hint') }}">
                     @foreach($displayImages as $idx => $url)
                         <div class="product-gallery-slide absolute inset-0 flex items-center justify-center transition-opacity duration-300 {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0' }}" data-slide-index="{{ $idx }}" data-image-url="{{ $url }}" aria-hidden="{{ $idx !== 0 }}">
-                            <img src="{{ $url }}" alt="{{ $product->name }} — {{ $idx + 1 }}. görsel" class="max-w-full max-h-full w-auto h-auto object-contain">
+                            <img src="{{ $url }}" alt="{{ __('store.product.image_alt', ['name' => $product->name, 'num' => $idx + 1]) }}" class="max-w-full max-h-full w-auto h-auto object-contain">
                         </div>
                     @endforeach
                     @if(count($displayImages) > 1)
                         <div class="absolute bottom-3 left-0 right-0 z-20 flex justify-center gap-1.5">
                             @foreach($displayImages as $idx => $url)
-                                <button type="button" class="product-gallery-dot w-2.5 h-2.5 rounded-full transition-colors {{ $idx === 0 ? 'bg-white ring-2 ring-primary-500' : 'bg-white/60 hover:bg-white/80' }}" data-slide-index="{{ $idx }}" aria-label="{{ $idx + 1 }}. görsele git"></button>
+                                <button type="button" class="product-gallery-dot w-2.5 h-2.5 rounded-full transition-colors {{ $idx === 0 ? 'bg-white ring-2 ring-primary-500' : 'bg-white/60 hover:bg-white/80' }}" data-slide-index="{{ $idx }}" aria-label="{{ __('store.product.slide_aria', ['n' => $idx + 1]) }}"></button>
                             @endforeach
                         </div>
-                        <button type="button" class="product-gallery-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-slate-700 transition-opacity" aria-label="Önceki görsel">
+                        <button type="button" class="product-gallery-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-slate-700 transition-opacity" aria-label="{{ __('store.product.prev_image') }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button type="button" class="product-gallery-next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-slate-700 transition-opacity" aria-label="Sonraki görsel">
+                        <button type="button" class="product-gallery-next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center text-slate-700 transition-opacity" aria-label="{{ __('store.product.next_image') }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     @endif
                 </div>
                 {{-- Lightbox: tıklanınca büyütme --}}
-                <div id="product-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="Ürün görseli büyütülmüş">
-                    <button type="button" id="lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="Kapat">
+                <div id="product-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.lightbox_aria') }}">
+                    <button type="button" id="lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.lightbox_close') }}">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                     @if(count($displayImages) > 1)
-                        <button type="button" id="lightbox-prev" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="Önceki görsel">
+                        <button type="button" id="lightbox-prev" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.prev_image') }}">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button type="button" id="lightbox-next" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="Sonraki görsel">
+                        <button type="button" id="lightbox-next" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.next_image') }}">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     @endif
@@ -110,6 +110,13 @@
                 if (!gallery || !lightbox || !lightboxImg) return;
                 var slides = gallery.querySelectorAll('.product-gallery-slide');
                 var urls = Array.from(slides).map(function(s) { return s.getAttribute('data-image-url'); });
+                var originalFirstGalleryUrl = urls.length ? urls[0] : null;
+                function refreshGalleryUrlsFromDom() {
+                    slides = gallery.querySelectorAll('.product-gallery-slide');
+                    urls = Array.from(slides).map(function(s) { return s.getAttribute('data-image-url'); });
+                }
+                window.__productGalleryRefreshUrls = refreshGalleryUrlsFromDom;
+                window.__productGalleryOriginalFirstUrl = originalFirstGalleryUrl;
                 var currentIndex = 0;
                 function openLightbox(index) {
                     currentIndex = (index + urls.length) % urls.length;
@@ -199,41 +206,41 @@
                     <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                     </span>
-                    Seçilen seçenekler
+                    {{ __('store.product.variation_selected_heading') }}
                 </p>
                 <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
-                    <table class="w-full text-sm border-collapse" aria-label="Seçilen varyasyonlar ve adet">
+                    <table class="w-full text-sm border-collapse" aria-label="{{ __('store.product.variation_summary_aria') }}">
                         <thead>
                             <tr class="bg-slate-100 border-b border-slate-200">
-                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Seçenek</th>
-                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">Değer</th>
+                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">{{ __('store.product.option_column') }}</th>
+                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">{{ __('store.product.value_column') }}</th>
                             </tr>
                         </thead>
                         <tbody id="variation-summary-tbody">
                             <tr>
-                                <td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td>
+                                <td colspan="2" class="text-slate-400 py-4 px-3 text-center">{{ __('store.product.summary_select_prompt') }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <p id="variation-summary-warning" class="mt-3 text-sm text-amber-700 font-medium hidden" role="alert">
-                    Sepete eklemek için tüm seçenekleri belirleyin.
+                    {{ __('store.product.summary_cart_warning') }}
                 </p>
                 <div id="variation-confirm-wrap" class="mt-4 hidden">
                     <label class="flex items-start gap-3 cursor-pointer group">
                         <input type="checkbox" id="variation-confirm-checkbox" name="variation_confirmed" value="1" form="add-to-cart-form" class="mt-1 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">Seçimlerimi onaylıyorum, sepete ekleyebilirim.</span>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">{{ __('store.product.variation_confirm_label') }}</span>
                     </label>
                 </div>
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
                     <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
-                        <span class="text-sm font-semibold text-slate-600">Ürün Fiyatı:</span>
+                        <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-base-price" class="text-sm font-semibold text-slate-700">
                                 {{ $selectedCurrency->format($baseConverted) }}
                             </span>
                         </div>
-                        <span class="text-sm font-semibold text-slate-600">Toplam Sipariş Tutarı:</span>
+                        <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
                                 {{ $selectedCurrency->format($selectedCurrency->convertFromTRY(0)) }}
@@ -246,7 +253,7 @@
                 </div>
                 <button type="submit" id="add-to-cart-btn" form="add-to-cart-form" class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed" disabled>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span id="add-to-cart-btn-label">Seçenekleri belirleyin, ardından onaylayın.</span>
+                    <span id="add-to-cart-btn-label">{{ __('store.product.add_to_cart_hint') }}</span>
                 </button>
             </div>
         @endif
@@ -268,19 +275,19 @@
                     @if($productStatus === 'stokta_yok')
                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-red-100 text-red-800 border border-red-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Stokta yok
+                            {{ __('store.index.out_of_stock') }}
                         </span>
                     @elseif($productStatus === 'yakinda_gelecek')
                         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Yakında gelecek
+                            {{ __('store.index.coming_soon_badge') }}
                         </span>
                     @endif
                 </div>
             @endif
 
             @if(!$canSeePrices)
-                <p class="mt-4 text-slate-500 text-sm">Fiyatları görmek ve sipariş vermek için giriş yapmanız gerekmektedir.</p>
+                <p class="mt-4 text-slate-500 text-sm">{{ __('store.product.login_for_order') }}</p>
             @endif
 
             @if($product->description)
@@ -291,13 +298,13 @@
 
             @if($canSeePrices)
                 <div class="mt-6 flex items-center gap-2 text-sm">
-                    <span class="font-medium text-slate-700">Stok:</span>
+                    <span class="font-medium text-slate-700">{{ __('store.product.stock_label_short') }}</span>
                     @if($product->stock_quantity === null)
-                        <span class="text-slate-600">Stok takibi yapılmıyor</span>
+                        <span class="text-slate-600">{{ __('store.product.stock_not_tracked') }}</span>
                     @elseif((int) $product->stock_quantity > 0)
-                        <span class="text-slate-600">{{ number_format($product->stock_quantity, 0, ',', '.') }} adet</span>
+                        <span class="text-slate-600">{{ __('store.product.stock_units_fmt', ['count' => number_format($product->stock_quantity, 0, ',', '.')]) }}</span>
                     @else
-                        <span class="text-red-600 font-medium">Stokta yok</span>
+                        <span class="text-red-600 font-medium">{{ __('store.index.out_of_stock') }}</span>
                     @endif
                 </div>
             @endif
@@ -307,7 +314,7 @@
         $minOrder = $product->getMinimumOrderQuantity();
         $availableStock = $product->stock_quantity !== null ? (int) $product->stock_quantity : 999999;
     @endphp
-    <section class="mt-5 lg:mt-6 w-full" aria-label="Sipariş ve seçenekler">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="max-w-full">
             <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5 lg:p-6 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}" data-size-table-trigger-variation="{{ e($product->size_table_trigger_variation ?? '') }}">
                 @csrf
@@ -319,10 +326,10 @@
 
                 {{-- Normal adet alanı (varyasyon yoksa hemen göster, varyasyon varsa tüm seçenekler seçilince göster) --}}
                 <div id="quantity-simple-wrap" class="{{ $hasVariations ? 'hidden' : '' }}">
-                    <label class="block font-semibold text-slate-700 mb-2">Adet</label>
+                    <label class="block font-semibold text-slate-700 mb-2">{{ __('store.product.qty_label') }}</label>
                     <input type="number" name="quantity" id="quantity-input" value="{{ $minOrder }}" min="{{ $minOrder }}" max="{{ $availableStock }}" class="w-full max-w-xs sm:max-w-sm lg:max-w-md rounded-xl border border-slate-300 px-4 py-3.5 lg:px-5 lg:py-4 text-base text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
                     @if($minOrder > 1)
-                        <p class="mt-1 text-sm text-slate-500">Minimum sipariş: {{ $minOrder }} adet</p>
+                        <p class="mt-1 text-sm text-slate-500">{{ __('store.product.min_order_line', ['count' => $minOrder]) }}</p>
                     @endif
                 </div>
 
@@ -355,9 +362,9 @@
                                     <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                                     </span>
-                                    Seçenekleri belirleyin
+                                    {{ __('store.product.variations_heading') }}
                                 </h2>
-                                <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">Adım adım seçenekleri belirleyin.</p>
+                                <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">{{ __('store.product.variations_subtitle') }}</p>
                             </div>
                             <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
                                 @foreach($variationSteps as $stepIndex => $variation)
@@ -366,13 +373,14 @@
                                          data-variation-name="{{ $variation->name }}"
                                          data-depends-on="{{ $variation->depends_on ?? '' }}"
                                          data-step-index="{{ $stepIndex }}"
+                                         data-replace-main-gallery="{{ $variation->replace_main_gallery_image ? '1' : '0' }}"
                                          @if($isDependent) style="display: none;" @endif>
                                         <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
                                             <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10 transition-colors duration-300">{{ $stepIndex + 1 }}</span>
                                             <div class="w-0.5 flex-1 min-h-[6px] -mt-0.5 -mb-4 pb-4 bg-slate-200 rounded-full self-center" aria-hidden="true"></div>
                                         </div>
                                         <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
-                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $stepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $stepIndex }}" aria-label="{{ $variation->name }} seçin">
+                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $stepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $stepIndex }}" aria-label="{{ __('store.product.variation_pick_aria', ['name' => $variation->name]) }}">
                                                 <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ $variation->name }}</span>
                                                 <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                             </button>
@@ -381,31 +389,31 @@
                                                     <span class="text-slate-500 text-sm">{{ $variation->name }}:</span>
                                                     <span class="variation-step-summary-value font-medium text-slate-800">—</span>
                                                 </div>
-                                                <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">Değiştir</button>
+                                                <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.change') }}</button>
                                             </div>
                                             <div class="variation-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4 {{ $stepIndex > 0 ? 'hidden' : '' }}">
                                                 <div class="flex flex-wrap gap-2.5 sm:gap-3 lg:gap-3.5 product-variation-options">
                                     @foreach($variation->options as $option)
                                         @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
-                                        @if($variation->type === 'color' && $option->option_color)
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" title="{{ $option->option_value }}">
-                                                <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $option->option_color }}"></span>
-                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $option->option_value }}</span>
-                                            </button>
-                                        @elseif($variation->type === 'image' && $option->option_image)
+                                        @if(($variation->type === 'image' || $variation->type === 'color' || $variation->type === 'fabric') && $option->option_image)
                                             @php $optionImageUrl = Storage::url($option->option_image); $imgSize = $option->option_image_size ?? 'medium'; $imgSizeClass = match($imgSize) { 'small' => 'w-14 h-14 sm:w-16 sm:h-16', 'large' => 'w-28 h-28 sm:w-32 sm:h-32', default => 'w-20 h-20 sm:w-24 sm:h-24' }; $minWClass = match($imgSize) { 'small' => 'min-w-[72px] sm:min-w-[88px]', 'large' => 'min-w-[120px] sm:min-w-[140px]', default => 'min-w-[88px] sm:min-w-[110px]' }; $labelMaxW = match($imgSize) { 'small' => 'max-w-[80px] sm:max-w-[88px]', 'large' => 'max-w-[120px] sm:max-w-[140px]', default => 'max-w-[96px] sm:max-w-[110px]' }; @endphp
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}">
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}">
                                                 <span class="relative inline-block group">
                                                     <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="{{ $imgSizeClass }} object-cover rounded-xl">
-                                                    <span class="variation-zoom-btn absolute top-1 right-1 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="Büyüt" role="button" aria-label="{{ $option->option_value }} görselini büyüt">
+                                                    <span class="variation-zoom-btn absolute top-1 right-1 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
                                                 <span class="text-sm font-medium text-slate-600 mt-2 w-full {{ $labelMaxW }} text-center break-words leading-tight">{{ $option->option_value }}</span>
                                             </button>
+                                        @elseif($variation->type === 'color' && $option->option_color)
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? Storage::url($option->option_image) : '' }}" title="{{ $option->option_value }}">
+                                                <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $option->option_color }}"></span>
+                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $option->option_value }}</span>
+                                            </button>
                                         @else
-                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}">{{ $option->option_value }}</button>
+                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? Storage::url($option->option_image) : '' }}">{{ $option->option_value }}</button>
                                         @endif
                                     @endforeach
                                                 </div>
@@ -419,8 +427,8 @@
                                         <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10">{{ $totalSteps + 1 }}</span>
                                     </div>
                                     <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden -ml-px shadow-sm">
-                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $totalSteps }}" aria-label="Beden tablosu">
-                                            <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">Beden tablosu</span>
+                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $totalSteps }}" aria-label="{{ __('store.product.size_table_dot_aria') }}">
+                                            <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ __('store.product.size_table_heading') }}</span>
                                             <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                         </button>
                                         {{-- İçerik sadece tüm varyasyonlar seçildikten sonra görünür; hangi tablo gösterileceği JS ile güncellenir --}}
@@ -429,7 +437,7 @@
                                             <div id="{{ $sizeTable->slug }}-size-table-wrap" class="hidden mt-4 first:mt-0 size-table-wrap" data-slug="{{ $sizeTable->slug }}" data-trigger-variation="{{ e($sizeTable->trigger_variation_name ?? '') }}" data-trigger-value="{{ e($sizeTable->trigger_option_value ?? '') }}">
                                                 <p class="text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4 flex items-center gap-2">
                                                     <span class="h-px flex-1 max-w-[40px] rounded-full bg-primary-200"></span>
-                                                    {{ $sizeTable->title ?: 'BEDEN SEÇİNİZ' }}
+                                                    {{ $sizeTable->title ?: __('store.product.choose_sizes_default') }}
                                                 </p>
                                                 <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
                                                     <table class="w-full min-w-[520px] border-collapse text-sm">
@@ -443,7 +451,7 @@
                                                         </thead>
                                                         <tbody>
                                                             <tr class="bg-slate-100">
-                                                                <td class="font-medium text-slate-700 py-3 px-3">Sipariş adeti</td>
+                                                                <td class="font-medium text-slate-700 py-3 px-3">{{ __('store.product.qty_order_row') }}</td>
                                                                 @foreach($sizeTable->columns as $col)
                                                                     <td class="py-2 px-1 text-center">
                                                                         <input type="number" name="{{ $sizeTable->slug }}_size_qty_{{ $col->size_value }}" data-size="{{ $col->size_value }}" data-price-multiplier="{{ number_format((float) ($col->price_multiplier ?? 1), 4, '.', '') }}" min="0" max="999" value="0" class="size-table-input {{ $sizeTable->slug }}-size-input w-full max-w-[72px] mx-auto rounded-lg border border-slate-300 px-2 py-2 text-center text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/30">
@@ -455,19 +463,19 @@
                                                 </div>
                                                 <div class="mt-3 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/80 px-4 py-3 text-sm">
                                                     <span class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200/80">
-                                                        <span class="text-slate-500 font-medium">Min. sipariş</span>
-                                                        <span class="font-bold text-slate-800">{{ number_format($minOrder) }} adet</span>
+                                                        <span class="text-slate-500 font-medium">{{ __('store.product.size_min_chip') }}</span>
+                                                        <span class="font-bold text-slate-800">{{ __('store.product.stock_units_fmt', ['count' => number_format($minOrder)]) }}</span>
                                                     </span>
                                                     <span class="text-slate-300">·</span>
                                                     <span class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200/80">
-                                                        <span class="text-slate-500 font-medium">Maks. sipariş</span>
-                                                        <span class="font-bold text-slate-800">{{ $availableStock >= 999999 ? 'Sınırsız' : number_format($availableStock) }} adet</span>
+                                                        <span class="text-slate-500 font-medium">{{ __('store.product.size_max_chip') }}</span>
+                                                        <span class="font-bold text-slate-800">{{ $availableStock >= 999999 ? __('store.product.unlimited_qty') : __('store.product.stock_units_fmt', ['count' => number_format($availableStock)]) }}</span>
                                                     </span>
                                                     <span class="text-slate-300">·</span>
                                                     <span class="inline-flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-1.5 shadow-sm ring-1 ring-primary-200/80">
-                                                        <span class="text-slate-600 font-medium">Girilen toplam</span>
+                                                        <span class="text-slate-600 font-medium">{{ __('store.product.size_entered_total') }}</span>
                                                         <span id="{{ $sizeTable->slug }}-size-total" class="font-bold text-primary-700">0</span>
-                                                        <span class="text-slate-600">adet</span>
+                                                        <span class="text-slate-600">{{ __('store.product.units_suffix') }}</span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -478,9 +486,9 @@
                             </div>
                         </div>
                     </section>
-                    <div id="variation-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="Seçenek görseli büyütülmüş">
+                    <div id="variation-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.variation_lightbox_aria') }}">
                         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" id="variation-lightbox-backdrop"></div>
-                        <button type="button" id="variation-lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="Kapat">
+                        <button type="button" id="variation-lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.lightbox_close') }}">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                         <img id="variation-lightbox-image" src="" alt="" class="relative z-10 max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl">
@@ -492,13 +500,13 @@
                     @if($canSeePrices && $baseTry !== null)
                         <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
                             <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
-                                <span class="text-sm font-semibold text-slate-600">Ürün Fiyatı:</span>
+                                <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
                                 <div class="text-right">
                                     <span class="text-sm font-semibold text-slate-700">
                                         {{ $selectedCurrency->format($baseConverted) }}
                                     </span>
                                 </div>
-                                <span class="text-sm font-semibold text-slate-600">Toplam Ürün Fiyatı:</span>
+                                <span class="text-sm font-semibold text-slate-600">{{ __('store.product.no_variation_product_total_label') }}</span>
                                 <div class="text-right">
                                     <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
                                         {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($baseTry * $minOrderProduct)) }}
@@ -514,7 +522,7 @@
                     @endif
                     <button type="submit" id="add-to-cart-btn" class="mt-4 lg:mt-5 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        Sepete Ekle
+                        {{ __('store.product.add_to_cart') }}
                     </button>
                 @endif
             </form>
@@ -527,12 +535,12 @@
                         <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 mx-auto mb-5">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
-                        <h2 id="product-warning-dialog-title" class="text-xl font-semibold text-slate-900 text-center mb-2">Minimum Sipariş Uyarısı</h2>
-                        <p id="product-warning-dialog-desc" class="text-slate-600 text-center text-sm sm:text-base leading-relaxed">Minimum sipariş adeti karşılanmadı.</p>
+                        <h2 id="product-warning-dialog-title" class="text-xl font-semibold text-slate-900 text-center mb-2">{{ __('store.product.warn_min_title') }}</h2>
+                        <p id="product-warning-dialog-desc" class="text-slate-600 text-center text-sm sm:text-base leading-relaxed min-h-[3rem]"></p>
                     </div>
                     <div class="px-6 sm:px-8 pb-6 sm:pb-8">
                         <button type="button" id="product-warning-dialog-close" class="w-full py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                            Tamam
+                            {{ __('store.product.zoom_ok') }}
                         </button>
                     </div>
                 </div>
@@ -540,26 +548,26 @@
         </div>
     </section>
     @elseif($canSeePrices && !$product->isOnSale())
-    <section class="mt-5 lg:mt-6 w-full" aria-label="Satış durumu">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
                 <p class="font-medium text-slate-700">{{ $product->getStatusLabel() }}</p>
                 <p class="mt-1 text-sm text-slate-600">
                     @if($productStatus === 'stokta_yok')
-                        Bu ürün şu an stokta bulunmuyor. Stok geldiğinde satışa sunulacaktır.
+                        {{ __('store.product.status_out_stock_detail') }}
                     @else
-                        Bu ürün yakında satışa sunulacaktır.
+                        {{ __('store.product.status_coming_detail') }}
                     @endif
                 </p>
             </div>
         </div>
     </section>
     @elseif($canSeePrices && $product->stock_quantity !== null && (int) $product->stock_quantity === 0)
-    <section class="mt-5 lg:mt-6 w-full" aria-label="Stok bilgisi">
+    <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.stock_label_short') }}">
         <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
-                <p class="text-red-600 font-medium">Stokta yok</p>
-                <p class="mt-1 text-sm text-slate-600">Bu ürün şu an satışta değildir. Stok geldiğinde sepete ekleyebilirsiniz.</p>
+                <p class="text-red-600 font-medium">{{ __('store.product.stock_out_heading') }}</p>
+                <p class="mt-1 text-sm text-slate-600">{{ __('store.product.stock_out_body') }}</p>
             </div>
         </div>
     </section>
@@ -569,9 +577,27 @@
     </div>
 
     @if($canSeePrices && $hasVariations)
+        @php
+            $storeProductUi = [
+                'summary_select_prompt' => __('store.product.summary_select_prompt'),
+                'add_to_cart' => __('store.product.add_to_cart'),
+                'add_to_cart_hint' => __('store.product.add_to_cart_hint'),
+                'summary_total_qty' => __('store.product.summary_total_qty'),
+                'qty_row_label' => __('store.product.qty_row_label'),
+                'size_row_prefix' => __('store.product.size_row_prefix'),
+                'units_suffix' => __('store.product.units_suffix'),
+                'warn_min_title' => __('store.product.warn_min_title'),
+                'warn_min_desc' => __('store.product.warn_min_desc'),
+                'warn_stock_title' => __('store.product.warn_stock_title'),
+                'warn_stock_desc_breakdown' => __('store.product.warn_stock_desc_breakdown'),
+                'warn_stock_desc_simple' => __('store.product.warn_stock_desc_simple'),
+            ];
+        @endphp
+        <script>window.storeProductUi = @json($storeProductUi);</script>
         @push('head')
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
+                    var PU = window.storeProductUi || {};
                     var priceEl = document.getElementById('product-price');
                     var variationInput = document.getElementById('variation-data-input');
                     if (!priceEl) return;
@@ -772,6 +798,12 @@
                         });
                     }
 
+                    function escapeHtml(s) {
+                        var div = document.createElement('div');
+                        div.textContent = s;
+                        return div.innerHTML;
+                    }
+
                     function updateVariationSummaryAndButton() {
                         updateSizeTotalDisplays();
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
@@ -782,7 +814,10 @@
                         var confirmCheckbox = document.getElementById('variation-confirm-checkbox');
                         var ordered = getSelectedOptionsInStepOrder();
                         var sizeInfo = getSizeQuantities();
-                        if (!tbody) return;
+                        if (!tbody) {
+                            syncMainGalleryFromVariations();
+                            return;
+                        }
                         var rows = [];
                         ordered.forEach(function(item) {
                             rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td></tr>');
@@ -792,16 +827,16 @@
                                 Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                     var qty = sizeInfo.sizeQuantities[size];
                                     if (qty > 0) {
-                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">Beden ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' adet</td></tr>');
+                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                                     }
                                 });
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Toplam adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.summary_total_qty) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                             } else {
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">Adet</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' adet</td></tr>');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.qty_row_label) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
-                            tbody.innerHTML = '<tr><td colspan="2" class="text-slate-400 py-4 px-3 text-center">Tüm seçenekleri yukarıdan belirleyin.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="2" class="text-slate-400 py-4 px-3 text-center">' + escapeHtml(PU.summary_select_prompt) + '</td></tr>';
                         }
                         var confirmWrap = document.getElementById('variation-confirm-wrap');
                         if (confirmWrap) {
@@ -820,9 +855,7 @@
                         if (btn) {
                             btn.disabled = !canSubmit;
                             if (btnLabel) {
-                                btnLabel.textContent = canSubmit
-                                    ? 'Sepete Ekle'
-                                    : 'Seçenekleri belirleyin, ardından onaylayın.';
+                                btnLabel.textContent = canSubmit ? PU.add_to_cart : PU.add_to_cart_hint;
                             }
                         }
                         if (allSelected) {
@@ -837,11 +870,41 @@
                             window._variationAllSelectedScrolled = false;
                         }
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
+                        syncMainGalleryFromVariations();
                     }
-                    function escapeHtml(s) {
-                        var div = document.createElement('div');
-                        div.textContent = s;
-                        return div.innerHTML;
+
+                    /** Admin’de işaretlenen varyasyon(lar): seçilen seçeneğin görseli sol galerinin ilk slaytında (sıra önceliği). */
+                    function syncMainGalleryFromVariations() {
+                        var galleryEl = document.getElementById('product-gallery');
+                        if (!galleryEl || window.__productGalleryOriginalFirstUrl === undefined) return;
+                        var firstSlide = galleryEl.querySelector('.product-gallery-slide[data-slide-index="0"]');
+                        if (!firstSlide) return;
+                        var imgEl = firstSlide.querySelector('img');
+                        if (!imgEl) return;
+                        var panels = Array.from(document.querySelectorAll('.variation-step-panel[data-variation-name]')).sort(function(a, b) {
+                            return (parseInt(a.getAttribute('data-step-index'), 10) || 0) - (parseInt(b.getAttribute('data-step-index'), 10) || 0);
+                        });
+                        var replacementUrl = '';
+                        for (var pi = 0; pi < panels.length; pi++) {
+                            var panel = panels[pi];
+                            if (panel.style.display === 'none') continue;
+                            if ((panel.getAttribute('data-replace-main-gallery') || '') !== '1') continue;
+                            var sel = panel.querySelector('.product-option.option-selected');
+                            if (!sel || sel.style.display === 'none') continue;
+                            var u = (sel.getAttribute('data-option-image-url') || '').trim();
+                            if (u) {
+                                replacementUrl = u;
+                                break;
+                            }
+                        }
+                        var orig = window.__productGalleryOriginalFirstUrl || '';
+                        var targetUrl = replacementUrl || orig;
+                        if (!targetUrl) return;
+                        firstSlide.setAttribute('data-image-url', targetUrl);
+                        imgEl.src = targetUrl;
+                        if (typeof window.__productGalleryRefreshUrls === 'function') {
+                            window.__productGalleryRefreshUrls();
+                        }
                     }
 
                     function applyDependencyChain() {
@@ -1150,8 +1213,8 @@
                                     var descEl = document.getElementById('product-warning-dialog-desc');
                                     var titleEl = document.getElementById('product-warning-dialog-title');
                                     if (dialog && descEl) {
-                                        if (titleEl) titleEl.textContent = 'Minimum Sipariş Uyarısı';
-                                        descEl.textContent = 'Minimum sipariş adeti ' + minOrder + ' olmalıdır. Toplam: ' + total;
+                                        if (titleEl) titleEl.textContent = PU.warn_min_title;
+                                        descEl.textContent = PU.warn_min_desc.replace(':min', String(minOrder)).replace(':total', String(total));
                                         dialog.classList.remove('hidden');
                                         dialog.classList.add('flex');
                                         document.body.style.overflow = 'hidden';
@@ -1164,8 +1227,8 @@
                                     var descEl = document.getElementById('product-warning-dialog-desc');
                                     var titleEl = document.getElementById('product-warning-dialog-title');
                                     if (dialog && descEl) {
-                                        if (titleEl) titleEl.textContent = 'Stok Yetersiz';
-                                        descEl.textContent = 'Maksimum ' + availableStock + ' adet ekleyebilirsiniz. Toplam: ' + total;
+                                        if (titleEl) titleEl.textContent = PU.warn_stock_title;
+                                        descEl.textContent = PU.warn_stock_desc_breakdown.replace(':max', String(availableStock)).replace(':total', String(total));
                                         dialog.classList.remove('hidden');
                                         dialog.classList.add('flex');
                                         document.body.style.overflow = 'hidden';
@@ -1188,8 +1251,8 @@
                                     var descEl = document.getElementById('product-warning-dialog-desc');
                                     var titleEl = document.getElementById('product-warning-dialog-title');
                                     if (dialog && descEl) {
-                                        if (titleEl) titleEl.textContent = 'Stok Yetersiz';
-                                        descEl.textContent = 'Maksimum ' + availableStock + ' adet ekleyebilirsiniz. Girdiğiniz adet: ' + qty;
+                                        if (titleEl) titleEl.textContent = PU.warn_stock_title;
+                                        descEl.textContent = PU.warn_stock_desc_simple.replace(':max', String(availableStock)).replace(':qty', String(qty));
                                         dialog.classList.remove('hidden');
                                         dialog.classList.add('flex');
                                         document.body.style.overflow = 'hidden';

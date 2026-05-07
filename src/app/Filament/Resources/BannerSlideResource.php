@@ -54,7 +54,6 @@ class BannerSlideResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('headline')
                             ->label('Ana başlık')
-                            ->required()
                             ->maxLength(255),
                         Forms\Components\Textarea::make('description')
                             ->label('Açıklama')
@@ -104,6 +103,9 @@ class BannerSlideResource extends Resource
                     ->defaultImageUrl(fn ($record) => null),
                 Tables\Columns\TextColumn::make('headline')
                     ->label('Başlık')
+                    ->formatStateUsing(fn (?string $state, BannerSlide $record): string => filled($state)
+                        ? $state
+                        : (filled($record->title) ? $record->title : '—'))
                     ->limit(40)
                     ->searchable()
                     ->sortable(),

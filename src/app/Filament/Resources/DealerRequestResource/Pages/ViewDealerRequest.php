@@ -39,15 +39,17 @@ class ViewDealerRequest extends ViewRecord
                         $code = 'BAYI-' . strtoupper(Str::random(6));
                     } while (Company::where('code', $code)->exists());
 
+                    $companyName = (string) ($record->business_name ?: $record->full_name);
+
                     $company = Company::create([
-                        'name' => $record->full_name,
+                        'name' => $companyName,
                         'code' => $code,
                         'is_active' => true,
                     ]);
 
                     $user = User::create([
                         'company_id' => $company->id,
-                        'name' => $record->full_name,
+                        'name' => $record->applicantDisplayName(),
                         'email' => $record->email,
                         'password' => $passwordPlain,
                         'is_admin' => false,

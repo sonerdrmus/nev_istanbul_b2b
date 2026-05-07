@@ -12,7 +12,15 @@ class ProductVariation extends Model
         'type',
         'depends_on',
         'sort_order',
+        'replace_main_gallery_image',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'replace_main_gallery_image' => 'boolean',
+        ];
+    }
 
     public function product()
     {

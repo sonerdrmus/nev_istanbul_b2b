@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    /*
+    | TCMB günlük döviz tablosu (today.xml); USD/EUR canlı güncelleme için kullanılır.
+    | Hafta sonu / tatilde son iş gününün tablosu servis edilir.
+    */
+    'tcmb' => [
+        'kurlar_url' => env('TCMB_KURLAR_URL', 'https://www.tcmb.gov.tr/kurlar/today.xml'),
+        'cache_ttl_seconds' => (int) env('TCMB_CACHE_TTL', 45),
+        'timeout' => (int) env('TCMB_HTTP_TIMEOUT', 12),
+    ],
+
 ];

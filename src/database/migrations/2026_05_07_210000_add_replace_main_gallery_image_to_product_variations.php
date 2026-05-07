@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasColumn('product_variations', 'replace_main_gallery_image')) {
+            return;
+        }
+        Schema::table('product_variations', function (Blueprint $table) {
+            $table->boolean('replace_main_gallery_image')->default(false)->after('sort_order');
+        });
+    }
+
+    public function down(): void
+    {
+        if (! Schema::hasColumn('product_variations', 'replace_main_gallery_image')) {
+            return;
+        }
+        Schema::table('product_variations', function (Blueprint $table) {
+            $table->dropColumn('replace_main_gallery_image');
+        });
+    }
+};

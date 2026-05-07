@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', config('app.name')) – E-Ticaret</title>
+    <title>@yield('title', config('app.name')) – {{ __('store.meta_suffix') }}</title>
     @stack('meta')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
@@ -29,15 +29,15 @@
         .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
         /* Slider: Slaytlar üst üste, sadece aktif görünür (Tailwind .flex display’i ezmesin diye) */
-        #hero-carousel { position: relative; min-height: 320px; }
-        @media (min-width: 640px) { #hero-carousel { min-height: 380px; } }
-        @media (min-width: 1024px) { #hero-carousel { min-height: 420px; } }
+        #hero-carousel { position: relative; min-height: 360px; }
+        @media (min-width: 640px) { #hero-carousel { min-height: 420px; } }
+        @media (min-width: 1024px) { #hero-carousel { min-height: 560px; } }
         #hero-carousel .carousel-slide {
             position: absolute;
             inset: 0;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.1s ease;
         }
         #hero-carousel .carousel-slide.active {
             opacity: 1;
@@ -77,42 +77,62 @@
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-between gap-2">
             <span class="inline-flex items-center gap-1.5">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                ÜCRETSİZ KARGO — Belirli tutar üzeri siparişlerde
+                {{ __('store.topbar.free_shipping') }}
             </span>
-            <div class="flex items-center gap-2 flex-wrap justify-center" id="topbar-currencies">
-                @if(isset($currencies) && $currencies->isNotEmpty())
-                    @if($currencies->count() === 1)
-                        @php $curr = $currencies->first(); $isTry = $curr->code === 'TRY'; $rateFormatted = $isTry ? null : number_format((float) $curr->exchange_rate, 2, ',', '.'); @endphp
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium text-primary-100" title="{{ $curr->code }} ({{ $curr->symbol }})">
-                            @if($isTry)
-                                TRY ({{ $curr->symbol }})
-                            @else
-                                <span class="opacity-90">{{ $curr->symbol }}</span>
-                                <span>{{ $curr->code }}</span>
-                                <span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>
-                            @endif
-                        </span>
-                    @else
-                        @foreach($currencies as $curr)
-                            @php
-                                $path = request()->getPathInfo() ?: '/';
-                                $query = array_merge(request()->query(), ['currency' => $curr->code]);
-                                $currencyUrl = $path . ($query ? '?' . http_build_query($query) : '');
-                                $isTry = $curr->code === 'TRY';
-                                $rateFormatted = $isTry ? null : number_format((float) $curr->exchange_rate, 2, ',', '.');
-                            @endphp
-                            <a href="{{ $currencyUrl }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors {{ (isset($selectedCurrency) && $selectedCurrency->code === $curr->code) ? 'bg-white/20 text-white' : 'text-primary-100 hover:bg-white/10 hover:text-white' }}" title="{{ $curr->code }} ({{ $curr->symbol }})" data-currency-code="{{ $curr->code }}">
+            <div class="flex min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1.5 sm:justify-end sm:gap-x-3">
+                <div class="flex min-w-0 max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 sm:justify-end" id="topbar-currencies">
+                    @if(isset($currencies) && $currencies->isNotEmpty())
+                        @if($currencies->count() === 1)
+                            @php $curr = $currencies->first(); $isTry = $curr->code === 'TRY'; $rateFormatted = $isTry ? null : number_format((float) $curr->exchange_rate, 2, ',', '.'); @endphp
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium text-primary-100" title="{{ $curr->code }} ({{ $curr->symbol }})">
                                 @if($isTry)
-                                    <span>TRY ({{ $curr->symbol }})</span>
+                                    TRY ({{ $curr->symbol }})
                                 @else
                                     <span class="opacity-90">{{ $curr->symbol }}</span>
                                     <span>{{ $curr->code }}</span>
                                     <span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>
                                 @endif
-                            </a>
-                        @endforeach
+                            </span>
+                        @else
+                            @foreach($currencies as $curr)
+                                @php
+                                    $path = request()->getPathInfo() ?: '/';
+                                    $query = array_merge(request()->query(), ['currency' => $curr->code]);
+                                    $currencyUrl = $path . ($query ? '?' . http_build_query($query) : '');
+                                    $isTry = $curr->code === 'TRY';
+                                    $rateFormatted = $isTry ? null : number_format((float) $curr->exchange_rate, 2, ',', '.');
+                                @endphp
+                                <a href="{{ $currencyUrl }}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium transition-colors {{ (isset($selectedCurrency) && $selectedCurrency->code === $curr->code) ? 'bg-white/20 text-white' : 'text-primary-100 hover:bg-white/10 hover:text-white' }}" title="{{ $curr->code }} ({{ $curr->symbol }})" data-currency-code="{{ $curr->code }}">
+                                    @if($isTry)
+                                        <span>TRY ({{ $curr->symbol }})</span>
+                                    @else
+                                        <span class="opacity-90">{{ $curr->symbol }}</span>
+                                        <span>{{ $curr->code }}</span>
+                                        <span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>
+                                    @endif
+                                </a>
+                            @endforeach
+                        @endif
                     @endif
-                @endif
+                </div>
+                <span class="hidden sm:inline-block h-4 w-px shrink-0 bg-white/20" aria-hidden="true"></span>
+                {{-- Dil: kompakt (bayrak + kod) — glob ikon yok, tek satır --}}
+                <div class="relative inline-flex shrink-0" title="{{ __('store.header.locale_aria') }}">
+                    <label for="store-locale-select" class="sr-only">{{ __('store.header.locale_aria') }}</label>
+                    <select id="store-locale-select"
+                            name="store_locale"
+                            class="h-7 w-[5.25rem] shrink-0 cursor-pointer appearance-none rounded-md border border-white/20 bg-white/10 py-0 pl-1.5 pr-6 text-left text-[11px] font-semibold uppercase tracking-wide text-white shadow-none outline-none transition-colors hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white/40 sm:w-24 sm:text-xs [&>option]:bg-slate-900 [&>option]:font-normal [&>option]:normal-case [&>option]:text-white"
+                            onchange="var u = this.options[this.selectedIndex].getAttribute('data-url'); if (u) window.location.href = u;">
+                        @foreach (['tr' => '🇹🇷', 'en' => '🇬🇧', 'it' => '🇮🇹'] as $localeCode => $localeFlag)
+                            <option value="{{ $localeCode }}"
+                                    data-url="{{ route('locale.switch', ['locale' => $localeCode]) }}"
+                                    @selected(app()->getLocale() === $localeCode)>{{ $localeFlag }} {{ __('store.header.lang_' . $localeCode) }}</option>
+                        @endforeach
+                    </select>
+                    <span class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-white/70" aria-hidden="true">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -122,7 +142,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-3 sm:gap-4 h-14 sm:h-16">
                 <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center gap-2">
-                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-9 sm:h-11 w-auto object-contain">
+                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 sm:h-12 w-auto object-contain">
                 </a>
 
                 <div class="flex-1 min-w-0 max-w-xl mx-2 sm:mx-4 relative" id="header-search-wrap">
@@ -130,62 +150,23 @@
                         @if(request('category'))
                             <input type="hidden" name="category" value="{{ request('category') }}">
                         @endif
-                        <input type="search" name="q" id="header-search-input" value="{{ $searchQuery ?? '' }}" placeholder="Ürün ara..." class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-slate-900 placeholder-slate-400 text-sm transition-colors" autocomplete="off">
-                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-label="Ara">
+                        <input type="search" name="q" id="header-search-input" value="{{ $searchQuery ?? '' }}" placeholder="{{ __('store.header.search_placeholder') }}" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-slate-900 placeholder-slate-400 text-sm transition-colors" autocomplete="off">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-label="{{ __('store.header.search_aria') }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </button>
                     </form>
                     <div id="header-search-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-xl max-h-[min(400px,70vh)] overflow-y-auto z-[100] hidden">
-                        <div id="header-search-loading" class="p-4 text-center text-slate-500 text-sm hidden">Aranıyor...</div>
+                        <div id="header-search-loading" class="p-4 text-center text-slate-500 text-sm hidden">{{ __('store.search.searching') }}</div>
                         <div id="header-search-results" class="py-1"></div>
-                        <div id="header-search-empty" class="p-4 text-center text-slate-500 text-sm hidden">Ürün bulunamadı.</div>
+                        <div id="header-search-empty" class="p-4 text-center text-slate-500 text-sm hidden">{{ __('store.search.no_results') }}</div>
                     </div>
                 </div>
 
-                {{-- Üst bar: Kategoriler açılır menü --}}
-                <details class="dropdown relative flex-shrink-0 hidden sm:block">
-                    <summary class="list-none cursor-pointer select-none inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                        Kategoriler
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </summary>
-                    @isset($menuCategories)
-                    <div class="dropdown-menu absolute left-0 top-full mt-1 w-64 py-2 bg-white rounded-xl border border-slate-200 shadow-xl max-h-[70vh] overflow-y-auto z-50">
-                        <a href="{{ route('home') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-colors first:rounded-t-xl">
-                            <svg class="w-5 h-5 flex-shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
-                            Tüm Ürünler
-                        </a>
-                        <div class="border-t border-slate-100 my-2"></div>
-                        @foreach($menuCategories as $parent)
-                            @if($parent->children->isNotEmpty())
-                                <div class="px-3 pt-2 pb-1">
-                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1 mb-1.5">{{ $parent->name }}</p>
-                                    <div class="space-y-0.5">
-                                        @foreach($parent->children as $child)
-                                            <a href="{{ route('home', ['category' => $child->slug]) }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-colors">
-                                                @include('store.partials.category-icon', ['category' => $child])
-                                                {{ $child->name }}
-                                            </a>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                        <div class="border-t border-slate-100 mt-2 pt-2">
-                            <a href="{{ route('home') }}" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors rounded-b-xl">
-                                Tümünü gör
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                            </a>
-                        </div>
-                    </div>
-                    @endisset
-                </details>
-
                 {{-- Sağ aksiyonlar: Sepet + Hesap --}}
-                <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="ml-auto flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                     <a href="{{ route('store.cart') }}" class="relative flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span class="hidden sm:inline ml-1">Sepet</span>
+                    <span class="hidden sm:inline ml-1">{{ __('store.header.cart') }}</span>
                     @php $headerCartCount = collect(session('cart', []))->sum('quantity'); @endphp
                     @if($headerCartCount > 0)
                         <span class="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-primary-500 text-white text-xs font-bold">{{ $headerCartCount > 99 ? '99+' : $headerCartCount }}</span>
@@ -194,14 +175,14 @@
 
                     @auth
                         @if(auth()->user()->is_admin)
-                            <a href="{{ url('/admin') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">Admin</a>
+                            <a href="{{ url('/admin') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.admin') }}</a>
                         @else
-                            <a href="{{ url('/panel') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">Panelim</a>
+                            <a href="{{ url('/panel') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.my_panel') }}</a>
                         @endif
                     @else
-                        <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">Giriş Yap</button>
+                        <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.login') }}</button>
                         <a href="{{ route('store.dealer-registration') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold bg-primary-600 hover:bg-primary-700 text-white transition-colors">
-                            Kayıt Ol
+                            {{ __('store.header.register') }}
                         </a>
                     @endauth
                 </div>
@@ -219,11 +200,11 @@
                         <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Giriş Yap</h2>
-                        <p class="text-sm text-slate-500">Hesabınıza giriş yapın</p>
+                        <h2 class="text-xl font-bold text-slate-900">{{ __('store.login_modal.title') }}</h2>
+                        <p class="text-sm text-slate-500">{{ __('store.login_modal.subtitle') }}</p>
                     </div>
                 </div>
-                <button type="button" class="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors" onclick="document.getElementById('login-modal').classList.add('hidden')" aria-label="Kapat">
+                <button type="button" class="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors" onclick="document.getElementById('login-modal').classList.add('hidden')" aria-label="{{ __('store.login_modal.close') }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -236,28 +217,28 @@
                 @endif
                 <div class="space-y-4">
                     <div>
-                        <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1.5">E-posta</label>
+                        <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1.5">{{ __('store.login_modal.email') }}</label>
                         <input id="login-email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('email') border-red-500 @enderror"
                             placeholder="ornek@email.com">
                     </div>
                     <div>
-                        <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1.5">Şifre</label>
+                        <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1.5">{{ __('store.login_modal.password') }}</label>
                         <input id="login-password" name="password" type="password" required autocomplete="current-password"
                             class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('password') border-red-500 @enderror"
                             placeholder="••••••••">
                     </div>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input name="remember" type="checkbox" value="1" class="rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                        <span class="text-sm text-slate-600">Beni hatırla</span>
+                        <span class="text-sm text-slate-600">{{ __('store.login_modal.remember') }}</span>
                     </label>
                 </div>
                 <div class="mt-6 flex flex-col sm:flex-row gap-3">
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-sm hover:shadow transition-all">
-                        Giriş Yap
+                        {{ __('store.login_modal.submit') }}
                     </button>
                     <a href="{{ url('/panel/login') }}" class="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 text-center transition-colors">
-                        Panel sayfasına git
+                        {{ __('store.login_modal.panel_link') }}
                     </a>
                 </div>
             </form>
@@ -275,11 +256,11 @@
                 <div class="w-20 h-20 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-6 ring-4 ring-emerald-50">
                     <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-2">Tebrikler!</h2>
-                <p class="text-slate-600 text-lg font-medium mb-1">Bayilik talebiniz alındı.</p>
-                <p class="text-slate-500 text-sm mb-6">İnceleme sonrası sizinle iletişime geçilecektir.</p>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">{{ __('store.dealer_success.title') }}</h2>
+                <p class="text-slate-600 text-lg font-medium mb-1">{{ __('store.dealer_success.body') }}</p>
+                <p class="text-slate-500 text-sm mb-6">{{ __('store.dealer_success.note') }}</p>
                 <button type="button" onclick="document.getElementById('dealer-success-modal').classList.add('hidden')" class="px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-sm hover:shadow transition-all">
-                    Tamam
+                    {{ __('store.dealer_success.ok') }}
                 </button>
             </div>
         </div>
@@ -302,10 +283,10 @@
     </script>
     @endif
 
-    {{-- Anasayfa üst kategori şeridi: Tüm Ürünler + Tişört, Bags, … mega menü --}}
-    @isset($homeMegaNav)
+    {{-- Anasayfa üst kategori şeridi: üst kategoriler + yazılı alt menü --}}
+    @if(isset($topMenuCategories) && $topMenuCategories->isNotEmpty())
         @include('store.partials.home-mega-nav-strip')
-    @endisset
+    @endif
 
     @if(session('success'))
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 w-full">
@@ -338,12 +319,12 @@
             <div class="grid grid-cols-4 gap-2">
                 <a href="{{ route('home') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors {{ request()->routeIs('home') && !request('category') ? 'bottom-nav-active' : '' }}">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    <span class="text-[11px] font-medium mt-1">Ürünler</span>
+                    <span class="text-[11px] font-medium mt-1">{{ __('store.bottom_nav.products') }}</span>
                 </a>
 
                 <button type="button" onclick="document.getElementById('mobile-cats').classList.remove('hidden')" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z\"/></svg>
-                    <span class="text-[11px] font-medium mt-1">Kategoriler</span>
+                    <span class="text-[11px] font-medium mt-1">{{ __('store.bottom_nav.categories') }}</span>
                 </button>
 
                 <a href="{{ route('store.cart') }}" class="relative flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors {{ request()->routeIs('store.cart') ? 'bottom-nav-active' : '' }}">
@@ -351,18 +332,18 @@
                     @if($headerCartCount > 0)
                         <span class="absolute top-1 right-4 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary-500 text-white text-[10px] font-bold">{{ $headerCartCount > 99 ? '99+' : $headerCartCount }}</span>
                     @endif
-                    <span class="text-[11px] font-medium mt-1">Sepet</span>
+                    <span class="text-[11px] font-medium mt-1">{{ __('store.bottom_nav.cart') }}</span>
                 </a>
 
                 @auth
                     <a href="{{ auth()->user()->is_admin ? url('/admin') : url('/panel') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/></svg>
-                        <span class="text-[11px] font-medium mt-1">{{ auth()->user()->is_admin ? 'Admin' : 'Hesap' }}</span>
+                        <span class="text-[11px] font-medium mt-1">{{ auth()->user()->is_admin ? __('store.header.admin') : __('store.bottom_nav.account') }}</span>
                     </a>
                 @else
                     <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors w-full">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1\"/></svg>
-                        <span class="text-[11px] font-medium mt-1">Giriş</span>
+                        <span class="text-[11px] font-medium mt-1">{{ __('store.bottom_nav.login') }}</span>
                     </button>
                 @endauth
             </div>
@@ -374,15 +355,15 @@
         <div class="absolute inset-0 bg-black/40" onclick="document.getElementById('mobile-cats').classList.add('hidden')"></div>
         <div class="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl border-t border-slate-200 shadow-2xl max-h-[75vh] overflow-y-auto">
             <div class="px-5 pt-4 pb-2 flex items-center justify-between">
-                <p class="font-semibold text-slate-900">Kategoriler</p>
-                <button type="button" class="p-2 rounded-xl hover:bg-slate-100 text-slate-600" onclick="document.getElementById('mobile-cats').classList.add('hidden')" aria-label="Kapat">
+                <p class="font-semibold text-slate-900">{{ __('store.mobile_cats.title') }}</p>
+                <button type="button" class="p-2 rounded-xl hover:bg-slate-100 text-slate-600" onclick="document.getElementById('mobile-cats').classList.add('hidden')" aria-label="{{ __('store.mobile_cats.close') }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12\"/></svg>
                 </button>
             </div>
             <div class="px-5 pb-5">
                 <a href="{{ route('home') }}" class="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 hover:bg-primary-50 hover:border-primary-200 transition-colors text-slate-800 font-medium">
                     <svg class="w-5 h-5 flex-shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
-                    Tüm Ürünler
+                    {{ __('store.mobile_cats.all_products') }}
                 </a>
                 @isset($menuCategories)
                     <div class="mt-2 space-y-1">
@@ -415,7 +396,7 @@
                         @endforeach
                     </div>
                     <a href="{{ route('home') }}" class="mt-3 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors">
-                        Tümünü gör
+                        {{ __('store.mobile_cats.view_all') }}
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
                 @endisset
@@ -436,17 +417,18 @@
                     @if($footerSetting->show_brand ?? true)
                     <div>
                         <a href="{{ route('home') }}" class="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-lg">
-                            <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
+                            <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-11 sm:h-12 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
                         </a>
-                        <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">B2B toptan ve perakende tekstil ürünleri. Güvenli alışveriş, havale / EFT ile ödeme.</p>
+                        <p class="mt-3 text-sm text-slate-400 leading-relaxed max-w-xs">{{ __('store.footer.brand_text') }}</p>
                         <div class="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
                             <svg class="w-4 h-4 text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                            <span class="text-xs font-medium text-slate-300">Havale / EFT ile ödeme</span>
+                            <span class="text-xs font-medium text-slate-300">{{ __('store.footer.payment_chip') }}</span>
                         </div>
                     </div>
                     @endif
 
                     @foreach($footerMenuGroups ?? [] as $group)
+                        @continue($group->type === \App\Models\FooterMenuGroup::TYPE_CATEGORIES)
                     <div>
                         <h3 class="text-xs font-semibold text-white uppercase tracking-widest mb-4">{{ $group->title }}</h3>
                         @if($group->type === \App\Models\FooterMenuGroup::TYPE_MENU)
@@ -468,7 +450,7 @@
                                     <li><a href="{{ route('home', ['category' => $parent->slug]) }}" class="text-slate-400 hover:text-white transition-colors">{{ $parent->name }}</a></li>
                                 @endforeach
                                 @endisset
-                                <li><a href="{{ route('home') }}" class="text-slate-400 hover:text-primary-300 transition-colors font-medium">Tümünü gör →</a></li>
+                                <li><a href="{{ route('home') }}" class="text-slate-400 hover:text-primary-300 transition-colors font-medium">{{ __('store.mobile_cats.view_all') }} →</a></li>
                             </ul>
                         @elseif($group->type === \App\Models\FooterMenuGroup::TYPE_BANK_INFO)
                             <div class="space-y-4 text-sm">
@@ -479,7 +461,7 @@
                                     <p class="mt-0.5">{{ $account->account_holder }}@if($account->currency) ({{ $account->currency }})@endif</p>
                                 </div>
                                 @empty
-                                <p class="text-slate-500 text-xs">Banka hesabı eklenmemiş. Admin panelinden Banka Bilgileri’ne ekleyebilirsiniz.</p>
+                                <p class="text-slate-500 text-xs">{{ __('store.footer.bank_empty_note') }}</p>
                                 @endforelse
                             </div>
                         @endif
@@ -491,10 +473,10 @@
             <div class="border-t border-slate-800/80">
                 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                        <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ config('app.name') }}. Tüm hakları saklıdır.</p>
+                        <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('store.footer.copyright') }}</p>
                         <div class="flex items-center gap-2 text-slate-500 text-xs">
-                            <span class="hidden sm:inline">Güvenli ödeme</span>
-                            <span class="px-2 py-1 rounded bg-slate-800/60 text-slate-400 font-medium">Havale / EFT</span>
+                            <span class="hidden sm:inline">{{ __('store.footer.secure_payment') }}</span>
+                            <span class="px-2 py-1 rounded bg-slate-800/60 text-slate-400 font-medium">{{ __('store.footer.payment_label') }}</span>
                         </div>
                     </div>
                 </div>
@@ -503,12 +485,20 @@
     </footer>
 
     {{-- Topbar kurlarını Merkez Bankası güncellemesine göre periyodik güncelle --}}
+    @php
+        $topbarRateLocaleTag = match (app()->getLocale()) {
+            'tr' => 'tr-TR',
+            'it' => 'it-IT',
+            default => 'en-US',
+        };
+    @endphp
     <script>
     (function() {
         var rateEls = document.querySelectorAll('.topbar-rate');
         if (!rateEls.length) return;
+        var rateLocaleTag = @json($topbarRateLocaleTag);
         function formatRate(n) {
-            return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return Number(n).toLocaleString(rateLocaleTag, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         function refreshRates() {
             fetch('{{ url("/api/exchange-rates") }}', { headers: { 'Accept': 'application/json' } })

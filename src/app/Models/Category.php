@@ -14,12 +14,15 @@ class Category extends Model
         'image_path',
         'sort_order',
         'is_active',
+        'show_in_top_menu',
+        'top_menu_sort_order',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'show_in_top_menu' => 'boolean',
         ];
     }
 
@@ -112,12 +115,40 @@ class Category extends Model
         return $query->where('is_active', true);
     }
 
+    /**
+     * Mağaza listesi / üst menü: ürünler hangi category_id’lerde aranır (StoreController ile aynı mantık).
+     *
+     * @return array<int>
+     */
+    public function categoryIdsForProductListing(): array
+    {
+        $this->loadMissing('children');
+
+        if ($this->children->isNotEmpty()) {
+            return $this->children->pluck('id')->all();
+        }
+
+        return [$this->id];
+    }
+
     /** Üst kategoriler + alt kategoriler (sadece aktif, sıralı). */
     public static function treeForMenu(): \Illuminate\Support\Collection
     {
         return static::with(['children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
             ->active()
             ->roots()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** Admin panelden seçilen üst menü kategorileri. */
+    public static function topMenuForStore(): \Illuminate\Support\Collection
+    {
+        return static::with(['children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
+            ->active()
+            ->where('show_in_top_menu', true)
+            ->orderBy('top_menu_sort_order')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

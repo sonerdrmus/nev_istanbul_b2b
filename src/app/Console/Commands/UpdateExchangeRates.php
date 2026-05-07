@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Currency;
+use App\Services\TcmbExchangeRateService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class UpdateExchangeRates extends Command
@@ -13,31 +13,15 @@ class UpdateExchangeRates extends Command
 
     protected $description = 'TCMB\'den döviz kurlarını çekip günceller';
 
-    public function handle(): int
+    public function handle(TcmbExchangeRateService $tcmb): int
     {
         $this->info('TCMB döviz kurları güncelleniyor...');
 
         try {
-            $response = Http::timeout(10)->get('https://www.tcmb.gov.tr/kurlar/today.xml');
-
-            if (! $response->successful()) {
-                $this->error('TCMB API\'sine erişilemedi.');
+            $rates = $tcmb->fetchFromTcmbTodayXml(['USD', 'EUR']);
+            if ($rates === []) {
+                $this->error('TCMB\'den USD/EUR kuru alınamadı.');
                 return Command::FAILURE;
-            }
-
-            $xml = simplexml_load_string($response->body());
-            if (! $xml) {
-                $this->error('XML parse edilemedi.');
-                return Command::FAILURE;
-            }
-
-            $rates = [];
-            foreach ($xml->Currency as $currency) {
-                $code = (string) $currency['Kod'];
-                $forexBuying = (string) $currency->ForexBuying;
-                if ($code && $forexBuying && $forexBuying !== '') {
-                    $rates[$code] = (float) $forexBuying;
-                }
             }
 
             // USD ve EUR güncelle
@@ -66,13 +50,15 @@ class UpdateExchangeRates extends Command
                 $try->update(['exchange_rate' => 1.0]);
             }
 
+            $tcmb->bustCache();
+
             if ($updated > 0) {
                 $this->info("✓ {$updated} para birimi güncellendi.");
                 return Command::SUCCESS;
-            } else {
-                $this->warn('Güncellenecek kur bulunamadı.');
-                return Command::SUCCESS;
             }
+
+            $this->warn('USD/EUR veritabanında bulunamadı; kurlar dosyadan okundu, önbellek sıfırlandı.');
+            return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Hata: ' . $e->getMessage());
             Log::error('Exchange rate update failed', ['error' => $e->getMessage()]);

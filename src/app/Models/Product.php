@@ -27,6 +27,7 @@ class Product extends Model
         'sort_order',
         'show_on_home',
         'home_showcase_order',
+        'home_showcase_image',
         'size_table_trigger_variation',
     ];
 
@@ -223,9 +224,9 @@ class Product extends Model
     public function getStatusLabel(): string
     {
         return match ($this->status ?? 'satista') {
-            'stokta_yok' => 'Stokta yok',
-            'yakinda_gelecek' => 'Yakında gelecek',
-            default => 'Satışta',
+            'stokta_yok' => __('store.index.out_of_stock'),
+            'yakinda_gelecek' => __('store.index.coming_soon_badge'),
+            default => __('store.product.status_on_sale'),
         };
     }
 

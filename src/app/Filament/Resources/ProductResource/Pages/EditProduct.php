@@ -40,27 +40,22 @@ class EditProduct extends EditRecord
         }
         unset($data['image_upload']);
 
-        // Varyasyon seçeneklerinde: option_image_upload varsa option_image'ı onunla güncelle.
-        if (! empty($data['variations']) && is_array($data['variations'])) {
-            foreach ($data['variations'] as &$variation) {
-                if (empty($variation['options']) || ! is_array($variation['options'])) {
-                    continue;
-                }
-
-                foreach ($variation['options'] as &$opt) {
-                    if (! empty($opt['option_image_upload'])) {
-                        $upload = $opt['option_image_upload'];
-                        $path = is_array($upload) ? ($upload[0] ?? null) : $upload;
-                        if (is_string($path) && trim($path) !== '') {
-                            $opt['option_image'] = $path;
-                        }
-                    }
-                    unset($opt['option_image_upload']);
-                }
+        if (! empty($data['home_showcase_image_upload'])) {
+            $upload = $data['home_showcase_image_upload'];
+            $path = is_array($upload) ? ($upload[0] ?? null) : $upload;
+            if (is_string($path) && trim($path) !== '') {
+                $data['home_showcase_image'] = $path;
             }
-            unset($variation, $opt);
         }
+        unset($data['home_showcase_image_upload']);
+
+        $data = ProductResource::finalizeVariationOptionsInProductFormData($data);
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
     }
 }

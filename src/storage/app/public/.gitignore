@@ -1,2 +1,4 @@
 *
 !.gitignore
+!interface_color_variations/
+!interface_color_variations/**

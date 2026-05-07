@@ -1,132 +1,488 @@
 @extends('store.layout')
 
-@section('title', 'Bayi Ol')
+@section('title', __('store.titles.dealer_register'))
 
 @section('content')
-    {{-- Neden Bayi Olmalı: bilgi ve avantajlar --}}
-    <div class="max-w-4xl mx-auto mb-12">
-        <div class="rounded-2xl bg-gradient-to-br from-primary-50 to-slate-50 border border-primary-100 overflow-hidden">
-            <div class="px-6 sm:px-10 py-8 sm:py-10">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-14 h-14 rounded-2xl bg-primary-500 flex items-center justify-center text-white shadow-lg">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Neden Bayi Olmalı?</h1>
-                        <p class="text-slate-600 mt-0.5">B2B iş ortağımız olun, avantajlardan yararlanın</p>
-                    </div>
-                </div>
-                <div class="prose prose-slate max-w-none text-slate-700 space-y-4">
-                    <p class="text-base leading-relaxed">
-                        Bayi ağımıza katılarak toptan fiyat avantajları, özel indirimler ve sipariş kolaylığından yararlanın.
-                        Onaylanan bayilerimiz panel üzerinden sipariş verebilir, stok takibi yapabilir ve fiyatları görüntüleyebilir.
-                    </p>
-                    <ul class="grid sm:grid-cols-2 gap-3 list-none pl-0 space-y-0">
-                        <li class="flex items-start gap-3 p-4 rounded-xl bg-white/80 border border-slate-100">
-                            <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-slate-900">Toptan fiyat avantajı</strong> – Bayi fiyatlarıyla alım</span>
-                        </li>
-                        <li class="flex items-start gap-3 p-4 rounded-xl bg-white/80 border border-slate-100">
-                            <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-slate-900">Online sipariş paneli</strong> – 7/24 sipariş verebilirsiniz</span>
-                        </li>
-                        <li class="flex items-start gap-3 p-4 rounded-xl bg-white/80 border border-slate-100">
-                            <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-slate-900">Havale / EFT ile ödeme</strong> – Güvenli ödeme seçenekleri</span>
-                        </li>
-                        <li class="flex items-start gap-3 p-4 rounded-xl bg-white/80 border border-slate-100">
-                            <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-slate-900">Özel müşteri grubu indirimleri</strong> – Grup bazlı fiyatlandırma</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    <style>
+        .dealer-step-pane.hidden { display: none !important; }
+        details summary::-webkit-details-marker { display: none; }
+        .wiz-track { background: rgb(241 245 249); }
+        [data-step-indicator].wiz-done { border-color: rgb(226 232 240); background: rgb(248 250 252); color: rgb(71 85 105); font-weight: 500; }
+        [data-step-indicator].wiz-current { border-color: rgb(21 96 179); background: rgb(255 255 255); color: rgb(21 96 179); font-weight: 600; }
+        [data-step-indicator].wiz-upcoming { border-color: rgb(226 232 240); background: rgb(255 255 255); color: rgb(148 163 184); font-weight: 500; }
+    </style>
 
-    {{-- Bayilik Başvuru Formu (modern UI) --}}
-    <div class="max-w-3xl mx-auto">
-        <div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-6 sm:px-8 py-6 border-b border-slate-200 bg-slate-50/50">
-                <h2 class="text-xl font-bold text-slate-900">Bayilik Başvuru Formu</h2>
-                <p class="text-sm text-slate-600 mt-1">Formu doldurarak başvurunuzu iletebilirsiniz. İnceleme sonrası sizinle iletişime geçilecektir.</p>
+    @php
+        $businessProfiles = collect(\App\Models\DealerRequest::BUSINESS_PROFILES)
+            ->mapWithKeys(fn (string $key) => [$key => __('store.dealer.business_profile.' . $key)])
+            ->all();
+        $interestAreas = collect(\App\Models\DealerRequest::INTEREST_AREA_KEYS)
+            ->mapWithKeys(fn (string $key) => [$key => __('store.dealer.interest.' . $key)])
+            ->all();
+        $oldInterests = old('interest_areas', []);
+
+        $wizardSteps = [
+            1 => ['first_name', 'last_name', 'email', 'phone', 'mobile_phone'],
+            2 => ['business_name', 'address_line_1', 'address_line_2', 'city', 'postcode', 'country'],
+            3 => [
+                'business_type',
+                'limited_company_name',
+                'company_registration_number',
+                'vat_reg_number',
+                'website',
+                'facebook',
+                'instagram',
+                'twitter',
+                'linkedin',
+            ],
+            4 => ['business_profile', 'interest_areas', 'how_heard_about_us'],
+            5 => ['terms_accepted'],
+        ];
+
+        $wizardStepTitles = [
+            1 => __('store.dealer.steps.1'),
+            2 => __('store.dealer.steps.2'),
+            3 => __('store.dealer.steps.3'),
+            4 => __('store.dealer.steps.4'),
+            5 => __('store.dealer.steps.5'),
+        ];
+
+        $initialWizardStep = 1;
+        if ($errors->any()) {
+            foreach ($wizardSteps as $num => $keys) {
+                foreach ($keys as $key) {
+                    if ($errors->has($key)) {
+                        $initialWizardStep = max($initialWizardStep, (int) $num);
+                    }
+                }
+            }
+        }
+
+        $inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[15px] leading-normal text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:ring-1 focus:ring-slate-300 transition-colors outline-none';
+        $labelClass = 'block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1';
+    @endphp
+
+    {{-- Tam genişlik — sade düzen --}}
+    <div class="w-full px-4 sm:px-6 lg:px-10 xl:px-14 pb-12 pt-6">
+        <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+            <div class="px-6 sm:px-8 lg:px-12 py-8 border-b border-slate-100">
+                <div class="max-w-3xl lg:max-w-full mx-auto lg:mx-0">
+                    <h1 class="text-lg sm:text-xl font-medium text-slate-900 tracking-tight">{{ __('store.dealer.application_title') }}</h1>
+                    <p class="text-sm text-slate-500 mt-1">{{ __('store.dealer.intro_short') }}</p>
+                </div>
+
+                {{-- İlerleme --}}
+                <div class="max-w-3xl lg:max-w-none mx-auto mt-8 lg:mt-10">
+                    <div class="flex justify-between items-center pb-5">
+                        @foreach($wizardStepTitles as $stepNum => $_)
+                            <div class="flex flex-1 justify-center min-w-0">
+                                <div
+                                    data-step-indicator="{{ $stepNum }}"
+                                    class="wiz-upcoming flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border text-sm transition-colors duration-200"
+                                >{{ $stepNum }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="wiz-track h-2 rounded-full w-full overflow-hidden">
+                        <div
+                            id="dealer-wizard-progress"
+                            class="h-full min-w-[4px] rounded-full bg-primary-600 transition-[width] duration-300 ease-out"
+                            style="width: 20%"
+                        ></div>
+                    </div>
+                    <div class="flex justify-between gap-x-1 sm:gap-2 pt-3">
+                        @foreach($wizardStepTitles as $stepNum => $shortTitle)
+                            <div class="flex-1 flex justify-center min-w-0">
+                                <span data-step-caption="{{ $stepNum }}" class="block text-[10px] sm:text-[11px] font-medium text-center text-slate-400 leading-snug px-px line-clamp-2">{{ $shortTitle }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-slate-100 text-center lg:text-left space-y-1">
+                        <p id="dealer-wizard-current-title" class="text-base sm:text-lg font-medium text-slate-900">{{ $wizardStepTitles[$initialWizardStep] }}</p>
+                        <p id="dealer-wizard-next-hint-wrap" class="text-sm text-slate-500 mt-1">
+                            <span class="tabular-nums text-slate-600" id="dealer-wizard-step-label">{{ $initialWizardStep }} / 5</span>
+                            <span class="text-slate-300 mx-2" aria-hidden="true">·</span>
+                            <span id="dealer-badge-next-role">{{ $initialWizardStep >= 5 ? __('store.dealer.complete_label') : __('store.dealer.next_label') }}</span>&#32;
+                            <span id="dealer-wizard-next-preview" class="text-slate-700">
+                                @if ($initialWizardStep >= 5)
+                                    {{ __('store.dealer.complete_hint') }}
+                                @else
+                                    {{ $wizardStepTitles[$initialWizardStep + 1] }}
+                                @endif
+                            </span>
+                        </p>
+                    </div>
+                </div>
             </div>
-            <form action="{{ route('dealer-requests.store') }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 space-y-6">
+
+            <form id="dealer-wizard-form" action="{{ route('dealer-requests.store') }}" method="POST" class="px-6 sm:px-8 lg:px-12 xl:px-14 py-8 lg:py-10" novalidate>
                 @csrf
                 @if($errors->any())
-                    <div class="p-4 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">
-                        <ul class="list-disc list-inside space-y-1">
-                            @foreach($errors->all() as $err)
-                                <li>{{ $err }}</li>
-                            @endforeach
-                        </ul>
+                    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-0.5">
+                        @foreach($errors->all() as $err)
+                            <p>{{ $err }}</p>
+                        @endforeach
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label for="full_name" class="block text-sm font-medium text-slate-700 mb-1.5">Ad Soyad <span class="text-red-500">*</span></label>
-                        <input id="full_name" name="full_name" type="text" value="{{ old('full_name') }}" required
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('full_name') border-red-500 @enderror"
-                            placeholder="Adınız Soyadınız">
-                    </div>
-                    <div>
-                        <label for="tc_no" class="block text-sm font-medium text-slate-700 mb-1.5">T.C. Kimlik No <span class="text-red-500">*</span></label>
-                        <input id="tc_no" name="tc_no" type="text" value="{{ old('tc_no') }}" required maxlength="11" minlength="11" inputmode="numeric"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('tc_no') border-red-500 @enderror"
-                            placeholder="11 haneli T.C. kimlik no">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">E-posta <span class="text-red-500">*</span></label>
-                        <input id="email" name="email" type="email" value="{{ old('email') }}" required
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('email') border-red-500 @enderror"
-                            placeholder="ornek@email.com">
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-slate-700 mb-1.5">Telefon</label>
-                        <input id="phone" name="phone" type="text" value="{{ old('phone') }}"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('phone') border-red-500 @enderror"
-                            placeholder="05XX XXX XX XX">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="address" class="block text-sm font-medium text-slate-700 mb-1.5">Adres</label>
-                    <textarea id="address" name="address" rows="3"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors @error('address') border-red-500 @enderror"
-                        placeholder="Adresiniz (isteğe bağlı)">{{ old('address') }}</textarea>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Dosya Yükle (PDF)</label>
-                        <input name="document_pdf" type="file" accept="application/pdf"
-                            class="block w-full text-sm text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 file:font-medium file:cursor-pointer transition-colors">
-                        <p class="text-xs text-slate-500 mt-1.5">PDF, en fazla 5MB</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Dosya Yükle (JPEG)</label>
-                        <input name="document_jpeg" type="file" accept="image/jpeg"
-                            class="block w-full text-sm text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 file:font-medium file:cursor-pointer transition-colors">
-                        <p class="text-xs text-slate-500 mt-1.5">JPEG, en fazla 5MB</p>
+                {{-- Alanlar grid: geniş ekranda 2 kolon --}}
+                <div class="max-w-none">
+                {{-- Adım 1 --}}
+                <div data-step="1" class="space-y-6 dealer-step-pane @unless($initialWizardStep === 1) hidden @endunless">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                        <div>
+                            <label for="first_name" class="{{ $labelClass }}">{{ __('store.dealer.first_name') }} <span class="text-red-500">*</span></label>
+                            <input id="first_name" name="first_name" type="text" value="{{ old('first_name') }}" required autocomplete="given-name"
+                                class="{{ $inputClass }} @error('first_name') border-red-400 @enderror">
+                        </div>
+                        <div>
+                            <label for="last_name" class="{{ $labelClass }}">{{ __('store.dealer.last_name') }} <span class="text-red-500">*</span></label>
+                            <input id="last_name" name="last_name" type="text" value="{{ old('last_name') }}" required autocomplete="family-name"
+                                class="{{ $inputClass }} @error('last_name') border-red-400 @enderror">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="email" class="{{ $labelClass }}">{{ __('store.dealer.email') }} <span class="text-red-500">*</span></label>
+                            <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
+                                class="{{ $inputClass }} @error('email') border-red-400 @enderror">
+                        </div>
+                        <div>
+                            <label for="phone" class="{{ $labelClass }}">{{ __('store.dealer.phone') }} <span class="text-red-500">*</span></label>
+                            <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" required autocomplete="tel"
+                                class="{{ $inputClass }} @error('phone') border-red-400 @enderror">
+                        </div>
+                        <div>
+                            <label for="mobile_phone" class="{{ $labelClass }}">{{ __('store.dealer.mobile') }}</label>
+                            <input id="mobile_phone" name="mobile_phone" type="tel" value="{{ old('mobile_phone') }}" autocomplete="tel-national"
+                                class="{{ $inputClass }} @error('mobile_phone') border-red-400 @enderror">
+                        </div>
                     </div>
                 </div>
 
-                <div class="pt-4 flex flex-col sm:flex-row gap-3 justify-end">
-                    <a href="{{ route('home') }}" class="order-2 sm:order-1 px-5 py-3 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 text-center transition-colors">Vazgeç</a>
-                    <button type="submit" class="order-1 sm:order-2 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-sm hover:shadow transition-all">
-                        Başvuruyu Gönder
-                    </button>
+                {{-- Adım 2 --}}
+                <div data-step="2" class="space-y-5 dealer-step-pane @unless($initialWizardStep === 2) hidden @endunless">
+                    <p class="text-sm text-slate-500 max-w-2xl">{{ __('store.dealer.address_note') }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                        <div class="md:col-span-2">
+                            <label for="business_name" class="{{ $labelClass }}">{{ __('store.dealer.business_name') }} <span class="text-red-500">*</span></label>
+                            <input id="business_name" name="business_name" type="text" value="{{ old('business_name') }}" required autocomplete="organization"
+                                class="{{ $inputClass }} @error('business_name') border-red-400 @enderror">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="address_line_1" class="{{ $labelClass }}">{{ __('store.dealer.address_1') }} <span class="text-red-500">*</span></label>
+                            <input id="address_line_1" name="address_line_1" type="text" value="{{ old('address_line_1') }}" required autocomplete="address-line1"
+                                class="{{ $inputClass }} @error('address_line_1') border-red-400 @enderror">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="address_line_2" class="{{ $labelClass }}">{{ __('store.dealer.address_2') }}</label>
+                            <input id="address_line_2" name="address_line_2" type="text" value="{{ old('address_line_2') }}" autocomplete="address-line2"
+                                class="{{ $inputClass }}">
+                        </div>
+                        <div>
+                            <label for="city" class="{{ $labelClass }}">{{ __('store.dealer.city') }} <span class="text-red-500">*</span></label>
+                            <input id="city" name="city" type="text" value="{{ old('city') }}" required autocomplete="address-level2"
+                                class="{{ $inputClass }} @error('city') border-red-400 @enderror">
+                        </div>
+                        <div>
+                            <label for="postcode" class="{{ $labelClass }}">{{ __('store.dealer.postcode') }} <span class="text-red-500">*</span></label>
+                            <input id="postcode" name="postcode" type="text" value="{{ old('postcode') }}" required autocomplete="postal-code"
+                                class="{{ $inputClass }} @error('postcode') border-red-400 @enderror">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="country" class="{{ $labelClass }}">{{ __('store.dealer.country') }} <span class="text-red-500">*</span></label>
+                            <input id="country" name="country" type="text" value="{{ old('country') }}" required autocomplete="country-name"
+                                class="{{ $inputClass }} @error('country') border-red-400 @enderror">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Adım 3 --}}
+                <div data-step="3" class="space-y-5 dealer-step-pane @unless($initialWizardStep === 3) hidden @endunless">
+                    <p class="text-sm text-slate-500 max-w-3xl">{{ __('store.dealer.business_note') }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                        <div class="md:col-span-2">
+                            <label for="business_type" class="{{ $labelClass }}">{{ __('store.dealer.business_type') }} <span class="text-red-500">*</span></label>
+                            <input id="business_type" name="business_type" type="text" value="{{ old('business_type') }}" required
+                                class="{{ $inputClass }} @error('business_type') border-red-400 @enderror">
+                        </div>
+                    </div>
+                    <details class="group rounded-lg border border-slate-200 overflow-hidden md:col-span-2">
+                        <summary class="cursor-pointer list-none px-4 py-3 text-sm text-slate-700 flex items-center justify-between gap-2 hover:bg-slate-50 transition-colors">
+                            <span class="font-medium">{{ __('store.dealer.optional_details') }}</span>
+                            <span class="text-xs text-slate-400 truncate">{{ __('store.dealer.optional_hint') }}</span>
+                            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <div class="px-4 pb-6 pt-1 border-t border-slate-100 bg-white">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 pt-4">
+                                <div class="md:col-span-2">
+                                    <label for="limited_company_name" class="{{ $labelClass }}">{{ __('store.dealer.limited_name') }}</label>
+                                    <input id="limited_company_name" name="limited_company_name" type="text" value="{{ old('limited_company_name') }}" class="{{ $inputClass }}">
+                                </div>
+                                <div>
+                                    <label for="company_registration_number" class="{{ $labelClass }}">{{ __('store.dealer.reg_number') }}</label>
+                                    <input id="company_registration_number" name="company_registration_number" type="text" value="{{ old('company_registration_number') }}" class="{{ $inputClass }}">
+                                </div>
+                                <div>
+                                    <label for="vat_reg_number" class="{{ $labelClass }}">{{ __('store.dealer.vat') }}</label>
+                                    <input id="vat_reg_number" name="vat_reg_number" type="text" value="{{ old('vat_reg_number') }}" class="{{ $inputClass }}">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="website" class="{{ $labelClass }}">{{ __('store.dealer.website') }}</label>
+                                    <input id="website" name="website" type="text" value="{{ old('website') }}" placeholder="{{ __('store.dealer.website_placeholder') }}" class="{{ $inputClass }}">
+                                </div>
+                                @foreach([
+                                    'facebook' => __('store.dealer.social_facebook'),
+                                    'instagram' => __('store.dealer.social_instagram'),
+                                    'twitter' => __('store.dealer.social_twitter'),
+                                    'linkedin' => __('store.dealer.social_linkedin'),
+                                ] as $field => $lbl)
+                                    <div>
+                                        <label for="{{ $field }}" class="{{ $labelClass }}">{{ $lbl }}</label>
+                                        <input id="{{ $field }}" name="{{ $field }}" type="text" value="{{ old($field) }}" class="{{ $inputClass }}">
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                {{-- Adım 4 --}}
+                <div data-step="4" class="space-y-8 dealer-step-pane @unless($initialWizardStep === 4) hidden @endunless">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-8">
+                        <fieldset class="border-0 p-0 m-0 min-w-0">
+                            <legend class="block text-sm font-medium text-slate-600 mb-3">{{ __('store.dealer.profile_question') }} <span class="text-red-500">*</span></legend>
+                            <div class="rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden @error('business_profile') ring-1 ring-red-400 @enderror">
+                                @foreach($businessProfiles as $value => $label)
+                                    <label class="flex items-center gap-3 cursor-pointer px-4 py-3 text-[15px] text-slate-800 bg-white hover:bg-slate-50/80 transition-colors has-[:checked]:bg-slate-50">
+                                        <input type="radio" name="business_profile" value="{{ $value }}" class="h-4 w-4 rounded-full border-slate-300 text-slate-800 focus:ring-slate-400 shrink-0"
+                                            @checked(old('business_profile') === $value)>
+                                        <span>{{ $label }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+                        <div class="min-w-0">
+                            <fieldset class="border-0 p-0 m-0">
+                                <legend class="block text-sm font-medium text-slate-600 mb-3">{{ __('store.dealer.interests') }} <span class="text-red-500">*</span></legend>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 @error('interest_areas') rounded-lg ring-1 ring-red-400 p-2 -m-2 @enderror">
+                                    @foreach($interestAreas as $value => $label)
+                                        <label class="flex items-center gap-2.5 cursor-pointer py-2 text-[15px] text-slate-700">
+                                            <input type="checkbox" name="interest_areas[]" value="{{ $value }}" class="rounded border-slate-300 h-4 w-4 text-slate-800 focus:ring-slate-400 shrink-0"
+                                                @checked(in_array($value, $oldInterests, true))>
+                                            <span>{{ $label }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </fieldset>
+                            <div class="mt-8">
+                                <label for="how_heard_about_us" class="block text-sm font-medium text-slate-600 mb-2">{{ __('store.dealer.heard') }} <span class="text-red-500">*</span></label>
+                                <input id="how_heard_about_us" name="how_heard_about_us" type="text" value="{{ old('how_heard_about_us') }}" required
+                                    class="{{ $inputClass }} @error('how_heard_about_us') border-red-400 @enderror">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Adım 5 --}}
+                <div data-step="5" class="space-y-5 dealer-step-pane max-w-2xl @unless($initialWizardStep === 5) hidden @endunless">
+                    <p class="text-sm text-slate-500">{{ __('store.dealer.terms_intro') }}</p>
+                    <label class="flex items-start gap-3 cursor-pointer text-[15px] text-slate-800">
+                        <input type="checkbox" name="terms_accepted" value="1" required
+                            class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-slate-400 @error('terms_accepted') border-red-400 @enderror"
+                            @checked(old('terms_accepted'))>
+                        <span>{{ __('store.dealer.terms_accept') }} <span class="text-red-500">*</span></span>
+                    </label>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        {{ __('store.dealer.terms_note') }}
+                    </p>
+                </div>
+                </div>
+
+                {{-- Alt aksiyonlar --}}
+                <div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-6 border-t border-slate-100">
+                    <a href="{{ route('home') }}" class="text-sm text-slate-500 hover:text-slate-800 px-2 py-2 text-center sm:text-left">{{ __('store.dealer.cancel') }}</a>
+                    <div class="hidden sm:flex flex-1"></div>
+                    <div class="flex flex-1 sm:flex-none gap-2 justify-stretch sm:justify-end">
+                        <button type="button" id="dealer-wizard-prev" class="hidden rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                            {{ __('store.dealer.back') }}
+                        </button>
+                        <button type="button" id="dealer-wizard-next" class="flex-1 sm:flex-none min-w-[8rem] rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition-colors">
+                            {{ __('store.dealer.next') }}
+                        </button>
+                        <button type="submit" id="dealer-wizard-submit" class="hidden flex-1 sm:flex-none min-w-[8rem] rounded-lg border border-primary-600 bg-white px-5 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">
+                            {{ __('store.dealer.submit') }}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
+
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            var form = document.getElementById('dealer-wizard-form');
+            if (!form) return;
+            var TOTAL = 5;
+            var STEP_TITLES = @json(array_values($wizardStepTitles));
+            var WIZ_I18N = {
+                nextLabel: @json(__('store.dealer.next_label')),
+                completeLabel: @json(__('store.dealer.complete_label')),
+                completeHint: @json(__('store.dealer.complete_hint')),
+                validationProfile: @json(__('store.dealer.validation_select_profile')),
+                validationInterest: @json(__('store.dealer.validation_interests'))
+            };
+
+            var initial = {{ (int) $initialWizardStep }};
+            if (initial < 1 || initial > TOTAL) initial = 1;
+
+            var panes = form.querySelectorAll('.dealer-step-pane');
+            var progress = document.getElementById('dealer-wizard-progress');
+            var stepLabel = document.getElementById('dealer-wizard-step-label');
+            var currentTitle = document.getElementById('dealer-wizard-current-title');
+            var nextPreview = document.getElementById('dealer-wizard-next-preview');
+            var btnPrev = document.getElementById('dealer-wizard-prev');
+            var btnNext = document.getElementById('dealer-wizard-next');
+            var btnSubmit = document.getElementById('dealer-wizard-submit');
+            var badgeNextRole = document.getElementById('dealer-badge-next-role');
+
+            function paneFor(step) {
+                return form.querySelector('.dealer-step-pane[data-step="' + step + '"]');
+            }
+
+            function getInputs(step) {
+                var p = paneFor(step);
+                if (!p) return [];
+                return Array.prototype.slice.call(p.querySelectorAll('input, select, textarea')).filter(function (el) {
+                    if (el.type === 'hidden' || el.disabled) return false;
+                    if (el.closest('details') && !el.closest('details').open) return false;
+                    var checkName = el.getAttribute('name');
+                    return checkName && checkName.indexOf('_method') !== 0;
+                });
+            }
+
+            function validatePane(step) {
+                var inputs = getInputs(step);
+                for (var i = 0; i < inputs.length; i++) {
+                    if (!inputs[i].reportValidity()) {
+                        inputs[i].focus({ preventScroll: false });
+                        return false;
+                    }
+                }
+                if (step === 4) {
+                    var checkedProfiles = form.querySelectorAll('input[name="business_profile"]:checked');
+                    if (!checkedProfiles.length) {
+                        var firstRadio = form.querySelector('input[name="business_profile"]');
+                        if (firstRadio && firstRadio.setCustomValidity) {
+                            firstRadio.setCustomValidity(WIZ_I18N.validationProfile);
+                            firstRadio.reportValidity();
+                            firstRadio.setCustomValidity('');
+                        }
+                        return false;
+                    }
+                    var interests = form.querySelectorAll('input[name="interest_areas[]"]:checked');
+                    if (!interests.length) {
+                        var cb = form.querySelector('input[name="interest_areas[]"]');
+                        if (cb && cb.setCustomValidity) {
+                            cb.setCustomValidity(WIZ_I18N.validationInterest);
+                            cb.reportValidity();
+                            cb.setCustomValidity('');
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function updateStepIndicators(step) {
+                document.querySelectorAll('[data-step-indicator]').forEach(function (el) {
+                    var n = parseInt(el.getAttribute('data-step-indicator'), 10);
+                    el.classList.remove('wiz-done', 'wiz-current', 'wiz-upcoming');
+                    if (n < step) el.classList.add('wiz-done');
+                    else if (n === step) el.classList.add('wiz-current');
+                    else el.classList.add('wiz-upcoming');
+                });
+                document.querySelectorAll('[data-step-caption]').forEach(function (el) {
+                    var n = parseInt(el.getAttribute('data-step-caption'), 10);
+                    el.className = 'block text-[10px] sm:text-[11px] font-medium text-center leading-snug px-px line-clamp-2';
+                    if (n === step) {
+                        el.classList.add('text-slate-900', 'font-semibold');
+                    } else if (n < step) {
+                        el.classList.add('text-slate-500');
+                    } else {
+                        el.classList.add('text-slate-400');
+                    }
+                });
+            }
+
+            function showStep(step) {
+                panes.forEach(function (pane) {
+                    var n = parseInt(pane.getAttribute('data-step'), 10);
+                    if (n === step) pane.classList.remove('hidden');
+                    else pane.classList.add('hidden');
+                });
+                var pct = (step / TOTAL) * 100;
+                progress.style.width = pct + '%';
+                stepLabel.textContent = step + ' / ' + TOTAL;
+                currentTitle.textContent = STEP_TITLES[step - 1] || '';
+
+                if (badgeNextRole) {
+                    badgeNextRole.textContent = step >= TOTAL ? WIZ_I18N.completeLabel : WIZ_I18N.nextLabel;
+                }
+
+                if (step >= TOTAL) {
+                    nextPreview.textContent = WIZ_I18N.completeHint;
+                } else {
+                    nextPreview.textContent = STEP_TITLES[step] || '';
+                }
+
+                btnPrev.classList.toggle('hidden', step <= 1);
+                btnNext.classList.toggle('hidden', step >= TOTAL);
+                btnSubmit.classList.toggle('hidden', step < TOTAL);
+
+                updateStepIndicators(step);
+
+                var p = paneFor(step);
+                if (p) {
+                    var firstFocus = p.querySelector('input:not([type="hidden"]), select, textarea');
+                    try {
+                        firstFocus && firstFocus.focus();
+                    } catch (e) {}
+                }
+                try {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (e2) {}
+            }
+
+            btnNext.addEventListener('click', function () {
+                var current = parseInt(form.dataset.currentStep, 10) || 1;
+                if (!validatePane(current)) return;
+                var next = Math.min(TOTAL, current + 1);
+                form.dataset.currentStep = String(next);
+                showStep(next);
+            });
+
+            btnPrev.addEventListener('click', function () {
+                var current = parseInt(form.dataset.currentStep, 10) || 1;
+                var prev = Math.max(1, current - 1);
+                form.dataset.currentStep = String(prev);
+                showStep(prev);
+            });
+
+            form.addEventListener('submit', function (e) {
+                for (var s = 1; s <= TOTAL; s++) {
+                    if (!validatePane(s)) {
+                        e.preventDefault();
+                        form.dataset.currentStep = String(s);
+                        showStep(s);
+                        return;
+                    }
+                }
+            });
+
+            form.dataset.currentStep = String(initial);
+            showStep(initial);
+        })();
+    </script>
+@endpush

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\NormalizeLivewireUploadUrl;
+use App\Http\Middleware\SetStoreLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         // Livewire dosya yüklemede imza 401 önlemi: istek URL'sini APP_URL ile eşleştir
-        $middleware->web(append: [], prepend: [NormalizeLivewireUploadUrl::class]);
+        $middleware->web(prepend: [NormalizeLivewireUploadUrl::class], append: [SetStoreLocale::class]);
         // Mağaza (sepet, ödeme vb.) için giriş yapmamış kullanıcılar müşteri paneli girişine yönlendirilir
         $middleware->redirectGuestsTo(fn () => url('/panel/login'));
     })

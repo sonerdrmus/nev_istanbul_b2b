@@ -4,6 +4,8 @@ namespace App\Providers\Filament;
 
 use App\Filament\Resources\BannerSlideResource;
 use App\Filament\Resources\CategoryResource;
+use App\Filament\Resources\InterfaceColorVariationResource;
+use App\Filament\Resources\InterfaceFabricTypeVariationResource;
 use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
 use App\Filament\Resources\ProductResource;
@@ -148,7 +150,9 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*'))
+                    || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceColorVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*'))
                 ->childItems([
                     NavigationItem::make('Beden tabloları')
                         ->url(fn (): string => SizeTableResource::getUrl(panel: $panelId))
@@ -158,6 +162,14 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-photo')
                         ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Renk varyasyonları')
+                        ->url(fn (): string => InterfaceColorVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-swatch')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceColorVariationResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Kumaş türü varyasyonları')
+                        ->url(fn (): string => InterfaceFabricTypeVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-queue-list')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Footer Menü')
                         ->url(fn (): string => FooterMenuGroupResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-squares-2x2')
