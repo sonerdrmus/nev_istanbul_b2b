@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -142,10 +143,10 @@ class Product extends Model
     {
         $urls = [];
         if ($this->image) {
-            $urls[] = \Illuminate\Support\Facades\Storage::url($this->image);
+            $urls[] = MediaUrl::public($this->image);
         }
         foreach ($this->productImages as $img) {
-            $urls[] = \Illuminate\Support\Facades\Storage::url($img->path);
+            $urls[] = MediaUrl::public($img->path);
         }
         return $urls;
     }

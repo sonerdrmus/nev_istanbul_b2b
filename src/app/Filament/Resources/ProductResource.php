@@ -5,22 +5,22 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Category;
 use App\Models\Currency;
+use App\Models\CustomerGroup;
 use App\Models\InterfaceColorVariation;
 use App\Models\InterfaceFabricTypeVariation;
-use App\Models\TaxClass;
-use App\Models\CustomerGroup;
 use App\Models\Product;
 use App\Models\ProductVariation;
 use App\Models\ProductVariationOption;
-use Illuminate\Support\Facades\Storage;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Livewire\Livewire;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 class ProductResource extends Resource
 {
@@ -46,7 +46,7 @@ class ProductResource extends Resource
      */
     protected static function getPublicImageSelectOptions(string $directory): array
     {
-        $cacheKey = 'public-image-options:' . $directory;
+        $cacheKey = 'public-image-options:'.$directory;
         static $cache = [];
         if (isset($cache[$cacheKey])) {
             return $cache[$cacheKey];
@@ -58,25 +58,27 @@ class ProductResource extends Resource
         $options = collect($paths)
             ->filter(function (string $path) use ($allowed) {
                 $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
                 return in_array($ext, $allowed, true);
             })
             ->sort()
             ->mapWithKeys(function (string $path) {
                 $label = basename($path);
-                $url = asset('storage/' . $path);
+                $url = asset('storage/'.$path);
 
                 // Filament Select dropdown içinde thumbnail göstermek için HTML label.
                 // Search performansı için label sade tutulur.
                 $html = '<div class="flex items-center gap-2">'
-                    . '<img src="' . e($url) . '" alt="' . e($label) . '" class="w-7 h-7 rounded-md object-cover border border-slate-200" />'
-                    . '<span class="text-sm leading-tight break-all">' . e($label) . '</span>'
-                    . '</div>';
+                    .'<img src="'.e($url).'" alt="'.e($label).'" class="w-7 h-7 rounded-md object-cover border border-slate-200" />'
+                    .'<span class="text-sm leading-tight break-all">'.e($label).'</span>'
+                    .'</div>';
 
                 return [$path => $html];
             })
             ->all();
 
         $cache[$cacheKey] = $options;
+
         return $options;
     }
 
@@ -370,7 +372,7 @@ class ProductResource extends Resource
                             ->icon('heroicon-o-squares-2x2')
                             ->schema([
                                 Forms\Components\Section::make('Varyasyonlar')
-                                    ->description('Renk, beden vb. varyasyonlar tanımlayın. Her varyasyonun altına birden fazla seçenek ekleyebilir ve seçeneklere görsel yükleyebilirsiniz.')
+                                    ->description('Renk, beden vb. varyasyonlar tanımlayın. Her varyasyonun altına birden fazla seçenek ekleyebilir ve seçeneklere görsel yükleyebilirsiniz. Seçim modunda tek seçim veya çoklu seçim seçebilirsiniz.')
                                     ->schema([
                                         Forms\Components\Repeater::make('variations')
                                             ->relationship()
@@ -397,6 +399,37 @@ class ProductResource extends Resource
                                                     ->default('select')
                                                     ->required()
                                                     ->live()
+                                                    ->afterStateUpdated(function ($state, Set $set): void {
+                                                        if ($state === 'fabric') {
+                                                            $rows = static::fabricVariationOptionsFromInterfacePresets();
+                                                            $set('options', $rows);
+                                                            if ($rows === []) {
+                                                                Notification::make()
+                                                                    ->warning()
+                                                                    ->title('Kumaş türü kaydı bulunamadı')
+                                                                    ->body('Önce Arayüz → Kumaş türü varyasyonları bölümünden kayıt ekleyin.')
+                                                                    ->send();
+                                                            }
+
+                                                            return;
+                                                        }
+                                                        if ($state === 'color') {
+                                                            $rows = static::colorVariationOptionsFromInterfacePresets();
+                                                            $set('options', $rows);
+                                                            if ($rows === []) {
+                                                                Notification::make()
+                                                                    ->warning()
+                                                                    ->title('Renk kaydı bulunamadı')
+                                                                    ->body('Önce Arayüz → Renk varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.')
+                                                                    ->send();
+                                                            }
+                                                        }
+                                                    })
+                                                    ->helperText(fn (Get $get): ?string => match ($get('type')) {
+                                                        'fabric' => 'Seçenekler, Kumaş türü varyasyonları kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
+                                                        'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
+                                                        default => null,
+                                                    })
                                                     ->columnSpan(1),
                                                 Forms\Components\Select::make('depends_on')
                                                     ->label('Bağlı olduğu varyasyon')
@@ -421,8 +454,10 @@ class ProductResource extends Resource
                                                                     $out[$n] = $n;
                                                                 }
                                                             }
+
                                                             return $out;
                                                         }
+
                                                         return [];
                                                     })
                                                     ->searchable()
@@ -440,6 +475,14 @@ class ProductResource extends Resource
                                                     ->label('Seçilen seçeneğin görseli sol ürün görselinde gösterilsin')
                                                     ->helperText('Açıksa, müşteri bu varyasyonda seçim yaptığında seçeneğin görseli (varsa) mağazada sol taraftaki ana ürün galerisinin ilk görselinin yerine geçer. Birden fazla varyasyonda işaretliyse küçük sıra numarası önceliklidir.')
                                                     ->default(false)
+                                                    ->columnSpanFull(),
+                                                Forms\Components\Radio::make('allows_multiple')
+                                                    ->label('Seçim modu')
+                                                    ->options([
+                                                        0 => 'Tek seçim — müşteri yalnızca bir seçenek seçer; seçimden sonra otomatik olarak sonraki adıma geçilir.',
+                                                        1 => 'Çoklu seçim — birden fazla seçenek seçilebilir; seçtikten sonra "Devam et" ile sonraki adıma geçilir.',
+                                                    ])
+                                                    ->default(0)
                                                     ->columnSpanFull(),
                                                 Forms\Components\Repeater::make('options')
                                                     ->relationship()
@@ -463,13 +506,18 @@ class ProductResource extends Resource
                                                                     ->where('is_active', true)
                                                                     ->whereNotNull('image_path')
                                                                     ->where('image_path', '!=', '')
+                                                                    ->with('fabricTypeVariation')
                                                                     ->orderBy('sort_order')
                                                                     ->orderBy('id')
                                                                     ->get()
                                                                     ->mapWithKeys(function (InterfaceColorVariation $preset): array {
-                                                                        $suffix = '#' . $preset->id;
+                                                                        $suffix = '#'.$preset->id;
+                                                                        $base = $preset->name ? $preset->name.' · '.$suffix : $suffix;
+                                                                        $g = $preset->fabricTypeVariation;
+                                                                        $group = $g ? trim((string) ($g->name ?? '')) : '';
+                                                                        $label = $group !== '' ? '['.$group.'] '.$base : $base;
 
-                                                                        return [$preset->id => ($preset->name ? $preset->name . ' · ' . $suffix : $suffix)];
+                                                                        return [$preset->id => $label];
                                                                     })
                                                                     ->all();
                                                             })
@@ -486,9 +534,9 @@ class ProductResource extends Resource
                                                                     return;
                                                                 }
                                                                 $label = trim((string) ($preset->name ?? ''));
-                                                                $set('option_value', $label !== '' ? $label : ('#' . $preset->id));
+                                                                $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
                                                                 if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', $preset->image_path);
+                                                                    $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
                                                             ->helperText('Arayüz Yönetimi → Renk varyasyonlarından tanımlı görsel seçilir ve aşağıdaki görsel alanı güncellenir. Özel yükleme kullanırsanız preset sıfırlanır.')
@@ -505,9 +553,9 @@ class ProductResource extends Resource
                                                                     ->orderBy('id')
                                                                     ->get()
                                                                     ->mapWithKeys(function (InterfaceFabricTypeVariation $preset): array {
-                                                                        $suffix = '#' . $preset->id;
+                                                                        $suffix = '#'.$preset->id;
 
-                                                                        return [$preset->id => ($preset->name ? $preset->name . ' · ' . $suffix : $suffix)];
+                                                                        return [$preset->id => ($preset->name ? $preset->name.' · '.$suffix : $suffix)];
                                                                     })
                                                                     ->all();
                                                             })
@@ -524,9 +572,9 @@ class ProductResource extends Resource
                                                                     return;
                                                                 }
                                                                 $label = trim((string) ($preset->name ?? ''));
-                                                                $set('option_value', $label !== '' ? $label : ('#' . $preset->id));
+                                                                $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
                                                                 if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', $preset->image_path);
+                                                                    $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
                                                             ->helperText('Arayüz Yönetimi → Kumaş türü varyasyonlarından görsel seçilir; özel yüklemede preset sıfırlanır.')
@@ -547,6 +595,13 @@ class ProductResource extends Resource
                                                             ->imagePreviewHeight(120)
                                                             ->maxFiles(1)
                                                             ->nullable()
+                                                            ->formatStateUsing(function ($state): ?array {
+                                                                if ($state === null || $state === '') {
+                                                                    return null;
+                                                                }
+
+                                                                return is_array($state) ? $state : [$state];
+                                                            })
                                                             ->helperText('Dosya doğrudan kaydedilir. Kayıtlı renk/kumaş preset’i seçtiyseniz preset görseli buraya yazılır; farklı bir dosya yüklerseniz preset bağlantısı kaldırılır.')
                                                             ->columnSpanFull(),
                                                         Forms\Components\Select::make('option_image_size')
@@ -561,10 +616,12 @@ class ProductResource extends Resource
                                                             ->helperText('Varyasyon görseli mağaza ürün sayfasında bu boyutta gösterilir.')
                                                             ->columnSpan(1),
                                                         Forms\Components\TextInput::make('price_delta')
-                                                            ->label('Fiyat farkı (₺)')
+                                                            ->label('Fiyat çarpanı (×)')
                                                             ->numeric()
-                                                            ->default(0)
+                                                            ->default(1)
+                                                            ->minValue(0)
                                                             ->step(0.01)
+                                                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde birim fiyat × 1,50 olur. 0 veya boş kayıtta 1 kabul edilir.')
                                                             ->columnSpan(1),
                                                         Forms\Components\TextInput::make('stock_quantity')
                                                             ->label('Stok miktarı')
@@ -589,12 +646,13 @@ class ProductResource extends Resource
                                                                 if (! $productId) {
                                                                     return [];
                                                                 }
+
                                                                 return ProductVariationOption::query()
                                                                     ->whereHas('variation', fn ($q) => $q->where('product_id', $productId))
                                                                     ->with('variation')
                                                                     ->orderBy('sort_order')
                                                                     ->get()
-                                                                    ->mapWithKeys(fn ($o) => [$o->id => ($o->variation ? $o->variation->name . ' — ' : '') . $o->option_value])
+                                                                    ->mapWithKeys(fn ($o) => [$o->id => ($o->variation ? $o->variation->name.' — ' : '').$o->option_value])
                                                                     ->all();
                                                             })
                                                             ->searchable()
@@ -605,8 +663,56 @@ class ProductResource extends Resource
                                                     ])
                                                     ->columns(2)
                                                     ->columnSpanFull(),
+                                                Forms\Components\Section::make('Tek başına seçim seçeneği')
+                                                    ->description('Çoklu seçim modunda bu metinle eşleşen seçenek seçilince diğer işaretler kalkar ve otomatik sonraki adıma geçilir.')
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('solo_option_value')
+                                                            ->label('Seçenek metni')
+                                                            ->placeholder('Örn: İstemiyorum')
+                                                            ->maxLength(255)
+                                                            ->nullable()
+                                                            ->helperText('Yukarıdaki seçeneklerden birinin değeriyle birebir aynı yazın. Boş bırakırsanız solo davranış olmaz.')
+                                                            ->columnSpanFull(),
+                                                    ])
+                                                    ->columns(1)
+                                                    ->columnSpanFull(),
                                             ])
                                             ->columns(2)
+                                            ->columnSpanFull(),
+                                        Forms\Components\Section::make('Mağaza: Beden tablosu')
+                                            ->description('Ürün sayfasında "Seçenekleri belirleyin" alanındaki beden tablolarının hangi koşulda görüneceğini buradan yönetirsiniz.')
+                                            ->schema([
+                                                Forms\Components\Select::make('size_table_trigger_variation')
+                                                    ->label('Beden tabloları için ek önkoşul varyasyon')
+                                                    ->placeholder('Yok — yalnızca tüm seçimler yeterli')
+                                                    ->options(function (Get $get): array {
+                                                        $names = collect($get('variations') ?? [])
+                                                            ->pluck('name')
+                                                            ->map(fn ($n) => trim((string) $n))
+                                                            ->filter();
+                                                        $livewire = Livewire::current();
+                                                        if ($livewire && method_exists($livewire, 'getRecord')) {
+                                                            $record = $livewire->getRecord();
+                                                            if ($record instanceof Product && $record->exists) {
+                                                                $names = $names->merge(
+                                                                    $record->variations()->orderBy('sort_order')->pluck('name')
+                                                                );
+                                                            }
+                                                        }
+                                                        $current = trim((string) ($get('size_table_trigger_variation') ?? ''));
+                                                        if ($current !== '' && ! $names->contains($current)) {
+                                                            $names->push($current);
+                                                        }
+
+                                                        return $names->unique()->filter()->sort()->values()
+                                                            ->mapWithKeys(fn (string $n): array => [$n => $n])
+                                                            ->all();
+                                                    })
+                                                    ->searchable()
+                                                    ->nullable()
+                                                    ->helperText('Boş bırakın: Müşteri tüm varyasyonları seçtikten sonra beden tablosu adımı açılır; hangi tablonun (Erkek/Kadın vb.) görüneceği Arayüz → Beden tabloları kaydındaki tetikleyici varyasyon/seçenek ile belirlenir. Bir varyasyon adı seçerseniz: mağazada bu varyasyonda da seçim yapılmadan beden tablo içerikleri gösterilmez (ör. önce kumaş seçilsin). Üstteki varyasyon adlarıyla birebir eşleşmelidir.'),
+                                            ])
+                                            ->columns(1)
                                             ->columnSpanFull(),
                                     ]),
                             ]),
@@ -629,7 +735,7 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
-                    ->formatStateUsing(fn ($state, $record) => $record?->category ? ($record->category->parent ? $record->category->parent->name . ' › ' : '') . $record->category->name : '—')
+                    ->formatStateUsing(fn ($state, $record) => $record?->category ? ($record->category->parent ? $record->category->parent->name.' › ' : '').$record->category->name : '—')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Liste sırası')
@@ -720,6 +826,129 @@ class ProductResource extends Resource
     }
 
     /**
+     * Ürün varyasyonu tipi "Kumaş Türü" olduğunda seçenek satırları için kullanılır.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function fabricVariationOptionsFromInterfacePresets(): array
+    {
+        return InterfaceFabricTypeVariation::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(function (InterfaceFabricTypeVariation $preset, int $index): array {
+                $label = trim((string) ($preset->name ?? ''));
+                if ($label === '') {
+                    $label = 'Kumaş #'.$preset->getKey();
+                }
+
+                return [
+                    'option_value' => $label,
+                    'interface_fabric_type_variation_id' => $preset->getKey(),
+                    'interface_color_variation_id' => null,
+                    'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
+                    'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
+                    'price_delta' => 0,
+                    'stock_quantity' => null,
+                    'parent_option_id' => null,
+                    'parent_option_ids' => null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Ürün varyasyonu tipi "Renk" olduğunda seçenek satırları — Arayüz renk kayıtları, kumaş türü grubuna göre sıralı.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function colorVariationOptionsFromInterfacePresets(): array
+    {
+        $presets = InterfaceColorVariation::query()
+            ->where('is_active', true)
+            ->whereNotNull('image_path')
+            ->where('image_path', '!=', '')
+            ->with('fabricTypeVariation')
+            ->get();
+
+        $sorted = $presets->sortBy(function (InterfaceColorVariation $c): string {
+            $ft = $c->fabricTypeVariation;
+            $nullOrGrouped = $ft === null ? '0' : '1';
+            $fabricSort = $ft !== null ? (int) ($ft->sort_order ?? 0) : 0;
+            $fabricKey = $ft !== null ? (int) $ft->getKey() : 0;
+            $colorSort = (int) ($c->sort_order ?? 0);
+
+            return $nullOrGrouped.'-'.sprintf('%08d-%010d-%08d-%010d', $fabricSort, $fabricKey, $colorSort, $c->getKey());
+        })->values();
+
+        return $sorted
+            ->map(function (InterfaceColorVariation $preset, int $index): array {
+                $label = trim((string) ($preset->name ?? ''));
+                if ($label === '') {
+                    $label = 'Renk #'.$preset->getKey();
+                }
+
+                return [
+                    'option_value' => $label,
+                    'interface_color_variation_id' => $preset->getKey(),
+                    'interface_fabric_type_variation_id' => null,
+                    'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
+                    'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
+                    'price_delta' => 0,
+                    'stock_quantity' => null,
+                    'parent_option_id' => null,
+                    'parent_option_ids' => null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Ürünün "Renk" varyasyonu seçeneklerini Arayüz → Renk varyasyonları kayıtlarıyla yeniler.
+     * Mağazada kumaş türüne göre renk filtrelemesi için interface_color_variation_id gerekir.
+     */
+    public static function syncColorVariationOptionsForVariation(ProductVariation $variation): int
+    {
+        if ((string) $variation->type !== 'color') {
+            return 0;
+        }
+
+        $rows = static::colorVariationOptionsFromInterfacePresets();
+        if ($rows === []) {
+            return 0;
+        }
+
+        $variation->options()->delete();
+
+        $created = 0;
+        foreach ($rows as $row) {
+            $image = $row['option_image'] ?? null;
+            if (is_array($image)) {
+                $image = $image[0] ?? null;
+            }
+
+            ProductVariationOption::query()->create([
+                'product_variation_id' => $variation->getKey(),
+                'option_value' => $row['option_value'],
+                'interface_color_variation_id' => $row['interface_color_variation_id'],
+                'interface_fabric_type_variation_id' => null,
+                'option_image' => is_string($image) && $image !== '' ? $image : null,
+                'option_color' => null,
+                'sort_order' => (int) ($row['sort_order'] ?? 0),
+                'price_delta' => (float) ($row['price_delta'] ?? 0),
+                'stock_quantity' => $row['stock_quantity'] ?? null,
+                'parent_option_id' => $row['parent_option_id'] ?? null,
+                'parent_option_ids' => $row['parent_option_ids'] ?? null,
+            ]);
+            $created++;
+        }
+
+        return $created;
+    }
+
+    /**
      * Varyasyon seçeneklerinde yüklenen görsel ve Arayüz renk / kumaş preset’lerini kayıt öncesi normalize eder.
      */
     public static function finalizeVariationOptionsInProductFormData(array $data): array
@@ -760,7 +989,7 @@ class ProductResource extends Resource
                         } else {
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $n = trim((string) ($preset->name ?? ''));
-                                $opt['option_value'] = $n !== '' ? $n : ('#' . $preset->id);
+                                $opt['option_value'] = $n !== '' ? $n : ('#'.$preset->id);
                             }
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
@@ -776,7 +1005,7 @@ class ProductResource extends Resource
                         } else {
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $n = trim((string) ($preset->name ?? ''));
-                                $opt['option_value'] = $n !== '' ? $n : ('#' . $preset->id);
+                                $opt['option_value'] = $n !== '' ? $n : ('#'.$preset->id);
                             }
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
@@ -854,5 +1083,4 @@ class ProductResource extends Resource
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
-
 }

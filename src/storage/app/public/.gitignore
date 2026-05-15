@@ -1,4 +1,5 @@
 *
 !.gitignore
+!.htaccess
 !interface_color_variations/
 !interface_color_variations/**

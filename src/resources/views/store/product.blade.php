@@ -32,6 +32,8 @@
 
     @php
         $hasVariations = $product->variations->isNotEmpty();
+        $showPurchasePanel = $product->isOnSale()
+            && ($product->stock_quantity === null || (int) $product->stock_quantity > 0);
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
         $minOrderProduct = $product->getMinimumOrderQuantity();
         $normalPriceTry = null;
@@ -53,10 +55,12 @@
     @endphp
 
     {{-- Sol: sütun genişliği görsele sıkı (auto + sabit genişlik); sağ kalan alan (1fr). Geniş boş sütun kalmaz. --}}
+    {{-- items-start + kısa sol sütun: sticky üst kutusu satırdan erken çıkar; lg:self-stretch ile sol hücre satır boyuna uzar ve sticky viewport’ta kalır --}}
     <div class="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-6 xl:gap-8 items-start">
-        {{-- Sol: ürün görseli (büyük ekranda scroll ile sabit / sticky) --}}
+        {{-- Sol lg+: galeri + “Seçilen seçenekler” birlikte sticky; sağdaki uzun varyasyon listesi kayarken sabit kalır --}}
         @php $displayImages = $product->display_image_urls; @endphp
-        <div class="w-full max-w-[30.8rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[19.8rem] xl:w-[22rem] 2xl:w-[34.2rem] shrink-0 lg:sticky lg:top-24 lg:z-[1] lg:self-start">
+        <div class="w-full max-w-[30.8rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[19.8rem] xl:w-[22rem] 2xl:w-[34.2rem] shrink-0 lg:self-stretch">
+        <div class="lg:sticky lg:top-24 lg:z-[1] lg:shrink-0 lg:self-start w-full">
         <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square max-h-[400px] lg:max-h-[min(88vh,572px)] lg:aspect-square relative shadow-2xl shadow-slate-300/30 ring-1 ring-slate-200/70 w-full">
             @if(count($displayImages) > 0)
                 <div id="product-gallery" class="relative w-full h-full flex items-center justify-center cursor-zoom-in" role="region" aria-label="{{ __('store.product.gallery_aria') }}" title="{{ __('store.product.zoom_hint') }}">
@@ -199,7 +203,7 @@
         @endpush
         @endif
 
-        @if($canSeePrices && $hasVariations && $product->isOnSale())
+        @if($hasVariations && $showPurchasePanel)
             {{-- Seçilen seçenekler özeti: ürün görselinin altında --}}
             <div id="variation-summary-wrap" class="mt-4 lg:mt-5 p-4 sm:p-5 rounded-xl border border-slate-200/90 bg-white shadow-sm">
                 <p class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
@@ -226,12 +230,15 @@
                 <p id="variation-summary-warning" class="mt-3 text-sm text-amber-700 font-medium hidden" role="alert">
                     {{ __('store.product.summary_cart_warning') }}
                 </p>
+                @if($canSeePrices)
                 <div id="variation-confirm-wrap" class="mt-4 hidden">
                     <label class="flex items-start gap-3 cursor-pointer group">
                         <input type="checkbox" id="variation-confirm-checkbox" name="variation_confirmed" value="1" form="add-to-cart-form" class="mt-1 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
                         <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">{{ __('store.product.variation_confirm_label') }}</span>
                     </label>
                 </div>
+                @endif
+                @if($canSeePrices && $baseTry !== null && $selectedCurrency)
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
                     <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
@@ -251,12 +258,21 @@
                         </div>
                     </div>
                 </div>
+                @endif
+                @auth
                 <button type="submit" id="add-to-cart-btn" form="add-to-cart-form" class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed" disabled>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     <span id="add-to-cart-btn-label">{{ __('store.product.add_to_cart_hint') }}</span>
                 </button>
+                @endauth
+                @guest
+                <button type="button" id="add-to-cart-login-cta" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20">
+                    {{ __('store.product.login_for_order') }}
+                </button>
+                @endguest
             </div>
         @endif
+        </div>{{-- /sticky: galeri + seçilen seçenekler --}}
         </div>
 
         {{-- Sağ: başlık, fiyat, açıklama ve sipariş / varyasyon alanı (sayfa ile birlikte kayar) --}}
@@ -309,14 +325,14 @@
                 </div>
             @endif
 
-    @if($canSeePrices && $product->isOnSale() && ($product->stock_quantity === null || (int) $product->stock_quantity > 0))
+    @if($showPurchasePanel)
     @php
         $minOrder = $product->getMinimumOrderQuantity();
         $availableStock = $product->stock_quantity !== null ? (int) $product->stock_quantity : 999999;
     @endphp
     <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="max-w-full">
-            <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5 lg:p-6 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}" data-size-table-trigger-variation="{{ e($product->size_table_trigger_variation ?? '') }}">
+            <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-2 sm:p-5 lg:p-2 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}" data-size-table-trigger-variation="{{ e($product->size_table_trigger_variation ?? '') }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 @if($hasVariations)
@@ -339,20 +355,39 @@
                         $variationSteps = [];
                         $addedNames = [];
                         $variationsCollection = $product->variations;
+                        $sizeTableTriggerVariation = trim((string) ($product->size_table_trigger_variation ?? ''));
                         while (count($variationSteps) < $variationsCollection->count()) {
-                            $found = false;
+                            $eligible = [];
                             foreach ($variationsCollection as $v) {
-                                if (in_array($v->name, $addedNames)) continue;
+                                if (in_array($v->name, $addedNames, true)) {
+                                    continue;
+                                }
                                 $dep = $v->depends_on ?? '';
-                                if ($dep === '' || in_array($dep, $addedNames)) {
-                                    $variationSteps[] = $v;
-                                    $addedNames[] = $v->name;
-                                    $found = true;
+                                if ($dep === '' || in_array($dep, $addedNames, true)) {
+                                    $eligible[] = $v;
                                 }
                             }
-                            if (! $found) break;
+                            if ($eligible === []) {
+                                break;
+                            }
+                            $chosen = null;
+                            if ($sizeTableTriggerVariation !== '') {
+                                foreach ($eligible as $v) {
+                                    if (strcasecmp(trim((string) $v->name), $sizeTableTriggerVariation) === 0) {
+                                        $chosen = $v;
+                                        break;
+                                    }
+                                }
+                            }
+                            if ($chosen === null) {
+                                $chosen = $eligible[0];
+                            }
+                            $variationSteps[] = $chosen;
+                            $addedNames[] = $chosen->name;
                         }
                         $totalSteps = count($variationSteps);
+                        $sizeStepIndex = $totalSteps;
+                        $customStepIndex = $totalSteps + 1;
                         $sizeTables = $sizeTables ?? collect();
                     @endphp
                     <section class="mt-3 lg:mt-4 w-full" aria-labelledby="variations-heading">
@@ -366,14 +401,17 @@
                                 </h2>
                                 <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">{{ __('store.product.variations_subtitle') }}</p>
                             </div>
-                            <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
+                            <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5" data-customization-step-index="{{ $customStepIndex }}" data-size-step-index="{{ $sizeStepIndex }}">
                                 @foreach($variationSteps as $stepIndex => $variation)
                                     @php $isDependent = !empty($variation->depends_on); @endphp
                                     <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-3 lg:mt-4' }} {{ $isDependent ? 'dependent-variation-block' : '' }}"
                                          data-variation-name="{{ $variation->name }}"
+                                         data-variation-type="{{ $variation->type }}"
                                          data-depends-on="{{ $variation->depends_on ?? '' }}"
                                          data-step-index="{{ $stepIndex }}"
                                          data-replace-main-gallery="{{ $variation->replace_main_gallery_image ? '1' : '0' }}"
+                                         data-allows-multiple="{{ $variation->allows_multiple ? '1' : '0' }}"
+                                         data-multi-confirmed="0"
                                          @if($isDependent) style="display: none;" @endif>
                                         <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
                                             <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10 transition-colors duration-300">{{ $stepIndex + 1 }}</span>
@@ -396,9 +434,14 @@
                                     @foreach($variation->options as $option)
                                         @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
+                                        @php
+                                            $colorFabricGroupId = ($variation->type === 'color')
+                                                ? optional($option->interfaceColorVariation)->interface_fabric_type_variation_id
+                                                : null;
+                                        @endphp
                                         @if(($variation->type === 'image' || $variation->type === 'color' || $variation->type === 'fabric') && $option->option_image)
-                                            @php $optionImageUrl = Storage::url($option->option_image); $imgSize = $option->option_image_size ?? 'medium'; $imgSizeClass = match($imgSize) { 'small' => 'w-14 h-14 sm:w-16 sm:h-16', 'large' => 'w-28 h-28 sm:w-32 sm:h-32', default => 'w-20 h-20 sm:w-24 sm:h-24' }; $minWClass = match($imgSize) { 'small' => 'min-w-[72px] sm:min-w-[88px]', 'large' => 'min-w-[120px] sm:min-w-[140px]', default => 'min-w-[88px] sm:min-w-[110px]' }; $labelMaxW = match($imgSize) { 'small' => 'max-w-[80px] sm:max-w-[88px]', 'large' => 'max-w-[120px] sm:max-w-[140px]', default => 'max-w-[96px] sm:max-w-[110px]' }; @endphp
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}">
+                                            @php $optionImageUrl = \App\Support\MediaUrl::public($option->option_image); $imgSize = $option->option_image_size ?? 'medium'; $imgSizeClass = match($imgSize) { 'small' => 'w-14 h-14 sm:w-16 sm:h-16', 'large' => 'w-28 h-28 sm:w-32 sm:h-32', default => 'w-20 h-20 sm:w-24 sm:h-24' }; $minWClass = match($imgSize) { 'small' => 'min-w-[72px] sm:min-w-[88px]', 'large' => 'min-w-[120px] sm:min-w-[140px]', default => 'min-w-[88px] sm:min-w-[110px]' }; $labelMaxW = match($imgSize) { 'small' => 'max-w-[80px] sm:max-w-[88px]', 'large' => 'max-w-[120px] sm:max-w-[140px]', default => 'max-w-[96px] sm:max-w-[110px]' }; @endphp
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" @if($variation->type === 'fabric') data-fabric-preset-id="{{ $option->interface_fabric_type_variation_id ?? '' }}" @endif @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>
                                                 <span class="relative inline-block group">
                                                     <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="{{ $imgSizeClass }} object-cover rounded-xl">
                                                     <span class="variation-zoom-btn absolute top-1 right-1 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
@@ -408,32 +451,44 @@
                                                 <span class="text-sm font-medium text-slate-600 mt-2 w-full {{ $labelMaxW }} text-center break-words leading-tight">{{ $option->option_value }}</span>
                                             </button>
                                         @elseif($variation->type === 'color' && $option->option_color)
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? Storage::url($option->option_image) : '' }}" title="{{ $option->option_value }}">
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" title="{{ $option->option_value }}">
                                                 <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $option->option_color }}"></span>
                                                 <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $option->option_value }}</span>
                                             </button>
                                         @else
-                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? Storage::url($option->option_image) : '' }}">{{ $option->option_value }}</button>
+                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" @if($variation->type === 'fabric') data-fabric-preset-id="{{ $option->interface_fabric_type_variation_id ?? '' }}" @endif @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>{{ $option->option_value }}</button>
                                         @endif
                                     @endforeach
                                                 </div>
+                                                @if($variation->allows_multiple)
+                                                    <div class="variation-multi-continue-wrap mt-4 pt-3 border-t border-slate-100">
+                                                        <p class="text-xs text-slate-500 mb-2">{{ __('store.product.variation_multi_hint') }}</p>
+                                                        <button type="button" class="variation-multi-continue-btn w-full py-2.5 sm:py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                                            {{ __('store.product.variation_continue') }}
+                                                        </button>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 @endforeach
-                                {{-- Son step: Beden Tablosu (sadece burada) --}}
-                                <div class="variation-step-panel flex flex-row gap-0 mt-3 lg:mt-4" data-step-index="{{ $totalSteps }}">
+                                {{-- Beden / sipariş adeti — özelleştirmeden önce (zorunlu adım: Devam et) --}}
+                                <div class="variation-step-panel flex flex-row gap-0 mt-3 lg:mt-4"
+                                     data-step-index="{{ $sizeStepIndex }}"
+                                     data-size-step-panel="1"
+                                     data-size-step-confirmed="0">
                                     <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
-                                        <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10">{{ $totalSteps + 1 }}</span>
+                                        <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10">{{ $sizeStepIndex + 1 }}</span>
+                                        <div class="w-0.5 flex-1 min-h-[6px] -mt-0.5 -mb-4 pb-4 bg-slate-200 rounded-full self-center" aria-hidden="true"></div>
                                     </div>
                                     <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden -ml-px shadow-sm">
-                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $totalSteps }}" aria-label="{{ __('store.product.size_table_dot_aria') }}">
+                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $sizeStepIndex }}" aria-label="{{ __('store.product.size_table_dot_aria') }}">
                                             <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ __('store.product.size_table_heading') }}</span>
                                             <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                         </button>
                                         {{-- İçerik sadece tüm varyasyonlar seçildikten sonra görünür; hangi tablo gösterileceği JS ile güncellenir --}}
                                         <div class="variation-step-full size-table-step-content p-3.5 sm:p-4 lg:px-5 lg:py-4 hidden">
-                                            @foreach($sizeTables as $sizeTable)
+                                            @forelse($sizeTables as $sizeTable)
                                             <div id="{{ $sizeTable->slug }}-size-table-wrap" class="hidden mt-4 first:mt-0 size-table-wrap" data-slug="{{ $sizeTable->slug }}" data-trigger-variation="{{ e($sizeTable->trigger_variation_name ?? '') }}" data-trigger-value="{{ e($sizeTable->trigger_option_value ?? '') }}">
                                                 <p class="text-base sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4 flex items-center gap-2">
                                                     <span class="h-px flex-1 max-w-[40px] rounded-full bg-primary-200"></span>
@@ -479,7 +534,128 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            @endforeach
+                                            @empty
+                                            <p class="text-sm text-slate-600 mb-4">{{ __('store.product.size_step_simple_qty_hint') }}</p>
+                                            @endforelse
+                                            <div id="size-step-continue-wrap" class="mt-4 pt-3 border-t border-slate-100">
+                                                <button type="button" id="size-step-continue-btn" class="w-full py-2.5 sm:py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                                    {{ __('store.product.variation_continue') }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Özelleştirme — son zorunlu adım (atlanamaz) --}}
+                                <div class="variation-step-panel variation-customization-panel flex flex-row gap-0 mt-3 lg:mt-4"
+                                     data-step-index="{{ $customStepIndex }}"
+                                     data-customization-panel="1"
+                                     data-customization-confirmed="0">
+                                    <div class="variation-timeline-cell flex flex-col items-center w-10 sm:w-11 shrink-0 pt-3 sm:pt-3.5">
+                                        <span class="variation-step-num flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ring-2 ring-white sm:ring-4 bg-slate-200 text-slate-600 shadow-sm z-10 transition-colors duration-300">{{ $customStepIndex + 1 }}</span>
+                                    </div>
+                                    <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
+                                        <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $customStepIndex }}" aria-label="{{ __('store.product.customize_product') }}">
+                                            <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ __('store.product.customize_product') }}</span>
+                                            <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
+                                        </button>
+                                        <div class="variation-step-summary hidden flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="text-slate-500 text-sm">{{ __('store.product.customize_product') }}:</span>
+                                                <span class="variation-step-summary-value font-medium text-slate-800">—</span>
+                                            </div>
+                                            <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.change') }}</button>
+                                        </div>
+                                        <div class="variation-step-full customization-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4 hidden">
+                                            <p class="text-sm text-slate-600 leading-snug mb-4">{{ __('store.product.customization_step_intro') }}</p>
+                                            <p class="text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.customization_table_caption') }}</p>
+                                            @php
+                                                $customizationPrintOptions = [
+                                                    'emprime' => __('store.product.customization_print_emprime'),
+                                                    'dtf' => __('store.product.customization_print_dtf'),
+                                                    'direct_digital' => __('store.product.customization_print_direct_digital'),
+                                                    'embroidery' => __('store.product.customization_print_embroidery'),
+                                                ];
+                                                $customizationDefaultPrint = 'emprime';
+                                            @endphp
+                                            <div id="product-customization-table" class="mb-5 space-y-3">
+                                                <div class="hidden items-center gap-3 text-left sm:flex sm:rounded-xl sm:bg-slate-100/90 sm:px-4 sm:py-2.5">
+                                                    <div class="flex w-11 shrink-0 justify-center" aria-hidden="true">
+                                                        <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">{{ __('store.product.customization_col_select') }}</span>
+                                                    </div>
+                                                    <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-3 sm:grid-cols-11 sm:items-center">
+                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_position') }}</div>
+                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_dimensions') }}</div>
+                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-2">{{ __('store.product.customization_col_colors') }}</div>
+                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_print') }}</div>
+                                                    </div>
+                                                </div>
+                                                @for ($cr = 1; $cr <= 9; $cr++)
+                                                    @php
+                                                        $k = 'customization_row'.$cr.'_konum';
+                                                        $d = 'customization_row'.$cr.'_dims';
+                                                        $re = 'customization_row'.$cr.'_renk';
+                                                        $clKonum = __('store.product.'.$k);
+                                                        $dimsStr = __('store.product.'.$d);
+                                                        $dimParts = preg_split('/\s*[×x]\s*/ui', trim((string) $dimsStr), 2);
+                                                        $defEn = isset($dimParts[0]) ? trim(str_replace(',', '.', $dimParts[0])) : '';
+                                                        $defBoy = isset($dimParts[1]) ? trim(str_replace(',', '.', $dimParts[1])) : '';
+                                                        $defRenk = (int) preg_replace('/\D/', '', (string) __('store.product.'.$re));
+                                                        if ($defRenk < 1 || $defRenk > 7) {
+                                                            $defRenk = 3;
+                                                        }
+                                                    @endphp
+                                                    <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-3 sm:gap-4 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
+                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $cr }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonum }}">
+                                                        <span class="pointer-events-none relative flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-gradient-to-b from-white to-slate-50 shadow-inner transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-gradient-to-br peer-checked:from-primary-500 peer-checked:to-primary-600 peer-checked:shadow-lg peer-checked:shadow-primary-500/40 peer-checked:ring-4 peer-checked:ring-primary-400/30 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                        </span>
+                                                        <div class="min-w-0 flex-1 rounded-2xl border border-slate-200/90 bg-slate-50/40 p-3.5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-white hover:shadow-md peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-500 sm:p-4 peer-checked:border-primary-500 peer-checked:bg-gradient-to-br peer-checked:from-primary-50 peer-checked:via-white peer-checked:to-emerald-50/40 peer-checked:shadow-lg peer-checked:shadow-primary-500/10 peer-checked:ring-2 peer-checked:ring-primary-400/25">
+                                                            <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-11 sm:items-center sm:gap-x-3 sm:gap-y-0">
+                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
+                                                                    <span class="mb-1 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_position') }}</span>
+                                                                    <span class="customization-konum-text text-center text-sm font-semibold leading-snug text-slate-600 transition-colors sm:text-left">{{ $clKonum }}</span>
+                                                                </div>
+                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
+                                                                    <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_dimensions') }}</span>
+                                                                    <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-center">
+                                                                        <span class="sr-only">{{ __('store.product.customization_dim_en') }}</span>
+                                                                        <input type="number" inputmode="decimal" min="0" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-10 w-[4.85rem] shrink-0 rounded-xl border border-slate-300/90 bg-white px-2 text-center text-sm tabular-nums leading-none text-slate-800 shadow-sm transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_en') }}, {{ $clKonum }}">
+                                                                        <span class="flex h-10 shrink-0 select-none items-center justify-center text-slate-400" aria-hidden="true">×</span>
+                                                                        <span class="sr-only">{{ __('store.product.customization_dim_boy') }}</span>
+                                                                        <input type="number" inputmode="decimal" min="0" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-10 w-[4.85rem] shrink-0 rounded-xl border border-slate-300/90 bg-white px-2 text-center text-sm tabular-nums leading-none text-slate-800 shadow-sm transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ $clKonum }}">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-2">
+                                                                    <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_colors') }}</span>
+                                                                    <div class="flex justify-center sm:justify-center">
+                                                                        <select name="customization_row_{{ $cr }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full max-w-[7rem] rounded-xl border border-slate-300/90 bg-white px-3 text-center text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25 sm:max-w-[6.5rem]" aria-label="{{ __('store.product.customization_col_colors') }}, {{ $clKonum }}">
+                                                                            @for ($ci = 1; $ci <= 7; $ci++)
+                                                                                <option value="{{ $ci }}" {{ (int) $ci === (int) $defRenk ? 'selected' : '' }}>{{ $ci }}</option>
+                                                                            @endfor
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
+                                                                    <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_print') }}</span>
+                                                                    <div class="flex justify-center">
+                                                                        <select name="customization_row_{{ $cr }}_baski" data-default-baski="{{ $customizationDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-xl border border-slate-300/90 bg-white px-3 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_col_print') }}, {{ $clKonum }}">
+                                                                            @foreach ($customizationPrintOptions as $pSlug => $pLabel)
+                                                                                <option value="{{ $pSlug }}" {{ $pSlug === $customizationDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                @endfor
+                                            </div>
+                                            <label for="product-customization-notes-field" class="block text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.customization_panel_title') }}</label>
+                                            <textarea id="product-customization-notes-field" rows="3" maxlength="2000" class="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-500/20" placeholder="{{ __('store.product.customization_notes_placeholder') }}"></textarea>
+                                            <p class="mt-2 text-xs text-slate-500">{{ __('store.product.customization_notes_footer') }}</p>
+                                            <button type="button" id="customization-continue-btn" disabled class="mt-4 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                                {{ __('store.product.variation_continue') }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -520,10 +696,17 @@
                             </div>
                         </div>
                     @endif
+                    @auth
                     <button type="submit" id="add-to-cart-btn" class="mt-4 lg:mt-5 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         {{ __('store.product.add_to_cart') }}
                     </button>
+                    @endauth
+                    @guest
+                    <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="mt-4 lg:mt-5 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md shadow-primary-600/20">
+                        {{ __('store.product.login_for_order') }}
+                    </button>
+                    @endguest
                 @endif
             </form>
 
@@ -547,7 +730,7 @@
             </div>
         </div>
     </section>
-    @elseif($canSeePrices && !$product->isOnSale())
+    @elseif(!$product->isOnSale())
     <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
@@ -562,7 +745,7 @@
             </div>
         </div>
     </section>
-    @elseif($canSeePrices && $product->stock_quantity !== null && (int) $product->stock_quantity === 0)
+    @elseif($product->stock_quantity !== null && (int) $product->stock_quantity === 0)
     <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.stock_label_short') }}">
         <div class="w-full">
             <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
@@ -576,10 +759,12 @@
         </div>
     </div>
 
-    @if($canSeePrices && $hasVariations)
+    @if($hasVariations && $showPurchasePanel)
         @php
             $storeProductUi = [
                 'summary_select_prompt' => __('store.product.summary_select_prompt'),
+                'variation_continue' => __('store.product.variation_continue'),
+                'variation_multi_hint' => __('store.product.variation_multi_hint'),
                 'add_to_cart' => __('store.product.add_to_cart'),
                 'add_to_cart_hint' => __('store.product.add_to_cart_hint'),
                 'summary_total_qty' => __('store.product.summary_total_qty'),
@@ -591,6 +776,9 @@
                 'warn_stock_title' => __('store.product.warn_stock_title'),
                 'warn_stock_desc_breakdown' => __('store.product.warn_stock_desc_breakdown'),
                 'warn_stock_desc_simple' => __('store.product.warn_stock_desc_simple'),
+                'customization_summary_empty' => __('store.product.customization_summary_empty'),
+                'customization_summary_section_label' => __('store.product.customization_summary_section_label'),
+                'customization_colors_unit' => __('store.product.customization_colors_unit'),
             ];
         @endphp
         <script>window.storeProductUi = @json($storeProductUi);</script>
@@ -598,69 +786,301 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var PU = window.storeProductUi || {};
-                    var priceEl = document.getElementById('product-price');
                     var variationInput = document.getElementById('variation-data-input');
-                    if (!priceEl) return;
+                    if (!variationInput) return;
 
-                    var baseTry = parseFloat(priceEl.getAttribute('data-base-try')) || 0;
-                    var rate = parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1;
-                    var symbol = priceEl.getAttribute('data-currency-symbol') || '₺';
-                    var code = priceEl.getAttribute('data-currency-code') || 'TRY';
+                    function getVariationStepsMeta() {
+                        var wrap = document.getElementById('product-variations');
+                        if (!wrap) return { customizationIdx: -1, sizeIdx: -1 };
+                        var c = wrap.getAttribute('data-customization-step-index');
+                        var s = wrap.getAttribute('data-size-step-index');
+                        return {
+                            customizationIdx: c !== null && c !== '' ? parseInt(c, 10) : -1,
+                            sizeIdx: s !== null && s !== '' ? parseInt(s, 10) : -1
+                        };
+                    }
+
+                    function customizationRowPayloadFromCard(row, cb) {
+                        if (!row) return null;
+                        var enInp = row.querySelector('.customization-dim-en');
+                        var boyInp = row.querySelector('.customization-dim-boy');
+                        var renkSel = row.querySelector('.customization-color-count');
+                        var printSel = row.querySelector('.customization-print-tech');
+                        var en = enInp ? String(enInp.value || '').trim().replace(',', '.') : '';
+                        var boy = boyInp ? String(boyInp.value || '').trim().replace(',', '.') : '';
+                        var enDisp = en !== '' ? en : '—';
+                        var boyDisp = boy !== '' ? boy : '—';
+                        var en_boy_cm = enDisp + ' × ' + boyDisp;
+                        var renk_sayisi = renkSel ? String(renkSel.value || '').trim() : '';
+                        var baski_slug = printSel ? String(printSel.value || '').trim() : '';
+                        var baski_teknigi = '';
+                        if (printSel && printSel.selectedIndex >= 0 && printSel.options[printSel.selectedIndex]) {
+                            baski_teknigi = String(printSel.options[printSel.selectedIndex].textContent || '').trim();
+                        }
+                        return {
+                            row_id: String(cb && cb.value ? cb.value : ''),
+                            konum: row.getAttribute('data-konum') || '',
+                            en_boy_cm: en_boy_cm,
+                            en_cm: en,
+                            boy_cm: boy,
+                            renk_sayisi: renk_sayisi,
+                            baski_slug: baski_slug,
+                            baski_teknigi: baski_teknigi
+                        };
+                    }
+
+                    function getCustomizationTablePayload() {
+                        var wrap = document.getElementById('product-customization-table');
+                        if (!wrap) return null;
+                        var checked = wrap.querySelectorAll('input.customization-row-check:checked');
+                        if (!checked.length) return null;
+                        var rows = [];
+                        checked.forEach(function(cb) {
+                            var row = cb.closest('.customization-row-card');
+                            var payload = customizationRowPayloadFromCard(row, cb);
+                            if (payload) rows.push(payload);
+                        });
+                        return rows.length ? { rows: rows } : null;
+                    }
+
+                    function customizationSummaryLineFromInputs() {
+                        var p = getCustomizationTablePayload();
+                        var ta = document.getElementById('product-customization-notes-field');
+                        var txt = ta ? String(ta.value || '').trim() : '';
+                        var parts = [];
+                        var unit = (PU.customization_colors_unit || '').trim();
+                        if (p && p.rows && p.rows.length) {
+                            p.rows.forEach(function(row) {
+                                var renkPart = row.renk_sayisi && unit ? (row.renk_sayisi + ' ' + unit) : (row.renk_sayisi || '');
+                                parts.push(row.konum + ' · ' + row.en_boy_cm + (renkPart ? ' · ' + renkPart : '') + ' · ' + row.baski_teknigi);
+                            });
+                        }
+                        if (txt) parts.push(txt);
+                        return parts.length ? parts.join(' — ') : (PU.customization_summary_empty || '—');
+                    }
+
+                    function updateCustomizationContinueEnabled() {
+                        var btn = document.getElementById('customization-continue-btn');
+                        if (!btn) return;
+                        var ok = document.querySelectorAll('#product-customization-table input.customization-row-check:checked').length > 0;
+                        btn.disabled = !ok;
+                    }
+
+                    function resetCustomizationTableFields() {
+                        var tbl = document.getElementById('product-customization-table');
+                        if (!tbl) return;
+                        tbl.querySelectorAll('.customization-row-card').forEach(function(card) {
+                            var en = card.querySelector('.customization-dim-en');
+                            var boy = card.querySelector('.customization-dim-boy');
+                            var sel = card.querySelector('.customization-color-count');
+                            var printSel = card.querySelector('.customization-print-tech');
+                            if (en) {
+                                var de = en.getAttribute('data-default');
+                                if (de !== null) en.value = de;
+                            }
+                            if (boy) {
+                                var db = boy.getAttribute('data-default');
+                                if (db !== null) boy.value = db;
+                            }
+                            if (sel) {
+                                var dr = sel.getAttribute('data-default-renk');
+                                if (dr !== null && dr !== '') sel.value = dr;
+                            }
+                            if (printSel) {
+                                var dp = printSel.getAttribute('data-default-baski');
+                                if (dp !== null && dp !== '') printSel.value = dp;
+                            }
+                        });
+                    }
+
+                    function syncVariationJsonFromSelections() {
+                        if (!variationInput) return;
+                        var cust = null;
+                        var custNotes = undefined;
+                        var custTable = undefined;
+                        try {
+                            var prev = JSON.parse(variationInput.value || '{}');
+                            if (prev && typeof prev === 'object' && !Array.isArray(prev)) {
+                                if (prev.product_customization) cust = prev.product_customization;
+                                if (prev.product_customization_notes !== undefined) custNotes = prev.product_customization_notes;
+                                if (prev.product_customization_table !== undefined) custTable = prev.product_customization_table;
+                            }
+                        } catch (e) {}
+                        var fresh = getSelectedOptions();
+                        if (cust) fresh.product_customization = cust;
+                        if (custNotes !== undefined) fresh.product_customization_notes = custNotes;
+                        if (custTable !== undefined) fresh.product_customization_table = custTable;
+                        variationInput.value = JSON.stringify(fresh);
+                    }
+
+                    function applyCustomizationChoiceToVariationInput() {
+                        if (!variationInput) return;
+                        var vd = {};
+                        try {
+                            vd = JSON.parse(variationInput.value || '{}');
+                            if (typeof vd !== 'object' || vd === null || Array.isArray(vd)) vd = {};
+                        } catch (e) {
+                            vd = {};
+                        }
+                        var sel = getSelectedOptions();
+                        Object.keys(sel).forEach(function(k) {
+                            vd[k] = sel[k];
+                        });
+                        delete vd.product_customization;
+                        delete vd.product_customization_notes;
+                        delete vd.product_customization_table;
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        if (custPanel && (custPanel.getAttribute('data-customization-confirmed') || '') === '1') {
+                            vd.product_customization = 'completed';
+                            var ta = document.getElementById('product-customization-notes-field');
+                            vd.product_customization_notes = ta ? String(ta.value || '').trim() : '';
+                            var tp = getCustomizationTablePayload();
+                            if (tp) vd.product_customization_table = tp;
+                        }
+                        variationInput.value = JSON.stringify(vd);
+                    }
+
+                    function resetProductCustomizationUi() {
+                        var sizePanel = document.querySelector('[data-size-step-panel="1"]');
+                        if (sizePanel) sizePanel.setAttribute('data-size-step-confirmed', '0');
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        var ta = document.getElementById('product-customization-notes-field');
+                        if (custPanel) {
+                            custPanel.setAttribute('data-customization-confirmed', '0');
+                            var sum = custPanel.querySelector('.variation-step-summary');
+                            var sumVal = custPanel.querySelector('.variation-step-summary-value');
+                            if (sum) {
+                                sum.classList.add('hidden');
+                                sum.classList.remove('flex');
+                            }
+                            if (sumVal) sumVal.textContent = '—';
+                            var full = custPanel.querySelector('.customization-step-full');
+                            if (full) full.classList.add('hidden');
+                        }
+                        if (ta) ta.value = '';
+                        var custTbl = document.getElementById('product-customization-table');
+                        if (custTbl) custTbl.querySelectorAll('.customization-row-check').forEach(function(cb) { cb.checked = false; });
+                        resetCustomizationTableFields();
+                        updateCustomizationContinueEnabled();
+                        if (variationInput) {
+                            variationInput.value = JSON.stringify(getSelectedOptions());
+                        }
+                    }
+
+                    var priceEl = document.getElementById('product-price');
+                    var baseTry = priceEl ? parseFloat(priceEl.getAttribute('data-base-try')) || 0 : 0;
+                    var rate = priceEl ? parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1 : 1;
+                    var symbol = priceEl ? priceEl.getAttribute('data-currency-symbol') || '₺' : '₺';
+                    var code = priceEl ? priceEl.getAttribute('data-currency-code') || 'TRY' : 'TRY';
 
                     function formatPrice(num) {
                         if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
                         return symbol + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
                     }
 
+                    /** data-price-delta: DB’deki price_delta = çarpan; ≤0 veya geçersiz = 1 */
+                    function variationMultiplierFromAttr(el) {
+                        if (!el) return 1;
+                        var m = parseFloat(el.getAttribute('data-price-delta'));
+                        if (!isFinite(m) || m <= 0) return 1;
+                        return m;
+                    }
+
+                    function getCombinedVariationMultiplier() {
+                        var product = 1;
+                        document.querySelectorAll('.variation-step-panel[data-variation-name]').forEach(function(panel) {
+                            if (panel.style.display === 'none') return;
+                            var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
+                            if (isMulti) {
+                                panel.querySelectorAll('.product-option.option-selected').forEach(function(sel) {
+                                    if (sel.style.display === 'none') return;
+                                    product *= variationMultiplierFromAttr(sel);
+                                });
+                            } else {
+                                var sel = panel.querySelector('.product-option.option-selected');
+                                if (sel && sel.style.display !== 'none') {
+                                    product *= variationMultiplierFromAttr(sel);
+                                }
+                            }
+                        });
+                        return product;
+                    }
+
+                    function countVisibleSelectedOptions(panel) {
+                        var n = 0;
+                        panel.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                            if (b.style.display !== 'none') n++;
+                        });
+                        return n;
+                    }
+
                     function getSelectedOptions() {
                         var list = getSelectedOptionsInStepOrder();
                         var selected = {};
-                        list.forEach(function(item) { selected[item.name] = item.value; });
+                        list.forEach(function(item) {
+                            if (item.isMulti && item.values && item.values.length) {
+                                selected[item.name] = item.values;
+                            } else {
+                                selected[item.name] = item.value;
+                            }
+                        });
                         return selected;
                     }
 
                     /** Seçilen varyasyonları adım sırasına göre döndürür; özet satırından da okur (gizli paneller dahil). */
                     function getSelectedOptionsInStepOrder() {
                         var list = [];
-                        var panels = Array.from(document.querySelectorAll('.variation-step-panel')).sort(function(a, b) {
+                        var panels = Array.from(document.querySelectorAll('.variation-step-panel[data-variation-name]')).sort(function(a, b) {
                             return (parseInt(a.getAttribute('data-step-index'), 10) || 0) - (parseInt(b.getAttribute('data-step-index'), 10) || 0);
                         });
                         panels.forEach(function(panel) {
                             if (panel.style.display === 'none') return;
                             var name = (panel.getAttribute('data-variation-name') || '').trim();
                             if (!name) return;
-                            var value = '';
-                            var delta = 0;
-                            var sel = panel.querySelector('.product-option.option-selected');
-                            if (sel && sel.style.display !== 'none') {
-                                delta = parseFloat(sel.getAttribute('data-price-delta')) || 0;
-                            }
+                            var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
+                            var confirmed = (panel.getAttribute('data-multi-confirmed') || '') === '1';
                             var summary = panel.querySelector('.variation-step-summary');
                             var summaryVal = panel.querySelector('.variation-step-summary-value');
-                            if (summary && summaryVal && !summary.classList.contains('hidden')) {
-                                value = (summaryVal.textContent || '').trim();
+                            if (isMulti) {
+                                if (!confirmed) return;
+                                var values = [];
+                                var delta = 1;
+                                panel.querySelectorAll('.product-option.option-selected').forEach(function(sel) {
+                                    if (sel.style.display === 'none') return;
+                                    values.push((sel.getAttribute('data-option') || '').trim());
+                                    delta *= variationMultiplierFromAttr(sel);
+                                });
+                                var displayVal = summary && summaryVal && !summary.classList.contains('hidden')
+                                    ? (summaryVal.textContent || '').trim()
+                                    : values.join(', ');
+                                if (values.length && displayVal && displayVal !== '—') {
+                                    list.push({ name: name, value: displayVal, values: values, priceDelta: delta, isMulti: true });
+                                }
                             } else {
-                                if (sel && sel.style.display !== 'none') value = (sel.getAttribute('data-option') || '').trim();
+                                var value = '';
+                                var delta = 1;
+                                var sel = panel.querySelector('.product-option.option-selected');
+                                if (sel && sel.style.display !== 'none') {
+                                    delta = variationMultiplierFromAttr(sel);
+                                }
+                                if (summary && summaryVal && !summary.classList.contains('hidden')) {
+                                    value = (summaryVal.textContent || '').trim();
+                                } else if (sel && sel.style.display !== 'none') {
+                                    value = (sel.getAttribute('data-option') || '').trim();
+                                }
+                                if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false });
                             }
-                            if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta });
                         });
                         return list;
                     }
 
-                    function getDeltaTotal() {
-                        var total = 0;
-                        document.querySelectorAll('.variation-step-panel').forEach(function(panel) {
-                            if (panel.style.display === 'none') return;
-                            var sel = panel.querySelector('.product-option.option-selected');
-                            if (sel) total += parseFloat(sel.getAttribute('data-price-delta')) || 0;
-                        });
-                        return total;
-                    }
-
                     function updatePriceAndInput() {
+                        if (variationInput) {
+                            syncVariationJsonFromSelections();
+                        }
                         if (!priceEl) return;
-                        var delta = getDeltaTotal();
-                        var unitTry = baseTry + delta;
+                        var mult = getCombinedVariationMultiplier();
+                        var unitTry = baseTry * mult;
                         var sizeInfo = getSizeQuantities();
                         var qty = Math.max(0, parseInt(sizeInfo.total, 10) || 0);
                         var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
@@ -678,8 +1098,8 @@
                         if (strikeEl) {
                             var normalAttr = priceEl.getAttribute('data-normal-try');
                             var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
-                            if (qty > 0 && !isNaN(normalTry) && normalTry > unitTry) {
-                                var oldLineTry = (normalTry + delta) * pricingWeight;
+                            if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
+                                var oldLineTry = normalTry * mult * pricingWeight;
                                 var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
                                 strikeEl.textContent = formatPrice(oldConverted);
                                 strikeEl.classList.remove('hidden');
@@ -688,21 +1108,33 @@
                                 strikeEl.classList.add('hidden');
                             }
                         }
-                        if (variationInput) {
-                            variationInput.value = JSON.stringify(getSelectedOptions());
-                        }
                     }
 
-                    function getSelectedOptionIdInVariation(variationName) {
+                    function getSelectedParentOptionIdsForVariation(variationName) {
                         var block = document.querySelector('.product-variation-block[data-variation-name="' + variationName + '"]');
-                        if (!block) return null;
+                        if (!block || block.style.display === 'none') return [];
+                        var isMulti = (block.getAttribute('data-allows-multiple') || '') === '1';
+                        var confirmed = (block.getAttribute('data-multi-confirmed') || '') === '1';
+                        if (isMulti && !confirmed) return [];
+                        if (isMulti) {
+                            var ids = [];
+                            block.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                                if (b.style.display === 'none') return;
+                                var id = b.getAttribute('data-option-id');
+                                if (id) ids.push(Number(id));
+                            });
+                            return ids;
+                        }
                         var selected = block.querySelector('.product-option.option-selected');
-                        if (selected && selected.style.display !== 'none') return selected.getAttribute('data-option-id');
-                        var firstVisible = block.querySelector('.product-option:not([style*="display: none"])');
-                        return firstVisible ? firstVisible.getAttribute('data-option-id') : null;
+                        if (selected && selected.style.display !== 'none') {
+                            var sid = selected.getAttribute('data-option-id');
+                            return sid ? [Number(sid)] : [];
+                        }
+                        return [];
                     }
 
-                    function filterDependentVariation(block, parentOptionId) {
+                    function filterDependentVariation(block, parentOptionIds) {
+                        var ids = parentOptionIds && parentOptionIds.length ? parentOptionIds : [];
                         var options = block.querySelectorAll('.product-option');
                         var visible = [];
                         options.forEach(function(opt) {
@@ -713,12 +1145,12 @@
                             }
                             var parentIdSingle = (opt.getAttribute('data-parent-option-id') || '').trim();
                             var show;
-                            if (parentOptionId === null || parentOptionId === undefined || parentOptionId === '') {
+                            if (ids.length === 0) {
                                 show = (parentIds.length === 0 && !parentIdSingle);
                             } else {
-                                var matchMulti = parentIds.length > 0 && parentIds.indexOf(Number(parentOptionId)) !== -1;
-                                var matchSingle = parentIdSingle && parentIdSingle === String(parentOptionId);
-                                show = matchMulti || matchSingle || (parentIds.length === 0 && !parentIdSingle);
+                                var matchArr = parentIds.length > 0 && ids.some(function(id) { return parentIds.indexOf(Number(id)) !== -1; });
+                                var matchSingle = parentIdSingle && ids.indexOf(Number(parentIdSingle)) !== -1;
+                                show = matchArr || matchSingle || (parentIds.length === 0 && !parentIdSingle);
                             }
                             opt.style.display = show ? '' : 'none';
                             if (show) visible.push(opt);
@@ -742,15 +1174,123 @@
                         }
                     }
 
-                    function allVisibleVariationsSelected() {
+                    /** Kumaş türü adımında seçilen arayüz preset id (interface_fabric_type_variations.id). */
+                    function getSelectedFabricPresetId() {
+                        var fabricBlock = document.querySelector('.product-variation-block[data-variation-type="fabric"]');
+                        if (!fabricBlock || fabricBlock.style.display === 'none') return null;
+                        var isMulti = (fabricBlock.getAttribute('data-allows-multiple') || '') === '1';
+                        var confirmed = (fabricBlock.getAttribute('data-multi-confirmed') || '') === '1';
+                        if (isMulti && !confirmed) return null;
+                        var sel = null;
+                        if (isMulti) {
+                            fabricBlock.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                                if (b.style.display === 'none') return;
+                                if (!sel) sel = b;
+                            });
+                        } else {
+                            sel = fabricBlock.querySelector('.product-option.option-selected');
+                            if (sel && sel.style.display === 'none') sel = null;
+                        }
+                        if (!sel) return null;
+                        var id = (sel.getAttribute('data-fabric-preset-id') || '').trim();
+                        return id === '' ? null : id;
+                    }
+
+                    /**
+                     * Tip Renk: Admin gruplaması (interface_color_variations.interface_fabric_type_variation_id).
+                     * Kumaş adımı varken: seçim yoksa yalnızca grupsuz renkler; kumaş seçilince yalnızca o gruba bağlı renkler (grupsuz gizlenir).
+                     */
+                    function filterColorOptionsByFabric() {
+                        if (!document.querySelector('.product-variation-block[data-variation-type="color"]')) return;
+                        var fabricStepExists = !!document.querySelector('.product-variation-block[data-variation-type="fabric"]');
+                        var preset = fabricStepExists ? getSelectedFabricPresetId() : null;
+
+                        document.querySelectorAll('.product-variation-block[data-variation-type="color"]').forEach(function(colorBlock) {
+                            if (colorBlock.style.display === 'none') return;
+                            var options = colorBlock.querySelectorAll('.product-option');
+                            options.forEach(function(opt) {
+                                var gid = (opt.getAttribute('data-color-fabric-group-id') || '').trim();
+                                if (!fabricStepExists) {
+                                    opt.style.display = '';
+                                    return;
+                                }
+                                if (preset === null) {
+                                    // Kumaş henüz seçilmedi: sadece grupsuz (tüm kumaşlar) renkler; gruplular kumaş seçiminden sonra
+                                    opt.style.display = gid === '' ? '' : 'none';
+                                    return;
+                                }
+                                // Kumaş seçildi: admindeki gruba göre yalnızca bu kumaş preset’ine bağlı renkler (grupsuzlar gizlenir)
+                                opt.style.display = gid !== '' && gid === String(preset) ? '' : 'none';
+                            });
+
+                            var visible = [];
+                            colorBlock.querySelectorAll('.product-option').forEach(function(opt) {
+                                if (opt.style.display !== 'none') visible.push(opt);
+                            });
+
+                            var currentSelected = colorBlock.querySelector('.product-option.option-selected');
+                            if (currentSelected && currentSelected.style.display === 'none') {
+                                var isMulti = (colorBlock.getAttribute('data-allows-multiple') || '') === '1';
+                                if (!isMulti) {
+                                    visible.forEach(function(b, i) {
+                                        setProductOptionVisual(b, i === 0);
+                                    });
+                                    if (visible.length) updatePanelSummary(colorBlock, (visible[0].getAttribute('data-option') || '').trim());
+                                } else {
+                                    colorBlock.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                                        if (b.style.display === 'none') setProductOptionVisual(b, false);
+                                    });
+                                    colorBlock.setAttribute('data-multi-confirmed', '0');
+                                    updatePanelSummaryMulti(colorBlock);
+                                }
+                            }
+                        });
+                    }
+
+                    function allProductVariationBlocksComplete() {
                         var blocks = document.querySelectorAll('.product-variation-block');
                         for (var i = 0; i < blocks.length; i++) {
                             var block = blocks[i];
                             if (block.style.display === 'none') continue;
-                            var selected = block.querySelector('.product-option.option-selected');
-                            if (!selected || selected.style.display === 'none') return false;
+                            var isMulti = (block.getAttribute('data-allows-multiple') || '') === '1';
+                            if (isMulti) {
+                                if ((block.getAttribute('data-multi-confirmed') || '') !== '1') return false;
+                                if (countVisibleSelectedOptions(block) < 1) return false;
+                            } else {
+                                var selected = block.querySelector('.product-option.option-selected');
+                                if (!selected || selected.style.display === 'none') return false;
+                            }
                         }
                         return true;
+                    }
+
+                    function allVisibleVariationsSelected() {
+                        if (!allProductVariationBlocksComplete()) return false;
+                        var sizePanel = document.querySelector('[data-size-step-panel="1"]');
+                        if (sizePanel && (sizePanel.getAttribute('data-size-step-confirmed') || '') !== '1') return false;
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        if (!custPanel) return true;
+                        return (custPanel.getAttribute('data-customization-confirmed') || '') === '1';
+                    }
+
+                    function updateMultiContinueUi(container) {
+                        var wrap = container.querySelector('.variation-multi-continue-wrap');
+                        var btn = container.querySelector('.variation-multi-continue-btn');
+                        if (!btn) return;
+                        var n = countVisibleSelectedOptions(container);
+                        var confirmed = (container.getAttribute('data-multi-confirmed') || '') === '1';
+                        if (wrap) wrap.classList.toggle('hidden', confirmed);
+                        btn.disabled = n < 1;
+                    }
+
+                    function updatePanelSummaryMulti(container) {
+                        var vals = [];
+                        container.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                            if (b.style.display === 'none') return;
+                            vals.push((b.getAttribute('data-option') || '').trim());
+                        });
+                        updatePanelSummary(container, vals.join(', ') || '—');
+                        updateMultiContinueUi(container);
                     }
 
                     function getSizeQuantities() {
@@ -822,17 +1362,35 @@
                         ordered.forEach(function(item) {
                             rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td></tr>');
                         });
-                        if (ordered.length > 0) {
-                            if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
-                                Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
-                                    var qty = sizeInfo.sizeQuantities[size];
-                                    if (qty > 0) {
-                                        rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
-                                    }
-                                });
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.summary_total_qty) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
-                            } else {
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.qty_row_label) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                        var custPayload = getCustomizationTablePayload();
+                        var hasCustRows = !!(custPayload && custPayload.rows && custPayload.rows.length);
+                        if (hasCustRows) {
+                            var sec = (PU.customization_summary_section_label || '').trim();
+                            if (sec) {
+                                rows.push('<tr class="border-b border-slate-100 bg-slate-50/60"><td colspan="2" class="py-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">' + escapeHtml(sec) + '</td></tr>');
+                            }
+                            var colUnit = (PU.customization_colors_unit || '').trim();
+                            custPayload.rows.forEach(function(r) {
+                                var renkPart = r.renk_sayisi && colUnit ? (String(r.renk_sayisi) + ' ' + colUnit) : (r.renk_sayisi || '');
+                                var detail = (r.en_boy_cm != null && r.en_boy_cm !== '') ? String(r.en_boy_cm) : '—';
+                                if (renkPart) detail += ' · ' + renkPart;
+                                detail += ' · ' + (r.baski_teknigi || '');
+                                rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(r.konum || '') + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(detail) + '</td></tr>');
+                            });
+                        }
+                        if (ordered.length > 0 || hasCustRows) {
+                            if (ordered.length > 0) {
+                                if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
+                                    Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
+                                        var qty = sizeInfo.sizeQuantities[size];
+                                        if (qty > 0) {
+                                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                        }
+                                    });
+                                    rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.summary_total_qty) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                } else {
+                                    rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.qty_row_label) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                }
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
@@ -846,6 +1404,12 @@
                             confirmCheckbox.checked = false;
                         }
                         var allSelected = allVisibleVariationsSelected();
+                        if (!allProductVariationBlocksComplete()) {
+                            resetProductCustomizationUi();
+                            if (totalVariationSteps > 0 && typeof clampVariationStepIndex === 'function' && typeof showVariationStep === 'function') {
+                                showVariationStep(clampVariationStepIndex(currentVariationStep));
+                            }
+                        }
                         var confirmed = !confirmCheckbox || confirmCheckbox.checked;
                         var canSubmit = allSelected && confirmed;
                         var btnLabel = document.getElementById('add-to-cart-btn-label');
@@ -889,9 +1453,19 @@
                             var panel = panels[pi];
                             if (panel.style.display === 'none') continue;
                             if ((panel.getAttribute('data-replace-main-gallery') || '') !== '1') continue;
-                            var sel = panel.querySelector('.product-option.option-selected');
-                            if (!sel || sel.style.display === 'none') continue;
-                            var u = (sel.getAttribute('data-option-image-url') || '').trim();
+                            var isMultiGal = (panel.getAttribute('data-allows-multiple') || '') === '1';
+                            var u = '';
+                            if (isMultiGal) {
+                                panel.querySelectorAll('.product-option.option-selected').forEach(function(el) {
+                                    if (el.style.display === 'none') return;
+                                    var cu = (el.getAttribute('data-option-image-url') || '').trim();
+                                    if (cu && !u) u = cu;
+                                });
+                            } else {
+                                var sel = panel.querySelector('.product-option.option-selected');
+                                if (!sel || sel.style.display === 'none') continue;
+                                u = (sel.getAttribute('data-option-image-url') || '').trim();
+                            }
                             if (u) {
                                 replacementUrl = u;
                                 break;
@@ -911,9 +1485,15 @@
                         document.querySelectorAll('.product-variation-block').forEach(function(block) {
                             var dependsOn = (block.getAttribute('data-depends-on') || '').trim();
                             if (!dependsOn) return;
-                            var parentId = getSelectedOptionIdInVariation(dependsOn);
-                            filterDependentVariation(block, parentId);
+                            var parentIds = getSelectedParentOptionIdsForVariation(dependsOn);
+                            if (parentIds.length === 0) {
+                                block.style.display = 'none';
+                                return;
+                            }
+                            block.style.display = '';
+                            filterDependentVariation(block, parentIds);
                         });
+                        filterColorOptionsByFabric();
                         updateSizeTableVisibility();
                         updateVariationSummaryAndButton();
                     }
@@ -926,19 +1506,57 @@
                         if (valEl) valEl.textContent = selectedValue || '—';
                     }
 
+                    function clampVariationStepIndex(requested) {
+                        var meta = getVariationStepsMeta();
+                        var n = parseInt(requested, 10);
+                        if (isNaN(n)) n = 0;
+                        if (meta.sizeIdx >= 0 && n >= meta.sizeIdx && !allProductVariationBlocksComplete()) {
+                            n = Math.max(0, meta.sizeIdx - 1);
+                        }
+                        if (meta.customizationIdx >= 0 && n >= meta.customizationIdx) {
+                            var sp = document.querySelector('[data-size-step-panel="1"]');
+                            var sz = sp && (sp.getAttribute('data-size-step-confirmed') || '') === '1';
+                            if (!allProductVariationBlocksComplete() || !sz) {
+                                n = meta.sizeIdx >= 0 ? meta.sizeIdx : Math.max(0, meta.customizationIdx - 1);
+                            }
+                        }
+                        return n;
+                    }
+
+                    function isVariationStepDotLocked(dotIndex) {
+                        var meta = getVariationStepsMeta();
+                        if (meta.sizeIdx >= 0 && dotIndex === meta.sizeIdx) {
+                            return !allProductVariationBlocksComplete();
+                        }
+                        if (meta.customizationIdx >= 0 && dotIndex === meta.customizationIdx) {
+                            var sp = document.querySelector('[data-size-step-panel="1"]');
+                            var sz = sp && (sp.getAttribute('data-size-step-confirmed') || '') === '1';
+                            return !allProductVariationBlocksComplete() || !sz;
+                        }
+                        return false;
+                    }
+
                     function showVariationStep(stepIndex) {
-                        currentVariationStep = stepIndex;
+                        var si = clampVariationStepIndex(stepIndex);
+                        currentVariationStep = si;
                         document.querySelectorAll('.variation-step-panel').forEach(function(panel) {
                             var idx = parseInt(panel.getAttribute('data-step-index'), 10);
                             var summary = panel.querySelector('.variation-step-summary');
                             var full = panel.querySelector('.variation-step-full');
                             var card = panel.querySelector('.variation-step-card');
+                            var isCustPanel = (panel.getAttribute('data-customization-panel') || '') === '1';
+                            var custDone = isCustPanel && (panel.getAttribute('data-customization-confirmed') || '') === '1';
                             panel.style.display = '';
-                            if (idx === stepIndex) {
-                                if (summary) { summary.classList.add('hidden'); summary.classList.remove('flex'); }
-                                if (full) { full.classList.remove('hidden'); full.style.display = ''; }
+                            if (idx === si) {
+                                if (custDone && isCustPanel) {
+                                    if (summary) { summary.classList.remove('hidden'); summary.classList.add('flex'); }
+                                    if (full) { full.classList.add('hidden'); }
+                                } else {
+                                    if (summary) { summary.classList.add('hidden'); summary.classList.remove('flex'); }
+                                    if (full) { full.classList.remove('hidden'); full.style.display = ''; }
+                                }
                                 if (card) { card.classList.add('border-primary-400'); card.classList.remove('border-slate-200'); }
-                            } else if (idx < stepIndex) {
+                            } else if (idx < si) {
                                 if (summary) { summary.classList.remove('hidden'); summary.classList.add('flex'); }
                                 if (full && !full.classList.contains('size-table-step-content')) { full.classList.add('hidden'); }
                                 if (card) { card.classList.remove('border-primary-400'); card.classList.add('border-slate-200'); }
@@ -954,12 +1572,18 @@
                             var num = (panel ? panel.querySelector('.variation-step-num') : null) || dot.querySelector('.variation-step-num');
                             var check = dot.querySelector('.variation-step-check');
                             dot.classList.remove('bg-primary-50/80', 'border-primary-100', 'bg-emerald-50/80', 'bg-slate-50/80', 'opacity-60', 'cursor-not-allowed', 'pointer-events-none');
-                            if (i === stepIndex) {
+                            var locked = isVariationStepDotLocked(i);
+                            if (locked) {
+                                dot.classList.add('bg-slate-50/80', 'opacity-60', 'cursor-not-allowed', 'pointer-events-none');
+                                if (num) { num.classList.add('bg-slate-200', 'text-slate-600'); num.classList.remove('bg-primary-500', 'bg-emerald-500', 'text-white'); }
+                                if (check) check.classList.add('hidden');
+                                dot.setAttribute('aria-disabled', 'true');
+                            } else if (i === si) {
                                 dot.classList.add('bg-primary-50/80', 'border-primary-100');
                                 if (num) { num.classList.add('bg-primary-500', 'text-white'); num.classList.remove('bg-slate-200', 'text-slate-600', 'bg-emerald-500'); }
                                 if (check) check.classList.add('hidden');
                                 dot.removeAttribute('aria-disabled');
-                            } else if (i < stepIndex) {
+                            } else if (i < si) {
                                 dot.classList.add('bg-emerald-50/80');
                                 if (num) { num.classList.add('bg-emerald-500', 'text-white'); num.classList.remove('bg-primary-500', 'bg-slate-200', 'text-slate-600'); }
                                 if (check) check.classList.remove('hidden');
@@ -971,12 +1595,118 @@
                                 dot.setAttribute('aria-disabled', 'true');
                             }
                         });
+                        updateCustomizationContinueEnabled();
+                    }
+
+                    function invalidateCustomizationStepAfterVariationEdit() {
+                        var sizePanel = document.querySelector('[data-size-step-panel="1"]');
+                        if (sizePanel) sizePanel.setAttribute('data-size-step-confirmed', '0');
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        if (custPanel && (custPanel.getAttribute('data-customization-confirmed') || '') === '1') {
+                            custPanel.setAttribute('data-customization-confirmed', '0');
+                            var sum = custPanel.querySelector('.variation-step-summary');
+                            var sumVal = custPanel.querySelector('.variation-step-summary-value');
+                            if (sum) {
+                                sum.classList.add('hidden');
+                                sum.classList.remove('flex');
+                            }
+                            if (sumVal) sumVal.textContent = '—';
+                            var ctbl = document.getElementById('product-customization-table');
+                            if (ctbl) ctbl.querySelectorAll('.customization-row-check').forEach(function(cb) { cb.checked = false; });
+                            resetCustomizationTableFields();
+                            applyCustomizationChoiceToVariationInput();
+                        }
+                        showVariationStep(clampVariationStepIndex(currentVariationStep));
+                    }
+
+                    function maybeAdvanceVariationStepAfterSelection() {
+                        if (totalVariationSteps <= 0) return;
+                        var meta = getVariationStepsMeta();
+                        if (!allProductVariationBlocksComplete()) {
+                            var next = currentVariationStep + 1;
+                            if (meta.sizeIdx >= 0 && next >= meta.sizeIdx) {
+                                return;
+                            }
+                            if (currentVariationStep < totalVariationSteps - 1) {
+                                showVariationStep(next);
+                            }
+                            return;
+                        }
+                        var sizePanel = document.querySelector('[data-size-step-panel="1"]');
+                        var sizeConfirmed = sizePanel && (sizePanel.getAttribute('data-size-step-confirmed') || '') === '1';
+                        if (meta.sizeIdx >= 0 && !sizeConfirmed) {
+                            showVariationStep(meta.sizeIdx);
+                            return;
+                        }
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        var custConfirmed = custPanel && (custPanel.getAttribute('data-customization-confirmed') || '') === '1';
+                        if (meta.customizationIdx >= 0 && sizeConfirmed && !custConfirmed) {
+                            showVariationStep(meta.customizationIdx);
+                            return;
+                        }
+                        if (currentVariationStep < totalVariationSteps - 1) {
+                            showVariationStep(currentVariationStep + 1);
+                        } else if (allVisibleVariationsSelected()) {
+                            showVariationStep(totalVariationSteps - 1);
+                        }
+                    }
+
+                    function setProductOptionVisual(el, on) {
+                        el.classList.toggle('option-selected', on);
+                        el.classList.toggle('ring-2', on);
+                        el.classList.toggle('ring-primary-500', on);
+                        el.classList.toggle('border-primary-500', on);
+                        el.classList.toggle('bg-primary-50', on);
+                        el.classList.toggle('text-primary-700', on);
+                        el.classList.toggle('border-slate-300', !on);
                     }
 
                     function selectOption(btn) {
                         var variation = btn.getAttribute('data-variation');
                         var optionValue = btn.getAttribute('data-option') || '';
                         var container = btn.closest('.product-variation-block');
+                        if (!container) return;
+                        invalidateCustomizationStepAfterVariationEdit();
+                        var isMulti = (container.getAttribute('data-allows-multiple') || '') === '1';
+
+                        if (isMulti) {
+                            var isSolo = (btn.getAttribute('data-option-solo') || '') === '1';
+                            if (isSolo) {
+                                if (btn.classList.contains('option-selected') && countVisibleSelectedOptions(container) === 1) {
+                                    setProductOptionVisual(btn, false);
+                                    container.setAttribute('data-multi-confirmed', '0');
+                                    updatePanelSummaryMulti(container);
+                                    applyDependencyChain();
+                                    updateVariationSummaryAndButton();
+                                    return;
+                                }
+                                container.querySelectorAll('.product-option').forEach(function(b) {
+                                    if (b.style.display === 'none') return;
+                                    setProductOptionVisual(b, b === btn);
+                                });
+                                container.setAttribute('data-multi-confirmed', '1');
+                                updatePanelSummaryMulti(container);
+                                updateSizeTableVisibility();
+                                applyDependencyChain();
+                                maybeAdvanceVariationStepAfterSelection();
+                                updateVariationSummaryAndButton();
+                                return;
+                            }
+                            var turnOn = !btn.classList.contains('option-selected');
+                            if (turnOn) {
+                                container.querySelectorAll('.product-option.option-selected[data-option-solo="1"]').forEach(function(s) {
+                                    if (s.style.display === 'none') return;
+                                    setProductOptionVisual(s, false);
+                                });
+                            }
+                            setProductOptionVisual(btn, turnOn);
+                            container.setAttribute('data-multi-confirmed', '0');
+                            updatePanelSummaryMulti(container);
+                            applyDependencyChain();
+                            updateVariationSummaryAndButton();
+                            return;
+                        }
+
                         container.querySelectorAll('.product-option').forEach(function(b) {
                             if (b.style.display === 'none') return;
                             var on = b === btn;
@@ -991,16 +1721,12 @@
                         updatePanelSummary(container, optionValue);
                         updateSizeTableVisibility();
                         document.querySelectorAll('.product-variation-block[data-depends-on="' + variation + '"]').forEach(function(depBlock) {
-                            var parentId = btn.getAttribute('data-option-id');
+                            var pid = btn.getAttribute('data-option-id');
                             depBlock.style.display = '';
-                            filterDependentVariation(depBlock, parentId);
+                            filterDependentVariation(depBlock, pid ? [Number(pid)] : []);
                         });
                         applyDependencyChain();
-                        if (totalVariationSteps > 0 && currentVariationStep < totalVariationSteps - 1) {
-                            showVariationStep(currentVariationStep + 1);
-                        } else if (totalVariationSteps > 0 && allVisibleVariationsSelected()) {
-                            showVariationStep(totalVariationSteps - 1);
-                        }
+                        maybeAdvanceVariationStepAfterSelection();
                     }
 
                     document.querySelectorAll('.product-option').forEach(function(btn) {
@@ -1010,11 +1736,26 @@
                         });
                     });
 
+                    document.querySelectorAll('.variation-multi-continue-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var container = btn.closest('.product-variation-block');
+                            if (!container) return;
+                            if (countVisibleSelectedOptions(container) < 1) return;
+                            container.setAttribute('data-multi-confirmed', '1');
+                            updatePanelSummaryMulti(container);
+                            updateSizeTableVisibility();
+                            applyDependencyChain();
+                            maybeAdvanceVariationStepAfterSelection();
+                            updateVariationSummaryAndButton();
+                        });
+                    });
+
                     document.querySelectorAll('.variation-step-dot').forEach(function(dot) {
                         dot.addEventListener('click', function() {
                             if (this.getAttribute('aria-disabled') === 'true') return;
                             var step = parseInt(this.getAttribute('data-step'), 10);
                             if (isNaN(step)) return;
+                            if (isVariationStepDotLocked(step)) return;
                             if (step > currentVariationStep) return;
                             showVariationStep(step);
                             requestAnimationFrame(function() {
@@ -1027,8 +1768,20 @@
                         btn.addEventListener('click', function() {
                             var panel = this.closest('.variation-step-panel');
                             if (!panel) return;
+                            if ((panel.getAttribute('data-customization-panel') || '') === '1') {
+                                panel.setAttribute('data-customization-confirmed', '0');
+                                applyCustomizationChoiceToVariationInput();
+                            }
+                            if ((panel.getAttribute('data-allows-multiple') || '') === '1') {
+                                panel.setAttribute('data-multi-confirmed', '0');
+                            }
                             var step = parseInt(panel.getAttribute('data-step-index'), 10);
                             showVariationStep(step);
+                            requestAnimationFrame(function() {
+                                if ((panel.getAttribute('data-allows-multiple') || '') === '1') {
+                                    updateMultiContinueUi(panel);
+                                }
+                            });
                         });
                     });
 
@@ -1088,16 +1841,116 @@
                         if (vn === 'cocuk' && tn === 'cocuk') return true;
                         return cocukAliases.indexOf(v.toLowerCase()) !== -1 && cocukAliases.indexOf(t.toLowerCase()) !== -1;
                     }
+                    function rawSelectedValuesForVariationKey(selected, variation) {
+                        if (!variation) return [];
+                        var vv = variation.trim().toLowerCase();
+                        var raw = selected[variation];
+                        if (raw !== undefined && raw !== null) {
+                            if (Array.isArray(raw)) return raw.map(function(x) { return String(x).trim(); }).filter(Boolean);
+                            var s = String(raw).trim();
+                            return s ? [s] : [];
+                        }
+                        var keyMatch = Object.keys(selected).find(function(k) {
+                            var kk = (k || '').trim().toLowerCase();
+                            if (kk === vv) return true;
+                            if (kk.indexOf(vv) === 0) return true;
+                            var firstWord = kk.split(/\s+/)[0] || '';
+                            return firstWord === vv;
+                        });
+                        if (!keyMatch) return [];
+                        var r = selected[keyMatch];
+                        if (Array.isArray(r)) return r.map(function(x) { return String(x).trim(); }).filter(Boolean);
+                        var t = String(r || '').trim();
+                        return t ? [t] : [];
+                    }
+                    /**
+                     * Çoklu seçimde "Devam et" öncesi veya özet nesnesinde eksik anahtar olsa bile,
+                     * varyasyon panelindeki gerçek seçimi döndürür (beden önkoşulu / tetikleyici için).
+                     */
+                    function getDomSelectionValuesForVariation(variationName) {
+                        var target = (variationName || '').trim();
+                        if (!target) return [];
+                        var tLower = target.toLowerCase();
+                        var panel = null;
+                        document.querySelectorAll('.variation-step-panel[data-variation-name]').forEach(function(p) {
+                            if (panel) return;
+                            var n = (p.getAttribute('data-variation-name') || '').trim();
+                            if (n.toLowerCase() === tLower) panel = p;
+                        });
+                        if (!panel || panel.style.display === 'none') return [];
+                        var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
+                        var vals = [];
+                        if (isMulti) {
+                            panel.querySelectorAll('.product-option.option-selected').forEach(function(btn) {
+                                if (btn.style.display === 'none') return;
+                                var v = (btn.getAttribute('data-option') || '').trim();
+                                if (v) vals.push(v);
+                            });
+                        } else {
+                            var sel = panel.querySelector('.product-option.option-selected');
+                            if (sel && sel.style.display !== 'none') {
+                                var v = (sel.getAttribute('data-option') || '').trim();
+                                if (v) vals.push(v);
+                            }
+                        }
+                        return vals;
+                    }
+                    function selectedValuesForVariation(selected, variationKey) {
+                        var vals = rawSelectedValuesForVariationKey(selected, variationKey);
+                        if (vals.length > 0) return vals;
+                        return getDomSelectionValuesForVariation(variationKey);
+                    }
+                    function openProductWarningDialog(title, desc) {
+                        var dialog = document.getElementById('product-warning-dialog');
+                        var descEl = document.getElementById('product-warning-dialog-desc');
+                        var titleEl = document.getElementById('product-warning-dialog-title');
+                        if (dialog && descEl) {
+                            if (titleEl) titleEl.textContent = title;
+                            descEl.textContent = desc;
+                            dialog.classList.remove('hidden');
+                            dialog.classList.add('flex');
+                            document.body.style.overflow = 'hidden';
+                        }
+                    }
+                    function validateSizeStepOrWarn() {
+                        var formEl = document.getElementById('add-to-cart-form');
+                        var availableStock = formEl ? parseInt(formEl.getAttribute('data-available-stock'), 10) || 999999 : 999999;
+                        var quantityInput = document.getElementById('quantity-input');
+                        var minOrder = quantityInput ? parseInt(quantityInput.getAttribute('min'), 10) || 1 : 1;
+                        var info = getSizeQuantities();
+                        var activeWrap = document.querySelector('.size-table-wrap:not(.hidden)');
+                        if (activeWrap) {
+                            if (info.total < minOrder) {
+                                openProductWarningDialog(PU.warn_min_title, PU.warn_min_desc.replace(':min', String(minOrder)).replace(':total', String(info.total)));
+                                return false;
+                            }
+                            if (info.total > availableStock) {
+                                openProductWarningDialog(PU.warn_stock_title, PU.warn_stock_desc_breakdown.replace(':max', String(availableStock)).replace(':total', String(info.total)));
+                                return false;
+                            }
+                            return true;
+                        }
+                        var qty = quantityInput ? parseInt(quantityInput.value, 10) || 0 : 0;
+                        if (qty < minOrder) {
+                            openProductWarningDialog(PU.warn_min_title, PU.warn_min_desc.replace(':min', String(minOrder)).replace(':total', String(qty)));
+                            return false;
+                        }
+                        if (qty > availableStock) {
+                            openProductWarningDialog(PU.warn_stock_title, PU.warn_stock_desc_simple.replace(':max', String(availableStock)).replace(':qty', String(qty)));
+                            return false;
+                        }
+                        return true;
+                    }
                     function updateSizeTableVisibility() {
                         var selected = getSelectedOptions();
                         var formEl = document.getElementById('add-to-cart-form');
                         var simpleWrap = document.getElementById('quantity-simple-wrap');
                         var quantityInput = document.getElementById('quantity-input');
                         var hasVariations = document.querySelectorAll('.product-variation-block').length > 0;
-                        var allVariationsSelected = allVisibleVariationsSelected();
+                        var variationBlocksDone = allProductVariationBlocksComplete();
                         var sizeTableContent = document.querySelector('.size-table-step-content');
 
-                        if (!allVariationsSelected) {
+                        if (!variationBlocksDone) {
                             if (sizeTableContent) sizeTableContent.classList.add('hidden');
                             document.querySelectorAll('.size-table-wrap').forEach(function(wrap) { wrap.classList.add('hidden'); });
                             if (simpleWrap) simpleWrap.classList.toggle('hidden', hasVariations);
@@ -1107,54 +1960,49 @@
 
                         if (sizeTableContent) sizeTableContent.classList.remove('hidden');
                         var productTriggerVariation = (formEl && formEl.getAttribute('data-size-table-trigger-variation')) ? formEl.getAttribute('data-size-table-trigger-variation').trim() : '';
-                        var productTriggerSelected = productTriggerVariation ? findSelectedValueForVariation(selected, productTriggerVariation) : '';
-                        if (productTriggerVariation && !productTriggerSelected) {
+                        if (productTriggerVariation && selectedValuesForVariation(selected, productTriggerVariation).length === 0) {
                             document.querySelectorAll('.size-table-wrap').forEach(function(wrap) { wrap.classList.add('hidden'); });
                             if (simpleWrap) simpleWrap.classList.toggle('hidden', hasVariations);
                             if (quantityInput) quantityInput.setAttribute('name', 'quantity');
                             return;
                         }
                         var anyTableVisible = false;
-                        function findSelectedValueForVariation(selected, variation) {
-                        if (!variation) return '';
-                        var vv = variation.trim().toLowerCase();
-                        var val = (selected[variation] || '').trim();
-                        if (val) return val;
-                        var keyMatch = Object.keys(selected).find(function(k) {
-                            var kk = (k || '').trim().toLowerCase();
-                            if (kk === vv) return true;
-                            if (kk.indexOf(vv) === 0) return true;
-                            var firstWord = kk.split(/\s+/)[0] || '';
-                            return firstWord === vv;
-                        });
-                        return keyMatch ? (selected[keyMatch] || '').trim() : '';
-                    }
                         document.querySelectorAll('.size-table-wrap').forEach(function(wrap) {
                             var variation = (wrap.getAttribute('data-trigger-variation') || '').trim();
                             var value = (wrap.getAttribute('data-trigger-value') || '').trim();
-                            var selectedVal = findSelectedValueForVariation(selected, variation);
+                            var selectedVals = selectedValuesForVariation(selected, variation);
                             var show = false;
                             if (variation && value) {
-                                show = valueMatchesTrigger(selectedVal, value);
+                                show = selectedVals.some(function(sv) { return valueMatchesTrigger(sv, value); });
                             } else if (variation) {
-                                show = selectedVal.length > 0;
+                                show = selectedVals.length > 0;
                             } else {
                                 var slug = (wrap.getAttribute('data-slug') || '').toLowerCase();
-                                if (slug === 'erkek') show = Object.keys(selected).some(function(k) { return valueMatchesTrigger((selected[k] || '').trim(), 'Erkek'); });
-                                else if (slug === 'kadin') show = Object.keys(selected).some(function(k) { return valueMatchesTrigger((selected[k] || '').trim(), 'Kadın'); });
-                                else if (slug === 'cocuk') show = Object.keys(selected).some(function(k) { return valueMatchesTrigger((selected[k] || '').trim(), 'Çocuk'); });
+                                function selectedMatchesGender(label) {
+                                    return Object.keys(selected).some(function(k) {
+                                        var raw = selected[k];
+                                        var parts = Array.isArray(raw) ? raw : [raw];
+                                        return parts.some(function(p) { return valueMatchesTrigger(String(p || '').trim(), label); });
+                                    });
+                                }
+                                if (slug === 'erkek') show = selectedMatchesGender('Erkek');
+                                else if (slug === 'kadin') show = selectedMatchesGender('Kadın');
+                                else if (slug === 'cocuk') show = selectedMatchesGender('Çocuk');
                             }
                             wrap.classList.toggle('hidden', !show);
                             if (show) anyTableVisible = true;
                         });
                         if (simpleWrap) {
-                            simpleWrap.classList.toggle('hidden', anyTableVisible || (hasVariations && !allVariationsSelected));
+                            simpleWrap.classList.toggle('hidden', anyTableVisible || (hasVariations && !variationBlocksDone));
                         }
                         if (quantityInput) quantityInput.setAttribute('name', anyTableVisible ? 'quantity_placeholder' : 'quantity');
                     }
 
                     applyDependencyChain();
                     if (totalVariationSteps > 0) showVariationStep(0);
+                    document.querySelectorAll('.product-variation-block[data-allows-multiple="1"]').forEach(function(el) {
+                        updateMultiContinueUi(el);
+                    });
                     updateSizeTableVisibility();
                     updateVariationSummaryAndButton();
 
@@ -1171,6 +2019,61 @@
                         inp.addEventListener('input', updateVariationSummaryAndButton);
                         inp.addEventListener('change', updateVariationSummaryAndButton);
                     });
+
+                    var customizationContinueBtn = document.getElementById('customization-continue-btn');
+                    if (customizationContinueBtn) {
+                        customizationContinueBtn.addEventListener('click', function() {
+                            var custPanel = document.querySelector('[data-customization-panel="1"]');
+                            if (!custPanel) return;
+                            custPanel.setAttribute('data-customization-confirmed', '1');
+                            var sumVal = custPanel.querySelector('.variation-step-summary-value');
+                            if (sumVal) sumVal.textContent = customizationSummaryLineFromInputs();
+                            applyCustomizationChoiceToVariationInput();
+                            updateSizeTableVisibility();
+                            updateVariationSummaryAndButton();
+                            var meta = getVariationStepsMeta();
+                            if (!isNaN(meta.customizationIdx) && meta.customizationIdx >= 0) {
+                                showVariationStep(meta.customizationIdx);
+                            }
+                            requestAnimationFrame(function() {
+                                if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
+                            });
+                        });
+                    }
+
+                    (function bindCustomizationTableUi() {
+                        var tbl = document.getElementById('product-customization-table');
+                        if (!tbl) return;
+                        function syncCustUi() {
+                            updateCustomizationContinueEnabled();
+                            if (typeof updateVariationSummaryAndButton === 'function') updateVariationSummaryAndButton();
+                        }
+                        tbl.addEventListener('change', syncCustUi);
+                        tbl.addEventListener('input', function(e) {
+                            if (e.target && e.target.closest && e.target.closest('.customization-row-card')) syncCustUi();
+                        });
+                        syncCustUi();
+                    })();
+
+                    var sizeStepContinueBtn = document.getElementById('size-step-continue-btn');
+                    if (sizeStepContinueBtn) {
+                        sizeStepContinueBtn.addEventListener('click', function() {
+                            if (!validateSizeStepOrWarn()) return;
+                            var sp = document.querySelector('[data-size-step-panel="1"]');
+                            if (sp) sp.setAttribute('data-size-step-confirmed', '1');
+                            updateSizeTableVisibility();
+                            updateVariationSummaryAndButton();
+                            var meta = getVariationStepsMeta();
+                            if (!isNaN(meta.customizationIdx) && meta.customizationIdx >= 0) {
+                                showVariationStep(meta.customizationIdx);
+                            } else {
+                                showVariationStep(totalVariationSteps - 1);
+                            }
+                            requestAnimationFrame(function() {
+                                if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
+                            });
+                        });
+                    }
 
                     var form = document.getElementById('add-to-cart-form');
                     if (form) {
@@ -1190,6 +2093,7 @@
                                 if (summaryWrap) summaryWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                                 return;
                             }
+                            applyCustomizationChoiceToVariationInput();
                             var sizeInput = document.getElementById('size-quantities-input');
                             var quantityInput = document.getElementById('quantity-input');
                             var minOrder = quantityInput ? parseInt(quantityInput.getAttribute('min'), 10) || 1 : 1;

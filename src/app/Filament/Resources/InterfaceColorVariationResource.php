@@ -8,7 +8,9 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Ana menü bağlantısı {@see \App\Providers\Filament\AdminPanelProvider} içinde özelleştirilir.
@@ -35,6 +37,17 @@ class InterfaceColorVariationResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Renk varyasyonu')
                     ->schema([
+                        Forms\Components\Select::make('interface_fabric_type_variation_id')
+                            ->label('Kumaş türü grubu')
+                            ->relationship(
+                                name: 'fabricTypeVariation',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('sort_order')->orderBy('id'),
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Grup adı Kumaş Türü Varyasyonları listesinden seçilir; renk bu kumaş türüne bağlanır. Liste grupları bu ada göre oluşturulur; boş bırakılırsa “Grup atanmamış” altında görünür.'),
                         Forms\Components\TextInput::make('name')
                             ->label('Renk adı (opsiyonel)')
                             ->maxLength(255),
@@ -59,10 +72,20 @@ class InterfaceColorVariationResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('fabricTypeVariation');
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('fabricTypeVariation.name')
+                    ->label('Kumaş türü grubu')
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\ImageColumn::make('image_path')
                     ->label('Görsel')
                     ->disk('public')
@@ -84,7 +107,27 @@ class InterfaceColorVariationResource extends Resource
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->groups([
+                Group::make('interface_fabric_type_variation_id')
+                    ->label('Kumaş türü grubu')
+                    ->getTitleFromRecordUsing(function (InterfaceColorVariation $record): string {
+                        $ft = $record->fabricTypeVariation;
+                        if ($ft === null) {
+                            return 'Grup atanmamış';
+                        }
+                        $name = trim((string) ($ft->name ?? ''));
+
+                        return $name !== '' ? $name : ('#'.$ft->getKey());
+                    })
+                    ->collapsible(),
+            ])
+            ->defaultGroup('interface_fabric_type_variation_id')
             ->filters([
+                Tables\Filters\SelectFilter::make('interface_fabric_type_variation_id')
+                    ->label('Kumaş türü grubu')
+                    ->relationship('fabricTypeVariation', 'name')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Yayında'),
             ])

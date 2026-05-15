@@ -134,8 +134,41 @@
                             @if(!empty($item->variation_data) && is_array($item->variation_data))
                                 <ul class="mt-1 text-xs text-slate-500 space-y-0.5">
                                     @foreach($item->variation_data as $optName => $optValue)
-                                        @if($optValue !== null && $optValue !== '')
-                                            <li><span class="font-medium text-slate-600">{{ $optName }}:</span> {{ $optValue }}</li>
+                                        @if($optName === 'product_customization_table' && is_array($optValue))
+                                            @php
+                                                $custRowsChk = $optValue['rows'] ?? (isset($optValue['row_id']) ? [$optValue] : []);
+                                            @endphp
+                                            @if(count($custRowsChk) > 0)
+                                                <li>
+                                                    <span class="font-medium text-slate-600">{{ __('store.product.customization_summary_section_label') }}</span>
+                                                    <ul class="mt-0.5 ml-3 list-disc space-y-0.5">
+                                                        @foreach($custRowsChk as $crow)
+                                                            <li>
+                                                                {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                @if(!empty($crow['renk_sayisi']))
+                                                                    · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
+                                                                @endif
+                                                                · {{ $crow['baski_teknigi'] ?? '' }}
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                </li>
+                                            @endif
+                                        @else
+                                            @php
+                                                $showVarChk = false;
+                                                $varDispChk = '';
+                                                if (is_array($optValue)) {
+                                                    $varDispChk = implode(', ', array_filter(array_map('strval', $optValue)));
+                                                    $showVarChk = $varDispChk !== '';
+                                                } elseif ($optValue !== null && $optValue !== '') {
+                                                    $varDispChk = $optValue;
+                                                    $showVarChk = true;
+                                                }
+                                            @endphp
+                                            @if($showVarChk)
+                                                <li><span class="font-medium text-slate-600">{{ $optName }}:</span> {{ $varDispChk }}</li>
+                                            @endif
                                         @endif
                                     @endforeach
                                 </ul>

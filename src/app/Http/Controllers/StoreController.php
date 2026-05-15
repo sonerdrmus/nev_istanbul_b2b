@@ -9,8 +9,10 @@ use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariationOption;
 use App\Models\ShippingMethod;
 use App\Models\SizeTable;
+use App\Support\MediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -107,6 +109,12 @@ class StoreController extends Controller
             $discountPercent = $this->getCustomerDiscountPercent();
             if ($discountPercent !== null && $discountPercent > 0) {
                 $unitTry = $unitTry * (1 - $discountPercent / 100);
+            }
+
+            $variationData = $item['variation_data'] ?? null;
+            if (is_array($variationData) && $variationData !== []) {
+                $product->loadMissing('variations.options');
+                $unitTry *= ProductVariationOption::combinedMultiplierForSelections($product, $variationData);
             }
 
             $sizeQuantities = $item['size_quantities'] ?? null;
@@ -268,7 +276,13 @@ class StoreController extends Controller
         if (! $product->is_active) {
             abort(404);
         }
-        $product->load(['company', 'category.parent', 'currency', 'variations.options', 'productImages']);
+        $product->load([
+            'company',
+            'category.parent',
+            'currency',
+            'productImages',
+            'variations.options' => fn ($q) => $q->with(['interfaceColorVariation.fabricTypeVariation']),
+        ]);
         $variations = $product->variations;
         $sorted = collect();
         $remaining = $variations->keyBy('id');
@@ -328,7 +342,7 @@ class StoreController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'url' => route('store.product.show', $p),
-                'image' => $p->image ? \Illuminate\Support\Facades\Storage::url($p->image) : null,
+                'image' => $p->image ? MediaUrl::public($p->image) : null,
             ];
         });
         return response()->json(['products' => $items->all()]);
@@ -404,7 +418,16 @@ class StoreController extends Controller
                 return redirect()->back()->with('error', __('store.flash.select_all_options'));
             }
             foreach ($rootVariations as $variationName) {
-                if (! isset($variationData[$variationName]) || (string) $variationData[$variationName] === '') {
+                if (! isset($variationData[$variationName])) {
+                    return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                }
+                $val = $variationData[$variationName];
+                if (is_array($val)) {
+                    $nonEmpty = array_values(array_filter($val, fn ($x) => $x !== null && trim((string) $x) !== ''));
+                    if ($nonEmpty === []) {
+                        return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                    }
+                } elseif ((string) $val === '') {
                     return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                 }
             }

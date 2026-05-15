@@ -21,7 +21,7 @@ class SizeTableResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $modelLabel = 'Beden tablosu';
+    protected static ?string $modelLabel = 'Sipariş Adeti';
 
     protected static ?string $pluralModelLabel = 'Beden tabloları';
 

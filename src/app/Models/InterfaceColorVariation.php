@@ -10,6 +10,7 @@ class InterfaceColorVariation extends Model
     protected $table = 'interface_color_variations';
 
     protected $fillable = [
+        'interface_fabric_type_variation_id',
         'name',
         'image_path',
         'sort_order',
@@ -27,6 +28,12 @@ class InterfaceColorVariation extends Model
     public function productVariationOptions()
     {
         return $this->hasMany(ProductVariationOption::class, 'interface_color_variation_id');
+    }
+
+    /** Gruplama: Kumaş Türü Varyasyonları kaydı (admin listede grup adı buradan gelir). */
+    public function fabricTypeVariation()
+    {
+        return $this->belongsTo(InterfaceFabricTypeVariation::class, 'interface_fabric_type_variation_id');
     }
 
     /** Mağaza / arayüzde gösterim sırasıyla aktif kayıtlar. */

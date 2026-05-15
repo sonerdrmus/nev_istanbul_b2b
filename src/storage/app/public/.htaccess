@@ -1,0 +1,7 @@
+# Tarayıcı / ara CDN’in /storage/ altındaki görselleri agresif önbelleğe almasını azaltır.
+# Hostinger’da mod_headers kapalıysa bu blok yok sayılır (zararsız).
+<IfModule mod_headers.c>
+    <FilesMatch "(?i)\.(svg|png|jpe?g|gif|webp|ico|avif|bmp)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

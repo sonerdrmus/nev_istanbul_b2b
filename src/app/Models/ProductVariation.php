@@ -13,12 +13,15 @@ class ProductVariation extends Model
         'depends_on',
         'sort_order',
         'replace_main_gallery_image',
+        'allows_multiple',
+        'solo_option_value',
     ];
 
     protected function casts(): array
     {
         return [
             'replace_main_gallery_image' => 'boolean',
+            'allows_multiple' => 'boolean',
         ];
     }
 
@@ -50,5 +53,16 @@ class ProductVariation extends Model
         return $query->where(function ($q) use ($parentOptionId) {
             $q->whereNull('parent_option_id')->orWhere('parent_option_id', $parentOptionId);
         })->get();
+    }
+
+    /** Mağazada tek başına seçim (solo) olarak işaretlenecek seçenek metniyle eşleşiyor mu? */
+    public function optionValueIsSoloChoice(?string $optionValue): bool
+    {
+        $solo = trim((string) ($this->solo_option_value ?? ''));
+        if ($solo === '' || $optionValue === null || $optionValue === '') {
+            return false;
+        }
+
+        return mb_strtolower(trim($optionValue)) === mb_strtolower($solo);
     }
 }

@@ -97,6 +97,8 @@ class CopyProductVariationsToCategoryProducts extends Command
                             'depends_on' => $oldVar->depends_on,
                             'sort_order' => (int) $oldVar->sort_order,
                             'replace_main_gallery_image' => (bool) ($oldVar->replace_main_gallery_image ?? false),
+                            'allows_multiple' => (bool) ($oldVar->allows_multiple ?? false),
+                            'solo_option_value' => $oldVar->solo_option_value ?? null,
                         ]);
                         $variationMap[$oldVar->id] = $newVar;
                     }
@@ -121,7 +123,7 @@ class CopyProductVariationsToCategoryProducts extends Command
                         if ($batch->isEmpty()) {
                             throw new \RuntimeException(
                                 'Seçenek üst referansları çözülemedi (döngü veya eksik parent). Kalan id: '
-                                . $remaining->keys()->implode(', ')
+                                .$remaining->keys()->implode(', ')
                             );
                         }
 

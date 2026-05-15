@@ -38,7 +38,32 @@
                                                 @if(count($sizeParts) > 0)
                                                     <li><span class="font-medium text-slate-700">{{ __('store.order_confirmation.size_breakdown') }}</span> @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</li>
                                                 @endif
-                                            @elseif($optValue !== null && $optValue !== '' && !is_array($optValue))
+                                            @elseif($optName === 'product_customization_table' && is_array($optValue))
+                                                @php
+                                                    $custRowsOc = $optValue['rows'] ?? (isset($optValue['row_id']) ? [$optValue] : []);
+                                                @endphp
+                                                @if(count($custRowsOc) > 0)
+                                                    <li>
+                                                        <span class="font-medium text-slate-700">{{ __('store.product.customization_summary_section_label') }}</span>
+                                                        <ul class="mt-0.5 ml-3 list-disc space-y-0.5">
+                                                            @foreach($custRowsOc as $crow)
+                                                                <li>
+                                                                    {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                    @if(!empty($crow['renk_sayisi']))
+                                                                        · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
+                                                                    @endif
+                                                                    · {{ $crow['baski_teknigi'] ?? '' }}
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </li>
+                                                @endif
+                                            @elseif(is_array($optValue))
+                                                @php $dispOc = implode(', ', array_filter(array_map('strval', $optValue))); @endphp
+                                                @if($dispOc !== '')
+                                                    <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $dispOc }}</li>
+                                                @endif
+                                            @elseif($optValue !== null && $optValue !== '')
                                                 <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $optValue }}</li>
                                             @endif
                                         @endforeach

@@ -41,6 +41,7 @@ class ProductVariationOption extends Model
         if ($this->parent_option_id && ! in_array((int) $this->parent_option_id, $ids, true)) {
             $ids[] = (int) $this->parent_option_id;
         }
+
         return $ids;
     }
 
@@ -69,35 +70,67 @@ class ProductVariationOption extends Model
         return $this->hasMany(ProductVariationOption::class, 'parent_option_id');
     }
 
+    /** 0 veya geçersiz değer = fiyatı değiştirmez (×1). */
+    public static function normalizePriceMultiplier(mixed $raw): float
+    {
+        $f = (float) $raw;
+
+        return $f > 0.0 ? $f : 1.0;
+    }
+
     /**
-     * Seçilen varyasyon değerlerine göre fiyat farkı toplamı ve detayını döndürür.
-     *
-     * @return array{delta_total: float, breakdown: array<string, array<string, float>>}
+     * Seçilen her seçenek için `price_delta` alanını çarpan olarak çarpımına çevirir (ör. 1,5 × 2 = 3).
      */
-    public static function forSelection(Product $product, array $selections): array
+    public static function combinedMultiplierForSelections(Product $product, array $selections): float
     {
         $product->loadMissing('variations.options');
 
-        $deltaTotal = 0.0;
-        $breakdown = [];
+        $factor = 1.0;
 
         foreach ($selections as $variationName => $optionValue) {
+            if ((string) $variationName === 'size_quantities') {
+                continue;
+            }
+
             $variation = $product->variations->firstWhere('name', (string) $variationName);
             if (! $variation) {
                 continue;
             }
-            $option = $variation->options->firstWhere('option_value', (string) $optionValue);
-            if (! $option) {
-                continue;
+
+            if (is_array($optionValue)) {
+                foreach ($optionValue as $v) {
+                    if ($v === null || trim((string) $v) === '') {
+                        continue;
+                    }
+                    $option = $variation->options->firstWhere('option_value', (string) $v);
+                    if ($option) {
+                        $factor *= self::normalizePriceMultiplier($option->price_delta);
+                    }
+                }
+            } else {
+                $option = $variation->options->firstWhere('option_value', (string) $optionValue);
+                if ($option) {
+                    $factor *= self::normalizePriceMultiplier($option->price_delta);
+                }
             }
-            $delta = (float) $option->price_delta;
-            if ($delta === 0.0) {
-                continue;
-            }
-            $deltaTotal += $delta;
-            $breakdown[(string) $variationName] = [(string) $optionValue => $delta];
         }
 
-        return ['delta_total' => $deltaTotal, 'breakdown' => $breakdown];
+        return $factor;
+    }
+
+    /**
+     * Seçilen varyasyonlara göre çarpan bilgisi (TL farkı için `delta_total` artık kullanılmaz).
+     *
+     * @return array{multiplier_total: float, delta_total: float, breakdown: array<string, array<string, float>>}
+     */
+    public static function forSelection(Product $product, array $selections): array
+    {
+        $factor = self::combinedMultiplierForSelections($product, $selections);
+
+        return [
+            'multiplier_total' => $factor,
+            'delta_total' => 0.0,
+            'breakdown' => [],
+        ];
     }
 }

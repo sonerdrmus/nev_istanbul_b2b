@@ -30,7 +30,7 @@
                                 <li class="flex gap-4 p-5 sm:p-6">
                                     <div class="flex-shrink-0 w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
                                         @if($p->image)
-                                            <img src="{{ Storage::url($p->image) }}" alt="{{ $p->name }}" class="w-full h-full object-cover">
+                                            <img src="{{ \App\Support\MediaUrl::public($p->image) }}" alt="{{ $p->name }}" class="w-full h-full object-cover">
                                         @else
                                             <span class="text-slate-400 text-2xl">📦</span>
                                         @endif
@@ -41,8 +41,41 @@
                                         @if(!empty($item->variation_data) && is_array($item->variation_data))
                                             <ul class="mt-1.5 text-sm text-slate-600 space-y-0.5">
                                                 @foreach($item->variation_data as $optName => $optValue)
-                                                    @if($optValue !== null && $optValue !== '')
-                                                        <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $optValue }}</li>
+                                                    @if($optName === 'product_customization_table' && is_array($optValue))
+                                                        @php
+                                                            $custRows = $optValue['rows'] ?? (isset($optValue['row_id']) ? [$optValue] : []);
+                                                        @endphp
+                                                        @if(count($custRows) > 0)
+                                                            <li>
+                                                                <span class="font-medium text-slate-700">{{ __('store.product.customization_summary_section_label') }}</span>
+                                                                <ul class="mt-0.5 ml-3 list-disc space-y-0.5 text-slate-600">
+                                                                    @foreach($custRows as $crow)
+                                                                        <li>
+                                                                            {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                            @if(!empty($crow['renk_sayisi']))
+                                                                                · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
+                                                                            @endif
+                                                                            · {{ $crow['baski_teknigi'] ?? '' }}
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            </li>
+                                                        @endif
+                                                    @else
+                                                        @php
+                                                            $showVar = false;
+                                                            $varDisp = '';
+                                                            if (is_array($optValue)) {
+                                                                $varDisp = implode(', ', array_filter(array_map('strval', $optValue)));
+                                                                $showVar = $varDisp !== '';
+                                                            } elseif ($optValue !== null && $optValue !== '') {
+                                                                $varDisp = $optValue;
+                                                                $showVar = true;
+                                                            }
+                                                        @endphp
+                                                        @if($showVar)
+                                                            <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $varDisp }}</li>
+                                                        @endif
                                                     @endif
                                                 @endforeach
                                             </ul>

@@ -29,6 +29,12 @@ class InterfaceFabricTypeVariation extends Model
         return $this->hasMany(ProductVariationOption::class, 'interface_fabric_type_variation_id');
     }
 
+    /** Bu kumaş türüne bağlı arayüz renk swatch’ları (Renk Varyasyonları). */
+    public function interfaceColorVariations()
+    {
+        return $this->hasMany(InterfaceColorVariation::class, 'interface_fabric_type_variation_id');
+    }
+
     /** Mağaza / ürün varyasyonunda kullanım için aktif kayıtlar (görsel zorunlu). */
     public static function forDisplay(): Collection
     {

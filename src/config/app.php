@@ -56,6 +56,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public storage: URL cache bust
+    |--------------------------------------------------------------------------
+    | MEDIA_QUERY_VERSION doluysa tüm MediaUrl bağlarına bu değer eklenir (CDN / eski HTML).
+    | Boşsa dosya üzerinden otomatik parmak izi kullanılır.
+    */
+    'media_query_version' => env('MEDIA_QUERY_VERSION', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

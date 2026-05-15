@@ -35,7 +35,7 @@
         @foreach($bannerSlides as $index => $slide)
         <div class="carousel-slide {{ $index === 0 ? 'active' : '' }} relative flex items-center px-4 sm:px-8 lg:px-16 {{ $slide->text_align === 'center' ? 'justify-center text-center' : ($slide->text_align === 'right' ? 'justify-end text-right' : 'justify-start') }}">
             @if($slide->image_path)
-                <img src="{{ Storage::url($slide->image_path) }}" alt="" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
+                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
             @else
                 <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#114a8c] via-[#155fb3] to-[#0f3c6f]" aria-hidden="true"></div>
             @endif
@@ -114,7 +114,7 @@
                     <a href="{{ route('home', ['category' => $cat->slug]) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
                             <div class="absolute inset-[2px] overflow-hidden">
-                                <img src="{{ Storage::url($cat->image_path) }}" alt="{{ $cat->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
+                                <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
                             </div>
                         </div>
                         <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
@@ -128,7 +128,7 @@
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
                             @if($vitrinThumb)
                                 <div class="absolute inset-[2px] overflow-hidden">
-                                    <img src="{{ Storage::url($vitrinThumb) }}" alt="{{ $product->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
+                                    <img src="{{ \App\Support\MediaUrl::public($vitrinThumb) }}" alt="{{ $product->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
                                 </div>
                             @else
                                 <span class="absolute inset-0 flex items-center justify-center text-slate-400 text-5xl select-none" aria-hidden="true">📦</span>
@@ -207,7 +207,7 @@
                     <a href="{{ route('store.product.show', $product) }}" class="relative block aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
                         @php $thumbPath = $product->image ?? $product->productImages->first()?->path; @endphp
                         @if($thumbPath)
-                            <img src="{{ Storage::url($thumbPath) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
+                            <img src="{{ \App\Support\MediaUrl::public($thumbPath) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
                         @else
                             <span class="text-slate-300 text-5xl">📦</span>
                         @endif
