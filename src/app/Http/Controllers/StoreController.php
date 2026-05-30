@@ -13,6 +13,10 @@ use App\Models\ProductVariationOption;
 use App\Models\ShippingMethod;
 use App\Models\SizeTable;
 use App\Support\MediaUrl;
+use App\Support\ColorDimensionMultiplierCatalog;
+use App\Support\ProductCustomizationCatalog;
+use App\Support\QuantityDimensionMultiplierCatalog;
+use App\Support\SizeDimensionMultiplierCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -316,8 +320,12 @@ class StoreController extends Controller
         }
 
         $sizeTables = SizeTable::with('columns')->orderBy('sort_order')->get();
+        $productCustomization = ProductCustomizationCatalog::forStore();
+        $sizeEbatMultipliers = SizeDimensionMultiplierCatalog::rowsForStoreMatcher();
+        $quantityDimensionMultipliers = QuantityDimensionMultiplierCatalog::rowsForStoreMatcher();
+        $colorDimensionMultipliers = ColorDimensionMultiplierCatalog::rowsForStoreMatcher();
 
-        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables'));
+        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'sizeEbatMultipliers', 'quantityDimensionMultipliers', 'colorDimensionMultipliers'));
     }
 
     /** Header arama için: 3+ karakterde ürün listesi (görsel + isim) JSON döner. */

@@ -31,27 +31,31 @@
     @if($bannerSlides->isNotEmpty())
     {{-- Banner slider: ortalanmış, xl+ ekranda yanlardan 200px boşluk --}}
     <div class="w-full px-4 sm:px-6 lg:px-12 xl:px-[200px]">
-    <div class="relative w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10" id="hero-carousel">
+    <div class="relative w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10 mt-4 mb-4" id="hero-carousel">
         @foreach($bannerSlides as $index => $slide)
-        <div class="carousel-slide {{ $index === 0 ? 'active' : '' }} relative flex items-center px-4 sm:px-8 lg:px-16 {{ $slide->text_align === 'center' ? 'justify-center text-center' : ($slide->text_align === 'right' ? 'justify-end text-right' : 'justify-start') }}">
+        <div class="carousel-slide {{ $index === 0 ? 'active' : '' }} relative {{ $slide->text_align === 'center' ? 'text-center' : ($slide->text_align === 'right' ? 'text-right' : '') }}">
             @if($slide->image_path)
-                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
+                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="{{ $slide->headline ?: $slide->title ?: '' }}" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" width="1024" height="278" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
             @else
                 <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#114a8c] via-[#155fb3] to-[#0f3c6f]" aria-hidden="true"></div>
             @endif
-            <div class="relative z-10 max-w-7xl mx-auto w-full py-12 sm:py-16 lg:py-20 {{ $slide->text_align === 'center' ? 'text-center' : '' }} {{ $slide->text_align === 'right' ? 'text-right' : '' }}">
-                @if($slide->title)<p class="text-primary-100 text-sm font-semibold uppercase tracking-widest mb-2">{{ $slide->title }}</p>@endif
+            @if(filled($slide->title) || filled($slide->headline) || filled($slide->description) || ($slide->button_text && $slide->button_url))
+            <div class="relative z-10 flex h-full w-full items-center px-4 sm:px-8 lg:px-16 {{ $slide->text_align === 'center' ? 'justify-center text-center' : ($slide->text_align === 'right' ? 'justify-end text-right' : 'justify-start') }}">
+            <div class="max-w-7xl mx-auto w-full py-4 sm:py-6 {{ $slide->text_align === 'center' ? 'text-center' : '' }} {{ $slide->text_align === 'right' ? 'text-right' : '' }}">
+                @if($slide->title)<p class="text-primary-100 text-xs sm:text-sm font-semibold uppercase tracking-widest mb-1 sm:mb-2">{{ $slide->title }}</p>@endif
                 @if(filled($slide->headline))
-                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight max-w-2xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->headline }}</h2>
+                <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight max-w-2xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->headline }}</h2>
                 @endif
-                @if($slide->description)<p class="mt-4 text-lg text-white/90 max-w-xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->description }}</p>@endif
+                @if($slide->description)<p class="mt-2 sm:mt-3 text-sm sm:text-base text-white/90 max-w-xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->description }}</p>@endif
                 @if($slide->button_text && $slide->button_url)
-                <a href="{{ $slide->button_url }}" class="inline-flex items-center gap-2 mt-6 px-6 py-3.5 rounded-xl bg-white text-primary-700 font-semibold shadow-lg hover:bg-primary-50 transition-all duration-200">
+                <a href="{{ $slide->button_url }}" class="inline-flex items-center gap-2 mt-3 sm:mt-4 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-white text-primary-700 text-sm sm:text-base font-semibold shadow-lg hover:bg-primary-50 transition-all duration-200">
                     {{ $slide->button_text }}
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
                 @endif
             </div>
+            </div>
+            @endif
         </div>
         @endforeach
 
@@ -61,7 +65,7 @@
         <button type="button" id="carousel-next" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-lg flex items-center justify-center transition-colors" aria-label="{{ __('store.index.carousel_next') }}">
             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
-        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2" id="carousel-dots">
+        <div class="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2" id="carousel-dots">
             @foreach($bannerSlides as $i => $s)
             <button type="button" class="carousel-dot w-2.5 h-2.5 rounded-full bg-white/80 hover:bg-white transition-all {{ $i === 0 ? 'carousel-dot-active' : '' }}" data-index="{{ $i }}" aria-label="{{ __('store.index.carousel_slide', ['num' => $i + 1]) }}"></button>
             @endforeach

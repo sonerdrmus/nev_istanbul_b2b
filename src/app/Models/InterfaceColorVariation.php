@@ -12,6 +12,7 @@ class InterfaceColorVariation extends Model
     protected $fillable = [
         'interface_fabric_type_variation_id',
         'name',
+        'hex_color',
         'image_path',
         'sort_order',
         'is_active',

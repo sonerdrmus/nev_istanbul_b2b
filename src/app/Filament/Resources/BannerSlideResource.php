@@ -43,7 +43,7 @@ class BannerSlideResource extends Resource
                             ->directory('banner_slides')
                             ->visibility('public')
                             ->imagePreviewHeight('200')
-                            ->helperText('Yüklerseniz arka planda gösterilir. Boş bırakırsanız gradient arka plan kullanılır.')
+                            ->helperText('Önerilen boyut: 1024×278 px (geniş banner, ~3.7:1). Görsel slayt alanını tam doldurur; metin alanları boş bırakılabilir.')
                             ->nullable(),
                     ]),
                 Forms\Components\Section::make('Metinler')

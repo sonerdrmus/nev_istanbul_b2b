@@ -28,10 +28,13 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
-        /* Slider: Slaytlar üst üste, sadece aktif görünür (Tailwind .flex display’i ezmesin diye) */
-        #hero-carousel { position: relative; min-height: 360px; }
-        @media (min-width: 640px) { #hero-carousel { min-height: 420px; } }
-        @media (min-width: 1024px) { #hero-carousel { min-height: 560px; } }
+        /* Slider: 1024×278 banner oranı (~3.68:1); slaytlar üst üste, yalnızca aktif görünür */
+        #hero-carousel {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1024 / 278;
+            min-height: 0;
+        }
         #hero-carousel .carousel-slide {
             position: absolute;
             inset: 0;

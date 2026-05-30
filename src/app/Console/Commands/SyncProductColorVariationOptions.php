@@ -44,7 +44,7 @@ class SyncProductColorVariationOptions extends Command
 
         $presetCount = count(ProductResource::colorVariationOptionsFromInterfacePresets());
         if ($presetCount === 0) {
-            $this->error('Arayüzde aktif renk kaydı yok. Önce Renk varyasyonları panelinden kayıt ekleyin.');
+            $this->error('Arayüzde aktif renk kaydı yok. Önce Varyasyon yönetimi → Renk Varyasyonları panelinden kayıt ekleyin.');
 
             return self::FAILURE;
         }

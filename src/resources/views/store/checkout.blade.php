@@ -145,6 +145,14 @@
                                                         @foreach($custRowsChk as $crow)
                                                             <li>
                                                                 {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                @if(!empty($crow['alan_cm2_display']))
+                                                                    · {{ __('store.product.customization_area_cm2', ['area' => $crow['alan_cm2_display']]) }}
+                                                                @elseif(!empty($crow['alan_m2_display']))
+                                                                    · {{ __('store.product.customization_area_sqm', ['area' => $crow['alan_m2_display']]) }}
+                                                                @endif
+                                                                @if(!empty($crow['ebat']))
+                                                                    · {{ __('store.product.customization_matched_ebat', ['ebat' => $crow['ebat']]) }}
+                                                                @endif
                                                                 @if(!empty($crow['renk_sayisi']))
                                                                     · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
                                                                 @endif

@@ -407,7 +407,7 @@ class ProductResource extends Resource
                                                                 Notification::make()
                                                                     ->warning()
                                                                     ->title('Kumaş türü kaydı bulunamadı')
-                                                                    ->body('Önce Arayüz → Kumaş türü varyasyonları bölümünden kayıt ekleyin.')
+                                                                    ->body('Önce Varyasyon yönetimi → Kumaş Türü Varyasyonları bölümünden kayıt ekleyin.')
                                                                     ->send();
                                                             }
 
@@ -420,7 +420,7 @@ class ProductResource extends Resource
                                                                 Notification::make()
                                                                     ->warning()
                                                                     ->title('Renk kaydı bulunamadı')
-                                                                    ->body('Önce Arayüz → Renk varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.')
+                                                                    ->body('Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.')
                                                                     ->send();
                                                             }
                                                         }
@@ -539,7 +539,7 @@ class ProductResource extends Resource
                                                                     $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
-                                                            ->helperText('Arayüz Yönetimi → Renk varyasyonlarından tanımlı görsel seçilir ve aşağıdaki görsel alanı güncellenir. Özel yükleme kullanırsanız preset sıfırlanır.')
+                                                            ->helperText('Varyasyon yönetimi → Renk Varyasyonlarından tanımlı görsel seçilir ve aşağıdaki görsel alanı güncellenir. Özel yükleme kullanırsanız preset sıfırlanır.')
                                                             ->columnSpanFull(),
                                                         Forms\Components\Select::make('interface_fabric_type_variation_id')
                                                             ->label('Kayıtlı kumaş görseli (Arayüz)')
@@ -577,7 +577,7 @@ class ProductResource extends Resource
                                                                     $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
-                                                            ->helperText('Arayüz Yönetimi → Kumaş türü varyasyonlarından görsel seçilir; özel yüklemede preset sıfırlanır.')
+                                                            ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; özel yüklemede preset sıfırlanır.')
                                                             ->columnSpanFull(),
                                                         Forms\Components\TextInput::make('option_color')
                                                             ->label('Renk (hex)')
@@ -883,30 +883,66 @@ class ProductResource extends Resource
         })->values();
 
         return $sorted
-            ->map(function (InterfaceColorVariation $preset, int $index): array {
-                $label = trim((string) ($preset->name ?? ''));
-                if ($label === '') {
-                    $label = 'Renk #'.$preset->getKey();
-                }
-
-                return [
-                    'option_value' => $label,
-                    'interface_color_variation_id' => $preset->getKey(),
-                    'interface_fabric_type_variation_id' => null,
-                    'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
-                    'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
-                    'price_delta' => 0,
-                    'stock_quantity' => null,
-                    'parent_option_id' => null,
-                    'parent_option_ids' => null,
-                ];
-            })
+            ->map(fn (InterfaceColorVariation $preset, int $index): array => static::colorVariationOptionRowFromInterfacePreset($preset, $index * 10))
             ->values()
             ->all();
     }
 
     /**
-     * Ürünün "Renk" varyasyonu seçeneklerini Arayüz → Renk varyasyonları kayıtlarıyla yeniler.
+     * @return array<string, mixed>
+     */
+    public static function colorVariationOptionRowFromInterfacePreset(InterfaceColorVariation $preset, ?int $fallbackSortOrder = null): array
+    {
+        $label = trim((string) ($preset->name ?? ''));
+        if ($label === '') {
+            $label = 'Renk #'.$preset->getKey();
+        }
+
+        return [
+            'option_value' => $label,
+            'interface_color_variation_id' => $preset->getKey(),
+            'interface_fabric_type_variation_id' => null,
+            'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
+            'sort_order' => (int) ($preset->sort_order ?? $fallbackSortOrder ?? 0),
+            'price_delta' => 0,
+            'stock_quantity' => null,
+            'parent_option_id' => null,
+            'parent_option_ids' => null,
+        ];
+    }
+
+    /**
+     * Yeni arayüz renk kaydını, mevcut ürün Renk varyasyonlarına eksikse ekler (mevcut seçenekleri silmez).
+     */
+    public static function appendColorVariationOptionFromInterfacePreset(InterfaceColorVariation $preset): int
+    {
+        if (! $preset->is_active || ! filled($preset->image_path)) {
+            return 0;
+        }
+
+        $row = static::colorVariationOptionRowFromInterfacePreset($preset);
+        $created = 0;
+
+        ProductVariation::query()
+            ->where('type', 'color')
+            ->each(function (ProductVariation $variation) use ($preset, $row, &$created): void {
+                $exists = $variation->options()
+                    ->where('interface_color_variation_id', $preset->getKey())
+                    ->exists();
+
+                if ($exists) {
+                    return;
+                }
+
+                static::createColorVariationOptionFromPresetRow($variation, $row);
+                $created++;
+            });
+
+        return $created;
+    }
+
+    /**
+     * Ürünün "Renk" varyasyonu seçeneklerini Varyasyon yönetimi → Renk Varyasyonları kayıtlarıyla yeniler.
      * Mağazada kumaş türüne göre renk filtrelemesi için interface_color_variation_id gerekir.
      */
     public static function syncColorVariationOptionsForVariation(ProductVariation $variation): int
@@ -924,28 +960,36 @@ class ProductResource extends Resource
 
         $created = 0;
         foreach ($rows as $row) {
-            $image = $row['option_image'] ?? null;
-            if (is_array($image)) {
-                $image = $image[0] ?? null;
-            }
-
-            ProductVariationOption::query()->create([
-                'product_variation_id' => $variation->getKey(),
-                'option_value' => $row['option_value'],
-                'interface_color_variation_id' => $row['interface_color_variation_id'],
-                'interface_fabric_type_variation_id' => null,
-                'option_image' => is_string($image) && $image !== '' ? $image : null,
-                'option_color' => null,
-                'sort_order' => (int) ($row['sort_order'] ?? 0),
-                'price_delta' => (float) ($row['price_delta'] ?? 0),
-                'stock_quantity' => $row['stock_quantity'] ?? null,
-                'parent_option_id' => $row['parent_option_id'] ?? null,
-                'parent_option_ids' => $row['parent_option_ids'] ?? null,
-            ]);
+            static::createColorVariationOptionFromPresetRow($variation, $row);
             $created++;
         }
 
         return $created;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private static function createColorVariationOptionFromPresetRow(ProductVariation $variation, array $row): void
+    {
+        $image = $row['option_image'] ?? null;
+        if (is_array($image)) {
+            $image = $image[0] ?? null;
+        }
+
+        ProductVariationOption::query()->create([
+            'product_variation_id' => $variation->getKey(),
+            'option_value' => $row['option_value'],
+            'interface_color_variation_id' => $row['interface_color_variation_id'],
+            'interface_fabric_type_variation_id' => null,
+            'option_image' => is_string($image) && $image !== '' ? $image : null,
+            'option_color' => null,
+            'sort_order' => (int) ($row['sort_order'] ?? 0),
+            'price_delta' => (float) ($row['price_delta'] ?? 0),
+            'stock_quantity' => $row['stock_quantity'] ?? null,
+            'parent_option_id' => $row['parent_option_id'] ?? null,
+            'parent_option_ids' => $row['parent_option_ids'] ?? null,
+        ]);
     }
 
     /**

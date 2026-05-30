@@ -131,7 +131,9 @@ class Category extends Model
         return [$this->id];
     }
 
-    /** Üst kategoriler + alt kategoriler (sadece aktif, sıralı). */
+    /**
+     * Üst kategoriler + alt kategoriler (sadece aktif, sıralı).
+     */
     public static function treeForMenu(): \Illuminate\Support\Collection
     {
         return static::with(['children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])

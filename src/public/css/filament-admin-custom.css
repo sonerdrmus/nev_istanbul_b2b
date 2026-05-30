@@ -118,6 +118,45 @@
     background: rgb(148 163 184);
 }
 
+/* Form tablo repeater (Filament) */
+.fi-fo-form-table-repeater .form-table-repeater-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.fi-fo-form-table-repeater table {
+    overflow: visible;
+}
+
+.fi-fo-form-table-repeater .form-table-repeater-cell {
+    overflow: visible;
+    vertical-align: top;
+    min-width: 5.5rem;
+}
+
+.fi-fo-form-table-repeater .form-table-repeater-cell .fi-input-wrp,
+.fi-fo-form-table-repeater .form-table-repeater-cell .fi-select-input {
+    max-width: 7.5rem;
+}
+
+.fi-fo-form-table-repeater .fi-input-wrp {
+    min-height: 2.25rem;
+}
+
+.fi-fo-form-table-repeater tbody tr:hover {
+    background-color: rgb(24 78 119 / 0.04);
+}
+
+.dark .fi-fo-form-table-repeater tbody tr:hover {
+    background-color: rgb(24 78 119 / 0.12);
+}
+
+/* Filament seçim paneli tablo dışına taşabilsin */
+.fi-fo-form-table-repeater .choices__list--dropdown,
+.fi-fo-form-table-repeater .fi-select-input + div {
+    z-index: 40;
+}
+
 /* ========== Topbar — Minimal, modern ========== */
 .fi-topbar {
     border-bottom: 1px solid rgb(226 232 240);

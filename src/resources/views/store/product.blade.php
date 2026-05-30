@@ -205,24 +205,31 @@
 
         @if($hasVariations && $showPurchasePanel)
             {{-- Seçilen seçenekler özeti: ürün görselinin altında --}}
-            <div id="variation-summary-wrap" class="mt-4 lg:mt-5 p-4 sm:p-5 rounded-xl border border-slate-200/90 bg-white shadow-sm">
-                <p class="text-sm font-semibold text-slate-800 mb-2 flex items-center gap-2">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            <div id="variation-summary-wrap" class="mt-4 lg:mt-5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/5 sm:p-5">
+                <p class="mb-3 flex items-center gap-2.5 text-sm font-semibold text-slate-900">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-600/10 text-primary-700">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                     </span>
                     {{ __('store.product.variation_selected_heading') }}
                 </p>
-                <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
-                    <table class="w-full text-sm border-collapse" aria-label="{{ __('store.product.variation_summary_aria') }}">
+                <div class="overflow-hidden rounded-xl border border-slate-200/90 bg-slate-50/40">
+                    <style>
+                        #variation-summary-tbody tr.summary-customization-row td { padding: 0; border: 0; vertical-align: top; }
+                        #variation-summary-tbody .customization-summary-metric:nth-child(odd) { background: rgba(248, 250, 252, 0.65); }
+                        @media (min-width: 640px) {
+                            #variation-summary-tbody .customization-summary-metric { background: transparent; }
+                        }
+                    </style>
+                    <table class="w-full border-collapse text-sm" aria-label="{{ __('store.product.variation_summary_aria') }}">
                         <thead>
-                            <tr class="bg-slate-100 border-b border-slate-200">
-                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">{{ __('store.product.option_column') }}</th>
-                                <th scope="col" class="text-left font-semibold text-slate-700 py-2.5 px-3">{{ __('store.product.value_column') }}</th>
+                            <tr class="border-b border-slate-200 bg-slate-100/80">
+                                <th scope="col" class="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-4">{{ __('store.product.option_column') }}</th>
+                                <th scope="col" class="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-4">{{ __('store.product.value_column') }}</th>
                             </tr>
                         </thead>
-                        <tbody id="variation-summary-tbody">
+                        <tbody id="variation-summary-tbody" class="divide-y divide-slate-100 bg-white">
                             <tr>
-                                <td colspan="2" class="text-slate-400 py-4 px-3 text-center">{{ __('store.product.summary_select_prompt') }}</td>
+                                <td colspan="2" class="px-3 py-8 text-center text-sm text-slate-400 sm:px-4">{{ __('store.product.summary_select_prompt') }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -390,6 +397,20 @@
                         $customStepIndex = $totalSteps + 1;
                         $sizeTables = $sizeTables ?? collect();
                     @endphp
+                    @push('head')
+                    <style>
+                        .product-option.fabric-option-card.option-selected .fabric-option-accent { background-color: #155fb3; }
+                        .product-option.fabric-option-card.option-selected .fabric-option-radio {
+                            border-color: #155fb3;
+                            background-color: #155fb3;
+                            box-shadow: inset 0 0 0 3px #fff;
+                        }
+                        .product-option.fabric-option-card.option-selected [class*="bg-slate-100"] {
+                            background-color: #dbeafe;
+                            color: #1e40af;
+                        }
+                    </style>
+                    @endpush
                     <section class="mt-3 lg:mt-4 w-full" aria-labelledby="variations-heading">
                         <div class="rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 shadow-sm overflow-hidden ring-1 ring-slate-200/30">
                             <div class="px-4 sm:px-5 lg:px-6 py-3.5 lg:py-4 border-b border-slate-200/70 bg-white/95">
@@ -430,7 +451,7 @@
                                                 <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.change') }}</button>
                                             </div>
                                             <div class="variation-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4 {{ $stepIndex > 0 ? 'hidden' : '' }}">
-                                                <div class="flex flex-wrap gap-2.5 sm:gap-3 lg:gap-3.5 product-variation-options">
+                                                <div class="@if($variation->type === 'fabric') fabric-options-grid grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 @else flex flex-wrap gap-2.5 sm:gap-3 lg:gap-3.5 @endif product-variation-options">
                                     @foreach($variation->options as $option)
                                         @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
@@ -439,9 +460,45 @@
                                                 ? optional($option->interfaceColorVariation)->interface_fabric_type_variation_id
                                                 : null;
                                         @endphp
-                                        @if(($variation->type === 'image' || $variation->type === 'color' || $variation->type === 'fabric') && $option->option_image)
+                                        @if($variation->type === 'fabric')
+                                            @php
+                                                $fabricParts = \App\Support\FabricOptionDisplay::parse($option->option_value);
+                                                $fabricImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
+                                            @endphp
+                                            <button type="button"
+                                                class="{{ $optionClasses }} fabric-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
+                                                data-variation="{{ $variation->name }}"
+                                                data-option="{{ $option->option_value }}"
+                                                data-option-id="{{ $option->id }}"
+                                                data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
+                                                data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
+                                                data-parent-option-ids="{{ json_encode($parentIdsList) }}"
+                                                data-price-delta="{{ (float) $option->price_delta }}"
+                                                data-option-image-url="{{ $fabricImageUrl ?? '' }}"
+                                                data-fabric-preset-id="{{ $option->interface_fabric_type_variation_id ?? '' }}"
+                                                title="{{ $fabricParts['full'] }}">
+                                                <span class="fabric-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
+                                                <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">
+                                                    @if($fabricImageUrl)
+                                                        <img src="{{ $fabricImageUrl }}" alt="" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover shrink-0 border border-slate-200/80">
+                                                    @endif
+                                                    <span class="fabric-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
+                                                    <span class="flex-1 min-w-0">
+                                                        <span class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                                            @if($fabricParts['yarn_count'])
+                                                                <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] sm:text-xs font-semibold text-slate-600 tabular-nums">{{ $fabricParts['yarn_count'] }}</span>
+                                                            @endif
+                                                            <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $fabricParts['name'] }}</span>
+                                                        </span>
+                                                        @if($fabricParts['weight'])
+                                                            <span class="mt-0.5 block text-xs sm:text-sm text-slate-500 leading-snug">{{ $fabricParts['weight'] }}</span>
+                                                        @endif
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        @elseif(($variation->type === 'image' || $variation->type === 'color') && $option->option_image)
                                             @php $optionImageUrl = \App\Support\MediaUrl::public($option->option_image); $imgSize = $option->option_image_size ?? 'medium'; $imgSizeClass = match($imgSize) { 'small' => 'w-14 h-14 sm:w-16 sm:h-16', 'large' => 'w-28 h-28 sm:w-32 sm:h-32', default => 'w-20 h-20 sm:w-24 sm:h-24' }; $minWClass = match($imgSize) { 'small' => 'min-w-[72px] sm:min-w-[88px]', 'large' => 'min-w-[120px] sm:min-w-[140px]', default => 'min-w-[88px] sm:min-w-[110px]' }; $labelMaxW = match($imgSize) { 'small' => 'max-w-[80px] sm:max-w-[88px]', 'large' => 'max-w-[120px] sm:max-w-[140px]', default => 'max-w-[96px] sm:max-w-[110px]' }; @endphp
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" @if($variation->type === 'fabric') data-fabric-preset-id="{{ $option->interface_fabric_type_variation_id ?? '' }}" @endif @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-2 sm:p-3 {{ $minWClass }} relative" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>
                                                 <span class="relative inline-block group">
                                                     <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="{{ $imgSizeClass }} object-cover rounded-xl">
                                                     <span class="variation-zoom-btn absolute top-1 right-1 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
@@ -456,7 +513,7 @@
                                                 <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $option->option_value }}</span>
                                             </button>
                                         @else
-                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" @if($variation->type === 'fabric') data-fabric-preset-id="{{ $option->interface_fabric_type_variation_id ?? '' }}" @endif @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>{{ $option->option_value }}</button>
+                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" @if($variation->type === 'color') data-color-fabric-group-id="{{ $colorFabricGroupId ?? '' }}" @endif>{{ $option->option_value }}</button>
                                         @endif
                                     @endforeach
                                                 </div>
@@ -569,13 +626,9 @@
                                             <p class="text-sm text-slate-600 leading-snug mb-4">{{ __('store.product.customization_step_intro') }}</p>
                                             <p class="text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.customization_table_caption') }}</p>
                                             @php
-                                                $customizationPrintOptions = [
-                                                    'emprime' => __('store.product.customization_print_emprime'),
-                                                    'dtf' => __('store.product.customization_print_dtf'),
-                                                    'direct_digital' => __('store.product.customization_print_direct_digital'),
-                                                    'embroidery' => __('store.product.customization_print_embroidery'),
-                                                ];
-                                                $customizationDefaultPrint = 'emprime';
+                                                $customizationPrintOptions = $productCustomization['print_techniques'] ?? [];
+                                                $customizationDefaultPrint = (string) ($productCustomization['default_print_slug'] ?? 'emprime');
+                                                $customizationMaxColors = max(1, (int) ($productCustomization['max_color_count'] ?? 7));
                                             @endphp
                                             <div id="product-customization-table" class="mb-5 space-y-3">
                                                 <div class="hidden items-center gap-3 text-left sm:flex sm:rounded-xl sm:bg-slate-100/90 sm:px-4 sm:py-2.5">
@@ -589,23 +642,25 @@
                                                         <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_print') }}</div>
                                                     </div>
                                                 </div>
-                                                @for ($cr = 1; $cr <= 9; $cr++)
+                                                @foreach ($productCustomization['rows'] ?? [] as $customRow)
                                                     @php
-                                                        $k = 'customization_row'.$cr.'_konum';
-                                                        $d = 'customization_row'.$cr.'_dims';
-                                                        $re = 'customization_row'.$cr.'_renk';
-                                                        $clKonum = __('store.product.'.$k);
-                                                        $dimsStr = __('store.product.'.$d);
-                                                        $dimParts = preg_split('/\s*[×x]\s*/ui', trim((string) $dimsStr), 2);
-                                                        $defEn = isset($dimParts[0]) ? trim(str_replace(',', '.', $dimParts[0])) : '';
-                                                        $defBoy = isset($dimParts[1]) ? trim(str_replace(',', '.', $dimParts[1])) : '';
-                                                        $defRenk = (int) preg_replace('/\D/', '', (string) __('store.product.'.$re));
-                                                        if ($defRenk < 1 || $defRenk > 7) {
-                                                            $defRenk = 3;
+                                                        $rowId = is_object($customRow) ? ($customRow->id ?? null) : ($customRow['id'] ?? null);
+                                                        $clKonum = is_object($customRow) ? ($customRow->position_name ?? '') : ($customRow['position_name'] ?? '');
+                                                        $defEn = is_object($customRow) ? ($customRow->default_width ?? '') : ($customRow['default_width'] ?? '');
+                                                        $defBoy = is_object($customRow) ? ($customRow->default_height ?? '') : ($customRow['default_height'] ?? '');
+                                                        $defEn = $defEn !== null && $defEn !== '' ? rtrim(rtrim((string) $defEn, '0'), '.') : '';
+                                                        $defBoy = $defBoy !== null && $defBoy !== '' ? rtrim(rtrim((string) $defBoy, '0'), '.') : '';
+                                                        $defRenk = (int) (is_object($customRow) ? ($customRow->default_color_count ?? 3) : ($customRow['default_color_count'] ?? 3));
+                                                        if ($defRenk < 1 || $defRenk > $customizationMaxColors) {
+                                                            $defRenk = min(3, $customizationMaxColors);
+                                                        }
+                                                        $rowDefaultPrint = (string) (is_object($customRow) ? ($customRow->default_print_technique_slug ?? '') : ($customRow['default_print_technique_slug'] ?? ''));
+                                                        if ($rowDefaultPrint === '' || ! isset($customizationPrintOptions[$rowDefaultPrint])) {
+                                                            $rowDefaultPrint = $customizationDefaultPrint;
                                                         }
                                                     @endphp
                                                     <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-3 sm:gap-4 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
-                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $cr }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonum }}">
+                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonum }}">
                                                         <span class="pointer-events-none relative flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-gradient-to-b from-white to-slate-50 shadow-inner transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-gradient-to-br peer-checked:from-primary-500 peer-checked:to-primary-600 peer-checked:shadow-lg peer-checked:shadow-primary-500/40 peer-checked:ring-4 peer-checked:ring-primary-400/30 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                                                         </span>
@@ -628,8 +683,8 @@
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-2">
                                                                     <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_colors') }}</span>
                                                                     <div class="flex justify-center sm:justify-center">
-                                                                        <select name="customization_row_{{ $cr }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full max-w-[7rem] rounded-xl border border-slate-300/90 bg-white px-3 text-center text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25 sm:max-w-[6.5rem]" aria-label="{{ __('store.product.customization_col_colors') }}, {{ $clKonum }}">
-                                                                            @for ($ci = 1; $ci <= 7; $ci++)
+                                                                        <select name="customization_row_{{ $rowId }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full max-w-[7rem] rounded-xl border border-slate-300/90 bg-white px-3 text-center text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25 sm:max-w-[6.5rem]" aria-label="{{ __('store.product.customization_col_colors') }}, {{ $clKonum }}">
+                                                                            @for ($ci = 1; $ci <= $customizationMaxColors; $ci++)
                                                                                 <option value="{{ $ci }}" {{ (int) $ci === (int) $defRenk ? 'selected' : '' }}>{{ $ci }}</option>
                                                                             @endfor
                                                                         </select>
@@ -638,9 +693,9 @@
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
                                                                     <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_print') }}</span>
                                                                     <div class="flex justify-center">
-                                                                        <select name="customization_row_{{ $cr }}_baski" data-default-baski="{{ $customizationDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-xl border border-slate-300/90 bg-white px-3 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_col_print') }}, {{ $clKonum }}">
+                                                                        <select name="customization_row_{{ $rowId }}_baski" data-default-baski="{{ $rowDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-xl border border-slate-300/90 bg-white px-3 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_col_print') }}, {{ $clKonum }}">
                                                                             @foreach ($customizationPrintOptions as $pSlug => $pLabel)
-                                                                                <option value="{{ $pSlug }}" {{ $pSlug === $customizationDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
+                                                                                <option value="{{ $pSlug }}" {{ $pSlug === $rowDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
                                                                             @endforeach
                                                                         </select>
                                                                     </div>
@@ -648,7 +703,7 @@
                                                             </div>
                                                         </div>
                                                     </label>
-                                                @endfor
+                                                @endforeach
                                             </div>
                                             <label for="product-customization-notes-field" class="block text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.customization_panel_title') }}</label>
                                             <textarea id="product-customization-notes-field" rows="3" maxlength="2000" class="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-500/20" placeholder="{{ __('store.product.customization_notes_placeholder') }}"></textarea>
@@ -779,9 +834,46 @@
                 'customization_summary_empty' => __('store.product.customization_summary_empty'),
                 'customization_summary_section_label' => __('store.product.customization_summary_section_label'),
                 'customization_colors_unit' => __('store.product.customization_colors_unit'),
+                'customization_area_cm2' => __('store.product.customization_area_cm2'),
+                'customization_dim_cm_suffix' => __('store.product.customization_dim_cm_suffix'),
+                'customization_matched_ebat' => __('store.product.customization_matched_ebat'),
+                'customization_summary_dim' => __('store.product.customization_summary_dim'),
+                'customization_summary_area' => __('store.product.customization_summary_area'),
+                'customization_summary_ebat' => __('store.product.customization_summary_ebat'),
+                'customization_summary_colors' => __('store.product.customization_summary_colors'),
+                'customization_summary_print' => __('store.product.customization_summary_print'),
+                'customization_col_position' => __('store.product.customization_col_position'),
+                'customization_summary_multiplier' => __('store.product.customization_summary_multiplier'),
+                'customization_size_multiplier_formula' => __('store.product.customization_size_multiplier_formula'),
+                'customization_summary_price' => __('store.product.customization_summary_price'),
+                'customization_summary_order_qty' => __('store.product.customization_summary_order_qty'),
+                'customization_summary_qty_range' => __('store.product.customization_summary_qty_range'),
+                'customization_summary_qty_multiplier' => __('store.product.customization_summary_qty_multiplier'),
+                'customization_qty_range_fmt' => __('store.product.customization_qty_range_fmt'),
+                'customization_qty_not_set' => __('store.product.customization_qty_not_set'),
+                'customization_summary_color_multiplier' => __('store.product.customization_summary_color_multiplier'),
+                'customization_summary_total_price' => __('store.product.customization_summary_total_price'),
+                'customization_total_price_formula' => __('store.product.customization_total_price_formula'),
+                'customization_section_grand_total' => __('store.product.customization_section_grand_total'),
+            ];
+            $sizeEbatMultipliers = $sizeEbatMultipliers ?? [];
+            $quantityDimensionMultipliers = $quantityDimensionMultipliers ?? [];
+            $colorDimensionMultipliers = $colorDimensionMultipliers ?? [];
+            $usdCurrency = ($currencies ?? collect())->firstWhere('code', 'USD');
+            $storeCurrencyConfig = [
+                'canSeePrices' => (bool) ($canSeePrices ?? false),
+                'usdExchangeRate' => $usdCurrency ? (float) $usdCurrency->exchange_rate : null,
+                'selectedCode' => $selectedCurrency->code ?? 'TRY',
+                'selectedSymbol' => $selectedCurrency->symbol ?? '₺',
+                'selectedExchangeRate' => (float) ($selectedCurrency->exchange_rate ?? 1),
+                'selectedDecimalPlaces' => (int) ($selectedCurrency->decimal_places ?? 2),
             ];
         @endphp
         <script>window.storeProductUi = @json($storeProductUi);</script>
+        <script>window.sizeEbatMultipliers = @json($sizeEbatMultipliers);</script>
+        <script>window.quantityDimensionMultipliers = @json($quantityDimensionMultipliers);</script>
+        <script>window.colorDimensionMultipliers = @json($colorDimensionMultipliers);</script>
+        <script>window.storeCurrencyConfig = @json($storeCurrencyConfig);</script>
         @push('head')
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -800,18 +892,255 @@
                         };
                     }
 
+                    function computeCustomizationAreaCm2(enStr, boyStr) {
+                        var en = parseFloat(String(enStr || '').replace(',', '.'));
+                        var boy = parseFloat(String(boyStr || '').replace(',', '.'));
+                        if (!isFinite(en) || !isFinite(boy) || en <= 0 || boy <= 0) {
+                            return null;
+                        }
+                        return en * boy;
+                    }
+
+                    function formatCustomizationAreaCm2(cm2) {
+                        if (cm2 === null || !isFinite(cm2)) {
+                            return null;
+                        }
+                        var isWhole = Math.abs(cm2 - Math.round(cm2)) < 1e-9;
+                        return cm2.toLocaleString('tr-TR', {
+                            minimumFractionDigits: isWhole ? 0 : 2,
+                            maximumFractionDigits: isWhole ? 0 : 2
+                        });
+                    }
+
+                    function customizationAreaCm2Label(areaDisplay) {
+                        if (!areaDisplay) {
+                            return '';
+                        }
+                        var tpl = (PU.customization_area_cm2 || ':area cm²');
+                        return tpl.replace(':area', areaDisplay);
+                    }
+
+                    function findEbatRowForAreaCm2(cm2) {
+                        var list = window.sizeEbatMultipliers || [];
+                        if (!list.length || cm2 === null || !isFinite(cm2) || cm2 <= 0) {
+                            return null;
+                        }
+                        var sorted = list.slice().sort(function(a, b) {
+                            return parseFloat(a.ebat_cm2) - parseFloat(b.ebat_cm2);
+                        });
+                        for (var i = 0; i < sorted.length; i++) {
+                            if (parseFloat(sorted[i].ebat_cm2) >= cm2 - 1e-9) {
+                                return sorted[i];
+                            }
+                        }
+                        return sorted[sorted.length - 1] || null;
+                    }
+
+                    function findEbatLabelForAreaCm2(cm2) {
+                        var row = findEbatRowForAreaCm2(cm2);
+                        return row ? (row.size_label || null) : null;
+                    }
+
+                    function parseMultiplierNumber(raw) {
+                        if (raw === null || raw === undefined || raw === '') {
+                            return null;
+                        }
+                        var s = String(raw).trim().replace(',', '.');
+                        if (!/^-?\d+(\.\d+)?$/.test(s)) {
+                            return null;
+                        }
+                        var n = parseFloat(s);
+                        return isFinite(n) ? n : null;
+                    }
+
+                    function formatMultiplierNumber(n) {
+                        if (n === null || !isFinite(n)) {
+                            return '—';
+                        }
+                        var isWhole = Math.abs(n - Math.round(n)) < 1e-9;
+                        return n.toLocaleString('tr-TR', {
+                            minimumFractionDigits: isWhole ? 0 : 2,
+                            maximumFractionDigits: isWhole ? 0 : 4
+                        });
+                    }
+
+                    function computeEbatMultiplierResult(ebatRow) {
+                        if (!ebatRow) {
+                            return { display: null, fixed: null, extra: null, product: null, fixedLabel: null };
+                        }
+                        var extra = parseMultiplierNumber(ebatRow.extra_multiplier);
+                        if (extra === null) {
+                            extra = 0;
+                        }
+                        var fixedRaw = ebatRow.fixed_multiplier;
+                        var fixedNum = parseMultiplierNumber(fixedRaw);
+                        var fixedLabel = fixedNum === null && fixedRaw ? String(fixedRaw).trim() : null;
+                        if (fixedNum !== null) {
+                            var product = fixedNum * extra;
+                            return {
+                                fixed: fixedNum,
+                                extra: extra,
+                                product: product,
+                                fixedLabel: null,
+                                display: formatMultiplierResultDisplay({
+                                    fixed: fixedNum,
+                                    extra: extra,
+                                    product: product,
+                                    fixedLabel: null
+                                })
+                            };
+                        }
+                        if (fixedLabel) {
+                            return {
+                                fixed: null,
+                                extra: extra,
+                                product: null,
+                                fixedLabel: fixedLabel,
+                                display: fixedLabel
+                            };
+                        }
+                        return { display: null, fixed: null, extra: extra, product: null, fixedLabel: null };
+                    }
+
+                    function formatMultiplierResultDisplay(result) {
+                        if (!result) {
+                            return '';
+                        }
+                        if (result.fixed !== null && result.product !== null) {
+                            var tpl = (PU.customization_size_multiplier_formula || ':fixed × :extra = :result');
+                            return tpl
+                                .replace(':fixed', formatMultiplierNumber(result.fixed))
+                                .replace(':extra', formatMultiplierNumber(result.extra))
+                                .replace(':result', formatMultiplierNumber(result.product));
+                        }
+                        return result.fixedLabel || result.display || '';
+                    }
+
+                    function getUsdExchangeRate() {
+                        var cfg = window.storeCurrencyConfig || {};
+                        var rate = parseFloat(cfg.usdExchangeRate);
+                        return isFinite(rate) && rate > 0 ? rate : null;
+                    }
+
+                    function computeCustomizationPrintPriceTry(multiplierProduct) {
+                        if (multiplierProduct === null || !isFinite(multiplierProduct)) {
+                            return null;
+                        }
+                        var usdRate = getUsdExchangeRate();
+                        if (!usdRate) {
+                            return null;
+                        }
+                        return multiplierProduct * usdRate;
+                    }
+
+                    function formatStoreCurrencyAmount(tryAmount) {
+                        if (tryAmount === null || !isFinite(tryAmount)) {
+                            return null;
+                        }
+                        var cfg = window.storeCurrencyConfig || {};
+                        var code = cfg.selectedCode || 'TRY';
+                        var symbol = cfg.selectedSymbol || '₺';
+                        var rate = parseFloat(cfg.selectedExchangeRate) || 1;
+                        var decimals = parseInt(cfg.selectedDecimalPlaces, 10);
+                        if (!isFinite(decimals)) {
+                            decimals = 2;
+                        }
+                        var amount = code === 'TRY' ? tryAmount : tryAmount / rate;
+                        if (code === 'TRY') {
+                            return new Intl.NumberFormat('tr-TR', {
+                                minimumFractionDigits: decimals,
+                                maximumFractionDigits: decimals
+                            }).format(amount) + ' ' + symbol;
+                        }
+                        return symbol + new Intl.NumberFormat('en-US', {
+                            minimumFractionDigits: decimals,
+                            maximumFractionDigits: decimals
+                        }).format(amount);
+                    }
+
+                    function computeCustomizationPrintPriceDisplay(multiplierProduct) {
+                        var cfg = window.storeCurrencyConfig || {};
+                        if (!cfg.canSeePrices) {
+                            return null;
+                        }
+                        var tryAmount = computeCustomizationPrintPriceTry(multiplierProduct);
+                        return formatStoreCurrencyAmount(tryAmount);
+                    }
+
+                    function computeCustomizationRowTotalPrice(row, qtyCtx) {
+                        var cfg = window.storeCurrencyConfig || {};
+                        if (!cfg.canSeePrices) {
+                            return { total_try: null, total_display: null, formula_display: null };
+                        }
+                        var baseTry = row.size_multiplier_price_try;
+                        if (baseTry === null || !isFinite(baseTry)) {
+                            return { total_try: null, total_display: null, formula_display: null };
+                        }
+                        var qtyMult = qtyCtx && qtyCtx.quantity_multiplier_price != null && isFinite(qtyCtx.quantity_multiplier_price)
+                            ? qtyCtx.quantity_multiplier_price
+                            : null;
+                        var colorMult = row.color_multiplier_price != null && isFinite(row.color_multiplier_price)
+                            ? row.color_multiplier_price
+                            : null;
+                        if (qtyMult === null || colorMult === null) {
+                            return { total_try: null, total_display: null, formula_display: null };
+                        }
+                        var totalTry = baseTry * qtyMult * colorMult;
+                        var baseDisp = row.size_multiplier_price_display || formatStoreCurrencyAmount(baseTry) || '—';
+                        var qtyDisp = qtyCtx.quantity_multiplier_price_display || formatDimensionMultiplierPrice(qtyMult);
+                        var colorDisp = row.color_multiplier_price_display || formatDimensionMultiplierPrice(colorMult);
+                        var totalDisp = formatStoreCurrencyAmount(totalTry) || '—';
+                        var tpl = (PU.customization_total_price_formula || ':base × :qty × :color = :total');
+                        var formula = tpl
+                            .replace(':base', baseDisp)
+                            .replace(':qty', qtyDisp)
+                            .replace(':color', colorDisp)
+                            .replace(':total', totalDisp);
+                        return {
+                            total_try: totalTry,
+                            total_display: totalDisp,
+                            formula_display: formula
+                        };
+                    }
+
+                    function enrichCustomizationRowsWithTotals(rows, qtyCtx) {
+                        return (rows || []).map(function(row) {
+                            var enriched = Object.assign({}, row);
+                            var totals = computeCustomizationRowTotalPrice(enriched, qtyCtx);
+                            enriched.total_price_try = totals.total_try;
+                            enriched.total_price_display = totals.total_display;
+                            enriched.total_price_formula_display = totals.formula_display;
+                            return enriched;
+                        });
+                    }
+
+                    function customizationMatchedEbatLabel(ebat) {
+                        if (!ebat) {
+                            return '';
+                        }
+                        var tpl = (PU.customization_matched_ebat || 'EBAT: :ebat');
+                        return tpl.replace(':ebat', ebat);
+                    }
+
                     function customizationRowPayloadFromCard(row, cb) {
                         if (!row) return null;
                         var enInp = row.querySelector('.customization-dim-en');
                         var boyInp = row.querySelector('.customization-dim-boy');
                         var renkSel = row.querySelector('.customization-color-count');
                         var printSel = row.querySelector('.customization-print-tech');
+                        var cmSuffix = (PU.customization_dim_cm_suffix || 'cm').trim();
                         var en = enInp ? String(enInp.value || '').trim().replace(',', '.') : '';
                         var boy = boyInp ? String(boyInp.value || '').trim().replace(',', '.') : '';
                         var enDisp = en !== '' ? en : '—';
                         var boyDisp = boy !== '' ? boy : '—';
-                        var en_boy_cm = enDisp + ' × ' + boyDisp;
+                        var en_boy_cm = enDisp + ' × ' + boyDisp + (cmSuffix ? ' ' + cmSuffix : '');
+                        var alanCm2 = computeCustomizationAreaCm2(en, boy);
+                        var alanCm2Display = formatCustomizationAreaCm2(alanCm2);
+                        var ebatRow = findEbatRowForAreaCm2(alanCm2);
+                        var ebat = ebatRow ? (ebatRow.size_label || null) : null;
+                        var multiplier = computeEbatMultiplierResult(ebatRow);
                         var renk_sayisi = renkSel ? String(renkSel.value || '').trim() : '';
+                        var colorMultRow = findColorMultiplierRowForCount(parseInt(renk_sayisi, 10));
                         var baski_slug = printSel ? String(printSel.value || '').trim() : '';
                         var baski_teknigi = '';
                         if (printSel && printSel.selectedIndex >= 0 && printSel.options[printSel.selectedIndex]) {
@@ -823,10 +1152,277 @@
                             en_boy_cm: en_boy_cm,
                             en_cm: en,
                             boy_cm: boy,
+                            alan_cm2: alanCm2,
+                            alan_cm2_display: alanCm2Display,
+                            ebat: ebat,
+                            size_fixed_multiplier: ebatRow ? ebatRow.fixed_multiplier : null,
+                            size_extra_multiplier: ebatRow ? ebatRow.extra_multiplier : null,
+                            size_multiplier_product: multiplier.product,
+                            size_multiplier_display: multiplier.display,
+                            size_multiplier_price_try: computeCustomizationPrintPriceTry(multiplier.product),
+                            size_multiplier_price_display: computeCustomizationPrintPriceDisplay(multiplier.product),
                             renk_sayisi: renk_sayisi,
+                            color_multiplier_price: colorMultRow ? parseFloat(colorMultRow.multiplier_price) : null,
+                            color_multiplier_price_display: colorMultRow ? formatDimensionMultiplierPrice(parseFloat(colorMultRow.multiplier_price)) : null,
                             baski_slug: baski_slug,
                             baski_teknigi: baski_teknigi
                         };
+                    }
+
+                    function customizationRowDetailLine(row) {
+                        var detail = (row.en_boy_cm != null && row.en_boy_cm !== '') ? String(row.en_boy_cm) : '—';
+                        if (row.alan_cm2_display) {
+                            detail += ' · ' + customizationAreaCm2Label(row.alan_cm2_display);
+                        }
+                        if (row.ebat) {
+                            detail += ' · ' + customizationMatchedEbatLabel(row.ebat);
+                        }
+                        if (row.size_multiplier_display) {
+                            detail += ' · ' + (PU.customization_summary_multiplier || 'Çarpan') + ': ' + row.size_multiplier_display;
+                        }
+                        if (row.size_multiplier_price_display) {
+                            detail += ' · ' + (PU.customization_summary_price || 'Fiyat') + ': ' + row.size_multiplier_price_display;
+                        }
+                        if (row.color_multiplier_price_display) {
+                            detail += ' · ' + (PU.customization_summary_color_multiplier || 'Renk çarpanı') + ': ' + row.color_multiplier_price_display;
+                        }
+                        if (row.total_price_display) {
+                            detail += ' · ' + (PU.customization_summary_total_price || 'Toplam fiyat') + ': ' + row.total_price_display;
+                        }
+                        var colUnit = (PU.customization_colors_unit || '').trim();
+                        var renkPart = row.renk_sayisi && colUnit ? (String(row.renk_sayisi) + ' ' + colUnit) : (row.renk_sayisi || '');
+                        if (renkPart) {
+                            detail += ' · ' + renkPart;
+                        }
+                        detail += ' · ' + (row.baski_teknigi || '');
+                        return detail;
+                    }
+
+                    function customizationSummaryMetric(label, value) {
+                        return '<div class="customization-summary-metric min-w-0 px-3 py-2.5 sm:px-3.5 sm:py-3">' +
+                            '<span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">' + escapeHtml(label) + '</span>' +
+                            '<span class="mt-1 block text-sm font-semibold leading-snug text-slate-900" title="' + escapeHtml(value || '—') + '">' + escapeHtml(value || '—') + '</span>' +
+                            '</div>';
+                    }
+
+                    function customizationSummaryMetricPrice(label, priceText) {
+                        return '<div class="customization-summary-metric min-w-0 bg-emerald-50/50 px-3 py-2.5 sm:px-3.5 sm:py-3">' +
+                            '<span class="block text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">' + escapeHtml(label) + '</span>' +
+                            '<span class="mt-1 block text-base font-bold leading-snug text-emerald-800" title="' + escapeHtml(priceText || '—') + '">' + escapeHtml(priceText || '—') + '</span>' +
+                            '</div>';
+                    }
+
+                    function renderCustomizationSummaryCardHtml(row, index) {
+                        var dimLbl = PU.customization_summary_dim || 'Ölçü';
+                        var areaLbl = PU.customization_summary_area || 'Alan';
+                        var ebatLbl = PU.customization_summary_ebat || 'EBAT';
+                        var multLbl = PU.customization_summary_multiplier || 'Çarpan';
+                        var priceLbl = PU.customization_summary_price || 'Fiyat';
+                        var colorsLbl = PU.customization_summary_colors || 'Renk';
+                        var colorMultLbl = PU.customization_summary_color_multiplier || 'Renk çarpanı';
+                        var cfg = window.storeCurrencyConfig || {};
+                        var showPrice = !!(cfg.canSeePrices && row.size_multiplier_price_display);
+                        var dim = (row.en_boy_cm != null && row.en_boy_cm !== '') ? String(row.en_boy_cm) : '—';
+                        var area = row.alan_cm2_display ? customizationAreaCm2Label(row.alan_cm2_display) : '—';
+                        var ebat = row.ebat ? String(row.ebat) : '—';
+                        var mult = row.size_multiplier_display ? String(row.size_multiplier_display) : '—';
+                        var price = row.size_multiplier_price_display ? String(row.size_multiplier_price_display) : '—';
+                        var colUnit = (PU.customization_colors_unit || '').trim();
+                        var renk = row.renk_sayisi && colUnit ? (String(row.renk_sayisi) + ' ' + colUnit) : (row.renk_sayisi || '—');
+                        var colorMult = row.color_multiplier_price_display ? String(row.color_multiplier_price_display) : '—';
+                        var print = row.baski_teknigi || '—';
+                        var position = row.konum || '—';
+                        var rowNum = typeof index === 'number' ? (index + 1) : '';
+                        var positionLbl = PU.customization_col_position || 'Konum';
+                        var totalLbl = PU.customization_summary_total_price || 'Toplam fiyat';
+                        var gridCols = showPrice ? 'sm:grid-cols-7' : 'sm:grid-cols-6';
+                        var totalFooter = '';
+                        if (cfg.canSeePrices && row.total_price_display) {
+                            totalFooter = '<footer class="border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
+                                '<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">' +
+                                (row.total_price_formula_display
+                                    ? '<p class="text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
+                                    : '<span></span>') +
+                                '<p class="shrink-0 text-right">' +
+                                '<span class="block text-[10px] font-semibold uppercase tracking-wider text-primary-700 sm:inline">' + escapeHtml(totalLbl) + '</span>' +
+                                '<span class="mt-0.5 block text-xl font-bold text-primary-900 sm:mt-0 sm:ml-2 sm:inline">' + escapeHtml(row.total_price_display) + '</span>' +
+                                '</p></div></footer>';
+                        }
+
+                        return '<article class="customization-summary-card overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/[0.03]">' +
+                            '<header class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-3.5 py-3 sm:px-4">' +
+                            '<div class="flex min-w-0 items-center gap-3">' +
+                            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600/10 text-xs font-bold text-primary-700">' + escapeHtml(String(rowNum)) + '</span>' +
+                            '<div class="min-w-0">' +
+                            '<p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">' + escapeHtml(positionLbl) + '</p>' +
+                            '<p class="mt-0.5 truncate text-sm font-semibold text-slate-900 sm:text-base" title="' + escapeHtml(position) + '">' + escapeHtml(position) + '</p>' +
+                            '</div></div>' +
+                            '<span class="shrink-0 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-800">' + escapeHtml(print) + '</span>' +
+                            '</header>' +
+                            '<div class="grid grid-cols-2 divide-x divide-y divide-slate-100 ' + gridCols + ' sm:divide-y-0">' +
+                            customizationSummaryMetric(dimLbl, dim) +
+                            customizationSummaryMetric(areaLbl, area) +
+                            customizationSummaryMetric(ebatLbl, ebat) +
+                            customizationSummaryMetric(multLbl, mult) +
+                            (showPrice ? customizationSummaryMetricPrice(priceLbl, price) : '') +
+                            customizationSummaryMetric(colorsLbl, renk) +
+                            customizationSummaryMetricColorMultiplier(colorMultLbl, colorMult) +
+                            '</div>' +
+                            totalFooter +
+                            '</article>';
+                    }
+
+                    function customizationSummaryMetricColorMultiplier(label, value) {
+                        return '<div class="customization-summary-metric min-w-0 bg-violet-50/40 px-3 py-2.5 sm:px-3.5 sm:py-3">' +
+                            '<span class="block text-[10px] font-semibold uppercase tracking-wider text-violet-700/80">' + escapeHtml(label) + '</span>' +
+                            '<span class="mt-1 block text-sm font-bold leading-snug text-violet-900" title="' + escapeHtml(value || '—') + '">' + escapeHtml(value || '—') + '</span>' +
+                            '</div>';
+                    }
+
+                    function formatDimensionMultiplierPrice(price) {
+                        if (price === null || !isFinite(price)) {
+                            return '—';
+                        }
+                        var isWhole = Math.abs(price - Math.round(price)) < 1e-9;
+                        return price.toLocaleString('tr-TR', {
+                            minimumFractionDigits: isWhole ? 0 : 2,
+                            maximumFractionDigits: isWhole ? 0 : 4
+                        });
+                    }
+
+                    function findColorMultiplierRowForCount(colorCount) {
+                        var list = window.colorDimensionMultipliers || [];
+                        if (!list.length || colorCount === null || !isFinite(colorCount) || colorCount <= 0) {
+                            return null;
+                        }
+                        var c = Math.floor(colorCount);
+                        for (var i = 0; i < list.length; i++) {
+                            if (parseInt(list[i].color_count, 10) === c) {
+                                return list[i];
+                            }
+                        }
+                        return null;
+                    }
+
+                    function findQuantityMultiplierRowForQty(qty) {
+                        var list = window.quantityDimensionMultipliers || [];
+                        if (!list.length || qty === null || !isFinite(qty) || qty <= 0) {
+                            return null;
+                        }
+                        var q = Math.floor(qty);
+                        for (var i = 0; i < list.length; i++) {
+                            var row = list[i];
+                            var from = parseInt(row.quantity_from, 10);
+                            var to = parseInt(row.quantity_to, 10);
+                            if (q >= from && q <= to) {
+                                return row;
+                            }
+                        }
+                        var fallback = null;
+                        for (var j = 0; j < list.length; j++) {
+                            var r = list[j];
+                            if (q >= parseInt(r.quantity_from, 10)) {
+                                fallback = r;
+                            }
+                        }
+                        return fallback;
+                    }
+
+                    function formatQuantityRangeLabel(row) {
+                        if (!row) return '—';
+                        var tpl = (PU.customization_qty_range_fmt || ':from - :to');
+                        return tpl
+                            .replace(':from', String(row.quantity_from))
+                            .replace(':to', String(row.quantity_to));
+                    }
+
+                    function formatQuantityMultiplierPrice(price) {
+                        return formatDimensionMultiplierPrice(price);
+                    }
+
+                    function getOrderQuantityContext() {
+                        var qty = 0;
+                        if (typeof getSizeQuantities === 'function') {
+                            var info = getSizeQuantities();
+                            qty = info && isFinite(info.total) ? info.total : 0;
+                        }
+                        var matched = findQuantityMultiplierRowForQty(qty);
+                        return {
+                            order_quantity: qty,
+                            quantity_range_label: matched ? formatQuantityRangeLabel(matched) : null,
+                            quantity_multiplier_price: matched ? parseFloat(matched.multiplier_price) : null,
+                            quantity_multiplier_price_display: matched ? formatQuantityMultiplierPrice(parseFloat(matched.multiplier_price)) : null
+                        };
+                    }
+
+                    function renderQuantityMultiplierSummaryHtml() {
+                        var ctx = getOrderQuantityContext();
+                        var qtyLbl = PU.customization_summary_order_qty || 'Sipariş adeti';
+                        var rangeLbl = PU.customization_summary_qty_range || 'Adet aralığı';
+                        var multLbl = PU.customization_summary_qty_multiplier || 'Çarpan fiyatı';
+                        var qtyVal = ctx.order_quantity > 0
+                            ? (ctx.order_quantity.toLocaleString('tr-TR') + ' ' + (PU.units_suffix || 'adet'))
+                            : (PU.customization_qty_not_set || '—');
+                        var rangeVal = ctx.quantity_range_label || '—';
+                        var multVal = ctx.quantity_multiplier_price_display || '—';
+                        var metric = function(label, value, accent) {
+                            return '<div class="min-w-0 rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 shadow-sm">' +
+                                '<p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">' + escapeHtml(label) + '</p>' +
+                                '<p class="mt-0.5 text-sm font-semibold leading-snug ' + (accent || 'text-slate-900') + ' break-words">' + escapeHtml(value) + '</p>' +
+                                '</div>';
+                        };
+                        return '<div class="quantity-multiplier-summary border-b border-slate-200/80 bg-slate-50/60 px-3.5 py-3 sm:px-4">' +
+                            '<div class="grid grid-cols-1 gap-2 sm:grid-cols-3">' +
+                            metric(qtyLbl, qtyVal) +
+                            metric(rangeLbl, rangeVal) +
+                            metric(multLbl, multVal, 'text-emerald-800') +
+                            '</div></div>';
+                    }
+
+                    function renderCustomizationGrandTotalHtml(rows) {
+                        var cfg = window.storeCurrencyConfig || {};
+                        if (!cfg.canSeePrices || !rows || !rows.length) {
+                            return '';
+                        }
+                        var sumTry = 0;
+                        var hasAny = false;
+                        rows.forEach(function(r) {
+                            if (r.total_price_try != null && isFinite(r.total_price_try)) {
+                                sumTry += r.total_price_try;
+                                hasAny = true;
+                            }
+                        });
+                        if (!hasAny) {
+                            return '';
+                        }
+                        var label = PU.customization_section_grand_total || 'Baskı toplamı';
+                        var display = formatStoreCurrencyAmount(sumTry) || '—';
+                        return '<div class="border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
+                            '<div class="flex items-center justify-between gap-3 rounded-xl border border-primary-200/80 bg-gradient-to-r from-primary-50 to-emerald-50/70 px-4 py-3.5 shadow-sm">' +
+                            '<span class="text-sm font-semibold text-slate-800">' + escapeHtml(label) + '</span>' +
+                            '<span class="text-xl font-bold text-primary-900">' + escapeHtml(display) + '</span>' +
+                            '</div></div>';
+                    }
+
+                    function renderCustomizationSummarySectionHtml(rows) {
+                        if (!rows || !rows.length) return '';
+                        var sec = (PU.customization_summary_section_label || '').trim();
+                        var qtyCtx = getOrderQuantityContext();
+                        var enrichedRows = enrichCustomizationRowsWithTotals(rows, qtyCtx);
+                        var cards = enrichedRows.map(function(r, i) { return renderCustomizationSummaryCardHtml(r, i); }).join('');
+                        var qtySummary = renderQuantityMultiplierSummaryHtml();
+                        var grandTotal = renderCustomizationGrandTotalHtml(enrichedRows);
+
+                        return '<div class="customization-summary-section border-t border-slate-200/90 bg-slate-50/30">' +
+                            (sec ? '<div class="flex items-center gap-2.5 border-b border-slate-200/80 bg-white/90 px-3.5 py-3 sm:px-4">' +
+                            '<span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white shadow-sm">' +
+                            '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>' +
+                            '</span>' +
+                            '<p class="text-sm font-semibold text-slate-900">' + escapeHtml(sec) + '</p></div>' : '') +
+                            qtySummary +
+                            '<div class="space-y-2.5 p-3 sm:p-4">' + cards + '</div>' +
+                            grandTotal +
+                            '</div>';
                     }
 
                     function getCustomizationTablePayload() {
@@ -840,7 +1436,9 @@
                             var payload = customizationRowPayloadFromCard(row, cb);
                             if (payload) rows.push(payload);
                         });
-                        return rows.length ? { rows: rows } : null;
+                        var qtyCtx = getOrderQuantityContext();
+                        var enrichedRows = enrichCustomizationRowsWithTotals(rows, qtyCtx);
+                        return enrichedRows.length ? Object.assign({ rows: enrichedRows }, qtyCtx) : null;
                     }
 
                     function customizationSummaryLineFromInputs() {
@@ -851,8 +1449,7 @@
                         var unit = (PU.customization_colors_unit || '').trim();
                         if (p && p.rows && p.rows.length) {
                             p.rows.forEach(function(row) {
-                                var renkPart = row.renk_sayisi && unit ? (row.renk_sayisi + ' ' + unit) : (row.renk_sayisi || '');
-                                parts.push(row.konum + ' · ' + row.en_boy_cm + (renkPart ? ' · ' + renkPart : '') + ' · ' + row.baski_teknigi);
+                                parts.push(row.konum + ' · ' + customizationRowDetailLine(row));
                             });
                         }
                         if (txt) parts.push(txt);
@@ -1358,25 +1955,19 @@
                             syncMainGalleryFromVariations();
                             return;
                         }
+                        var summaryRowClass = 'transition-colors hover:bg-slate-50/60';
+                        var summaryLabelCell = 'align-top px-3 py-3 text-sm font-medium text-slate-700 sm:px-4';
+                        var summaryValueCell = 'px-3 py-3 text-sm text-slate-800 sm:px-4';
                         var rows = [];
                         ordered.forEach(function(item) {
-                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(item.name) + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(item.value) + '</td></tr>');
+                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(item.name) + '</td><td class="' + summaryValueCell + '">' + escapeHtml(item.value) + '</td></tr>');
                         });
                         var custPayload = getCustomizationTablePayload();
                         var hasCustRows = !!(custPayload && custPayload.rows && custPayload.rows.length);
                         if (hasCustRows) {
-                            var sec = (PU.customization_summary_section_label || '').trim();
-                            if (sec) {
-                                rows.push('<tr class="border-b border-slate-100 bg-slate-50/60"><td colspan="2" class="py-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">' + escapeHtml(sec) + '</td></tr>');
-                            }
-                            var colUnit = (PU.customization_colors_unit || '').trim();
-                            custPayload.rows.forEach(function(r) {
-                                var renkPart = r.renk_sayisi && colUnit ? (String(r.renk_sayisi) + ' ' + colUnit) : (r.renk_sayisi || '');
-                                var detail = (r.en_boy_cm != null && r.en_boy_cm !== '') ? String(r.en_boy_cm) : '—';
-                                if (renkPart) detail += ' · ' + renkPart;
-                                detail += ' · ' + (r.baski_teknigi || '');
-                                rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(r.konum || '') + '</td><td class="py-2.5 px-3 text-slate-800">' + escapeHtml(detail) + '</td></tr>');
-                            });
+                            rows.push('<tr class="summary-customization-row"><td colspan="2" class="p-0 border-0">' +
+                                renderCustomizationSummarySectionHtml(custPayload.rows) +
+                                '</td></tr>');
                         }
                         if (ordered.length > 0 || hasCustRows) {
                             if (ordered.length > 0) {
@@ -1384,17 +1975,17 @@
                                     Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                         var qty = sizeInfo.sizeQuantities[size];
                                         if (qty > 0) {
-                                            rows.push('<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"><td class="py-2.5 px-3 font-medium text-slate-700">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="py-2.5 px-3 text-slate-800">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="' + summaryValueCell + '">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                                         }
                                     });
-                                    rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.summary_total_qty) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                    rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.summary_total_qty) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                                 } else {
-                                    rows.push('<tr class="border-b border-slate-100 last:border-0 bg-slate-100/70"><td class="py-2.5 px-3 font-semibold text-slate-800">' + escapeHtml(PU.qty_row_label) + '</td><td class="py-2.5 px-3 font-semibold text-slate-800">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
+                                    rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.qty_row_label) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td></tr>');
                                 }
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
-                            tbody.innerHTML = '<tr><td colspan="2" class="text-slate-400 py-4 px-3 text-center">' + escapeHtml(PU.summary_select_prompt) + '</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="2" class="px-3 py-8 text-center text-sm text-slate-400 sm:px-4">' + escapeHtml(PU.summary_select_prompt) + '</td></tr>';
                         }
                         var confirmWrap = document.getElementById('variation-confirm-wrap');
                         if (confirmWrap) {

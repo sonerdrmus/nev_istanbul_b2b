@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\QuantityDimensionMultiplier;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Mağaza: sipariş adeti → admin Adet Çarpanı tablosu eşlemesi.
+ */
+final class QuantityDimensionMultiplierCatalog
+{
+    /**
+     * @return list<array{quantity_from: int, quantity_to: int, multiplier_price: float}>
+     */
+    public static function rowsForStoreMatcher(): array
+    {
+        if (! Schema::hasTable('quantity_dimension_multipliers')) {
+            return [];
+        }
+
+        return QuantityDimensionMultiplier::activeOrdered()
+            ->map(fn (QuantityDimensionMultiplier $row): array => [
+                'quantity_from' => (int) $row->quantity_from,
+                'quantity_to' => (int) $row->quantity_to,
+                'multiplier_price' => round((float) $row->multiplier_price, 4),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{quantity_from: int, quantity_to: int, multiplier_price: float}|null
+     */
+    public static function matchRowForQuantity(?int $quantity): ?array
+    {
+        if ($quantity === null || $quantity <= 0) {
+            return null;
+        }
+
+        $rows = self::rowsForStoreMatcher();
+        if ($rows === []) {
+            return null;
+        }
+
+        foreach ($rows as $row) {
+            if ($quantity >= $row['quantity_from'] && $quantity <= $row['quantity_to']) {
+                return $row;
+            }
+        }
+
+        $fallback = null;
+        foreach ($rows as $row) {
+            if ($quantity >= $row['quantity_from']) {
+                $fallback = $row;
+            }
+        }
+
+        return $fallback;
+    }
+}
