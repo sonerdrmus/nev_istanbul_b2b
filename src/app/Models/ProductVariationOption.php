@@ -10,6 +10,9 @@ class ProductVariationOption extends Model
         'product_variation_id',
         'interface_color_variation_id',
         'interface_fabric_type_variation_id',
+        'interface_label_type_variation_id',
+        'interface_packaging_preference_variation_id',
+        'size_table_id',
         'option_value',
         'option_color',
         'option_image',
@@ -27,6 +30,33 @@ class ProductVariationOption extends Model
             'price_delta' => 'decimal:2',
             'parent_option_ids' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (ProductVariationOption $option): void {
+            if (! empty($option->size_table_id)) {
+                $option->syncOptionValueFromSizeTable();
+            }
+        });
+    }
+
+    public function syncOptionValueFromSizeTable(): void
+    {
+        if (empty($this->size_table_id)) {
+            return;
+        }
+
+        $table = $this->relationLoaded('sizeTable')
+            ? $this->sizeTable
+            : SizeTable::query()->find($this->size_table_id);
+
+        if (! $table) {
+            return;
+        }
+
+        $label = trim((string) ($table->title ?: $table->name ?: ''));
+        $this->option_value = $label !== '' ? $label : (string) $table->slug;
     }
 
     /** Seçenek hangi üst seçenek(ler)e bağlı – hem tek parent_option_id hem parent_option_ids desteklenir. */
@@ -58,6 +88,21 @@ class ProductVariationOption extends Model
     public function interfaceFabricTypeVariation()
     {
         return $this->belongsTo(InterfaceFabricTypeVariation::class, 'interface_fabric_type_variation_id');
+    }
+
+    public function interfaceLabelTypeVariation()
+    {
+        return $this->belongsTo(InterfaceLabelTypeVariation::class, 'interface_label_type_variation_id');
+    }
+
+    public function interfacePackagingPreferenceVariation()
+    {
+        return $this->belongsTo(InterfacePackagingPreferenceVariation::class, 'interface_packaging_preference_variation_id');
+    }
+
+    public function sizeTable()
+    {
+        return $this->belongsTo(SizeTable::class);
     }
 
     public function parentOption()
@@ -97,6 +142,17 @@ class ProductVariationOption extends Model
                 continue;
             }
 
+            $optionLabel = self::resolveSelectionOptionLabel($optionValue);
+
+            if (is_array($optionValue) && ! self::isMultiValueList($optionValue)) {
+                $option = $variation->options->firstWhere('option_value', $optionLabel);
+                if ($option) {
+                    $factor *= self::normalizePriceMultiplier($option->price_delta);
+                }
+
+                continue;
+            }
+
             if (is_array($optionValue)) {
                 foreach ($optionValue as $v) {
                     if ($v === null || trim((string) $v) === '') {
@@ -108,7 +164,7 @@ class ProductVariationOption extends Model
                     }
                 }
             } else {
-                $option = $variation->options->firstWhere('option_value', (string) $optionValue);
+                $option = $variation->options->firstWhere('option_value', $optionLabel);
                 if ($option) {
                     $factor *= self::normalizePriceMultiplier($option->price_delta);
                 }
@@ -116,6 +172,31 @@ class ProductVariationOption extends Model
         }
 
         return $factor;
+    }
+
+    /** @param  array<string, mixed>  $selections */
+    public static function additiveExtraTryForSelections(array $selections): float
+    {
+        return PackagingTypeVariationDisplay::additiveExtraTryFromSelections($selections);
+    }
+
+    private static function resolveSelectionOptionLabel(mixed $optionValue): string
+    {
+        if (is_array($optionValue) && array_key_exists('option', $optionValue)) {
+            return trim((string) $optionValue['option']);
+        }
+
+        return trim((string) $optionValue);
+    }
+
+    /** @param  array<mixed>  $value */
+    private static function isMultiValueList(array $value): bool
+    {
+        if (array_key_exists('option', $value)) {
+            return false;
+        }
+
+        return array_is_list($value);
     }
 
     /**

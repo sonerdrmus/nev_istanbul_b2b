@@ -13,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use App\Support\PrintTechniqueSlugResolver;
 use Illuminate\Support\Str;
 
 class ManageProductCustomization extends Page implements HasForms
@@ -241,16 +242,45 @@ class ManageProductCustomization extends Page implements HasForms
         $settings = ProductCustomizationSetting::instance();
         $settings->update([
             'max_color_count' => max(1, min(20, (int) ($data['max_color_count'] ?? 7))),
-            'default_print_technique_slug' => $data['default_print_technique_slug'] ?? null,
+            'default_print_technique_slug' => filled($data['default_print_technique_slug'] ?? null)
+                ? PrintTechniqueSlugResolver::canonical((string) $data['default_print_technique_slug'])
+                : null,
         ]);
 
         $keptTechniqueIds = [];
         $sort = 0;
+        $seenSlugs = [];
         foreach ($data['print_techniques'] ?? [] as $row) {
-            $slug = Str::slug((string) ($row['slug'] ?? $row['name'] ?? ''));
-            if ($slug === '') {
+            $rawSlug = Str::slug((string) ($row['slug'] ?? $row['name'] ?? ''));
+            if ($rawSlug === '') {
                 continue;
             }
+            $slug = PrintTechniqueSlugResolver::canonical($rawSlug);
+            if (isset($seenSlugs[$slug])) {
+                Notification::make()
+                    ->title('Aynı slug iki kez kullanılamaz')
+                    ->body('“'.$slug.'” kodu birden fazla baskı tekniğinde tekrarlanıyor.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+            $seenSlugs[$slug] = true;
+
+            $duplicateQuery = ProductCustomizationPrintTechnique::query()->where('slug', $slug);
+            if (! empty($row['id'])) {
+                $duplicateQuery->where('id', '!=', (int) $row['id']);
+            }
+            if ($duplicateQuery->exists()) {
+                Notification::make()
+                    ->title('Bu slug zaten kayıtlı')
+                    ->body('“'.$slug.'” kodu başka bir baskı tekniğinde kullanılıyor. Farklı bir kod (slug) girin.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
             $attrs = [
                 'name' => trim((string) ($row['name'] ?? $slug)),
                 'slug' => $slug,
@@ -287,7 +317,9 @@ class ManageProductCustomization extends Page implements HasForms
                 'default_width' => filled($row['default_width'] ?? null) ? $row['default_width'] : null,
                 'default_height' => filled($row['default_height'] ?? null) ? $row['default_height'] : null,
                 'default_color_count' => max(1, min(20, (int) ($row['default_color_count'] ?? 3))),
-                'default_print_technique_slug' => $row['default_print_technique_slug'] ?? null,
+                'default_print_technique_slug' => filled($row['default_print_technique_slug'] ?? null)
+                    ? PrintTechniqueSlugResolver::canonical((string) $row['default_print_technique_slug'])
+                    : null,
                 'sort_order' => (int) ($row['sort_order'] ?? ($sort * 10)),
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];

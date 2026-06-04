@@ -8,9 +8,13 @@ use Illuminate\Support\Collection;
 trait HasDimensionMultiplierAttributes
 {
     /** @return Collection<int, static> */
-    public static function activeOrdered(): Collection
+    public static function activeOrdered(?string $printTechniqueSlug = null): Collection
     {
         return static::query()
+            ->when(
+                $printTechniqueSlug !== null && $printTechniqueSlug !== '',
+                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+            )
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')

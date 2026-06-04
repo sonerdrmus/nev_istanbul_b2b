@@ -33,6 +33,18 @@
                                 @if(!empty($item->variation_data) && is_array($item->variation_data))
                                     <ul class="mt-1.5 text-xs text-slate-600 space-y-0.5">
                                         @foreach($item->variation_data as $optName => $optValue)
+                                            @if($optName === 'product_customization')
+                                                @if($optValue === 'skipped')
+                                                    <li><span class="font-medium text-slate-700">{{ __('store.product.customization_summary_section_label') }}:</span> {{ __('store.product.skip_customization') }}</li>
+                                                @endif
+                                                @continue
+                                            @endif
+                                            @if($optName === 'product_customization_notes')
+                                                @if(is_string($optValue) && trim($optValue) !== '')
+                                                    <li><span class="font-medium text-slate-700">{{ __('store.product.customization_panel_title') }}:</span> {{ $optValue }}</li>
+                                                @endif
+                                                @continue
+                                            @endif
                                             @if($optName === 'size_quantities' && is_array($optValue))
                                                 @php $sizeParts = array_filter($optValue, fn($q) => (int)$q > 0); @endphp
                                                 @if(count($sizeParts) > 0)
@@ -66,13 +78,11 @@
                                                         </ul>
                                                     </li>
                                                 @endif
-                                            @elseif(is_array($optValue))
-                                                @php $dispOc = implode(', ', array_filter(array_map('strval', $optValue))); @endphp
-                                                @if($dispOc !== '')
+                                            @else
+                                                @php $dispOc = \App\Support\LabelTypeVariationDisplay::formatVariationValue($optValue); @endphp
+                                                @if($dispOc !== null && $dispOc !== '')
                                                     <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $dispOc }}</li>
                                                 @endif
-                                            @elseif($optValue !== null && $optValue !== '')
-                                                <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $optValue }}</li>
                                             @endif
                                         @endforeach
                                     </ul>

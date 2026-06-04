@@ -6,15 +6,19 @@ use App\Models\ColorDimensionMultiplier;
 use App\Models\ProductCustomizationSetting;
 use App\Models\QuantityDimensionMultiplier;
 use App\Models\SizeDimensionMultiplier;
+use App\Support\PrintTechniqueDimensionMultiplierTypes;
+use App\Support\PrintTechniqueMultiplierTabs;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Tabs;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class ManageSizeDimensionMultipliers extends Page implements HasForms
 {
@@ -54,34 +58,50 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill([
-            'size_rows' => $this->loadSizeRows(),
-            'color_rows' => $this->loadColorRows(),
-            'quantity_rows' => $this->loadQuantityRows(),
-        ]);
+        $this->form->fill($this->loadAllPrintTechniqueData());
     }
 
     public function form(Form $form): Form
     {
         $maxColors = $this->maxColorCount();
+        $emprimeLabel = PrintTechniqueMultiplierTabs::labelsBySlug()[PrintTechniqueDimensionMultiplierTypes::SLUG_EMPRIME] ?? 'Emprime';
+
+        $tabs = [];
+        foreach (PrintTechniqueMultiplierTabs::definitions() as $printTechnique) {
+            $slug = $printTechnique['slug'];
+            $label = $printTechnique['label'];
+            $tabSchema = [
+                Forms\Components\Section::make('Ebat Çarpanı')
+                    ->description($label.' için ebat bazlı otomatik, sabit ve ekstra çarpan değerleri.')
+                    ->schema([
+                        $this->sizeMultiplierTableRepeater("{$slug}.size_rows", 'Henüz ebat satırı yok. Aşağıdan satır ekleyin.'),
+                    ]),
+            ];
+
+            if (PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($slug)) {
+                $tabSchema[] = Forms\Components\Section::make('Renk Çarpanı')
+                    ->description('Renk sayısı seçenekleri Ürün Özelleştirme sayfasındaki maksimum renk sayısından otomatik gelir (1–'.$maxColors.'). Sadece '.$emprimeLabel.' baskıda uygulanır.')
+                    ->schema([
+                        $this->colorMultiplierTableRepeater("{$slug}.color_rows", 'Henüz renk çarpanı satırı yok. Aşağıdan satır ekleyin.'),
+                    ]);
+            }
+
+            $tabSchema[] = Forms\Components\Section::make('Adet Çarpanı')
+                ->description($label.' için başlangıç ve bitiş adetini 1–1000 arasında girin; bitiş, başlangıçtan küçük olamaz.')
+                ->schema([
+                    $this->quantityMultiplierTableRepeater("{$slug}.quantity_rows", 'Henüz adet çarpanı satırı yok. Aşağıdan satır ekleyin.'),
+                ]);
+
+            $tabs[] = Tabs\Tab::make($slug)
+                ->label($label)
+                ->schema($tabSchema);
+        }
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Ebat Çarpanı')
-                    ->description('Ebat bazlı otomatik, sabit ve ekstra çarpan değerleri.')
-                    ->schema([
-                        $this->sizeMultiplierTableRepeater('size_rows', 'Henüz ebat satırı yok. Aşağıdan satır ekleyin.'),
-                    ]),
-                Forms\Components\Section::make('Renk Çarpanı')
-                    ->description('Renk sayısı seçenekleri Ürün Özelleştirme sayfasındaki maksimum renk sayısından otomatik gelir (1–'.$maxColors.').')
-                    ->schema([
-                        $this->colorMultiplierTableRepeater('color_rows', 'Henüz renk çarpanı satırı yok. Aşağıdan satır ekleyin.'),
-                    ]),
-                Forms\Components\Section::make('Adet Çarpanı')
-                    ->description('Başlangıç ve bitiş adetini 1–1000 arasında girin; bitiş, başlangıçtan küçük olamaz.')
-                    ->schema([
-                        $this->quantityMultiplierTableRepeater('quantity_rows', 'Henüz adet çarpanı satırı yok. Aşağıdan satır ekleyin.'),
-                    ]),
+                Tabs::make('print_technique_tabs')
+                    ->tabs($tabs)
+                    ->persistTabInQueryString('baski'),
             ])
             ->statePath('data');
     }
@@ -99,9 +119,17 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        $this->persistSizeRows($data['size_rows'] ?? []);
-        $this->persistColorRows($data['color_rows'] ?? []);
-        $this->persistQuantityRows($data['quantity_rows'] ?? []);
+        foreach (PrintTechniqueMultiplierTabs::slugs() as $slug) {
+            $printData = $data[$slug] ?? [];
+
+            $this->persistSizeRows($printData['size_rows'] ?? [], $slug);
+
+            if (PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($slug)) {
+                $this->persistColorRows($printData['color_rows'] ?? [], $slug);
+            }
+
+            $this->persistQuantityRows($printData['quantity_rows'] ?? [], $slug);
+        }
 
         Notification::make()
             ->title('Çarpan tabloları kaydedildi')
@@ -109,6 +137,25 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             ->send();
 
         $this->mount();
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function loadAllPrintTechniqueData(): array
+    {
+        $loaded = [];
+
+        foreach (PrintTechniqueMultiplierTabs::slugs() as $slug) {
+            $loaded[$slug] = [
+                'size_rows' => $this->loadSizeRows($slug),
+                'quantity_rows' => $this->loadQuantityRows($slug),
+            ];
+
+            if (PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($slug)) {
+                $loaded[$slug]['color_rows'] = $this->loadColorRows($slug);
+            }
+        }
+
+        return $loaded;
     }
 
     private function sizeMultiplierTableRepeater(string $name, string $emptyMessage): Repeater
@@ -285,9 +332,18 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
     }
 
     /** @return list<array<string, mixed>> */
-    private function loadSizeRows(): array
+    private function loadSizeRows(string $printTechniqueSlug): array
     {
+        if (! $this->supportsPrintTechniqueColumn('size_dimension_multipliers')
+            && $printTechniqueSlug !== PrintTechniqueDimensionMultiplierTypes::SLUG_EMPRIME) {
+            return [];
+        }
+
         return SizeDimensionMultiplier::query()
+            ->when(
+                $this->supportsPrintTechniqueColumn('size_dimension_multipliers'),
+                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+            )
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -302,9 +358,17 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
     }
 
     /** @return list<array<string, mixed>> */
-    private function loadColorRows(): array
+    private function loadColorRows(string $printTechniqueSlug): array
     {
+        if (! PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($printTechniqueSlug)) {
+            return [];
+        }
+
         return ColorDimensionMultiplier::query()
+            ->when(
+                $this->supportsPrintTechniqueColumn('color_dimension_multipliers'),
+                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+            )
             ->orderBy('sort_order')
             ->orderBy('color_count')
             ->get()
@@ -314,9 +378,18 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
     }
 
     /** @return list<array<string, mixed>> */
-    private function loadQuantityRows(): array
+    private function loadQuantityRows(string $printTechniqueSlug): array
     {
+        if (! $this->supportsPrintTechniqueColumn('quantity_dimension_multipliers')
+            && $printTechniqueSlug !== PrintTechniqueDimensionMultiplierTypes::SLUG_EMPRIME) {
+            return [];
+        }
+
         return QuantityDimensionMultiplier::query()
+            ->when(
+                $this->supportsPrintTechniqueColumn('quantity_dimension_multipliers'),
+                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+            )
             ->orderBy('sort_order')
             ->orderBy('quantity_from')
             ->get()
@@ -326,7 +399,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
     }
 
     /** @param  list<array<string, mixed>>  $rows */
-    private function persistSizeRows(array $rows): void
+    private function persistSizeRows(array $rows, string $printTechniqueSlug): void
     {
         $keptIds = [];
         $sort = 0;
@@ -338,6 +411,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             }
 
             $attrs = [
+                'print_technique_slug' => $printTechniqueSlug,
                 'size_label' => $label,
                 'width' => filled($row['width'] ?? null) ? $row['width'] : null,
                 'height' => filled($row['height'] ?? null) ? $row['height'] : null,
@@ -352,11 +426,11 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             $sort++;
         }
 
-        $this->deleteRemovedRows(SizeDimensionMultiplier::class, $keptIds);
+        $this->deleteRemovedRows(SizeDimensionMultiplier::class, $keptIds, $printTechniqueSlug);
     }
 
     /** @param  list<array<string, mixed>>  $rows */
-    private function persistColorRows(array $rows): void
+    private function persistColorRows(array $rows, string $printTechniqueSlug): void
     {
         $keptIds = [];
         $sort = 0;
@@ -369,6 +443,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             }
 
             $attrs = [
+                'print_technique_slug' => $printTechniqueSlug,
                 'color_count' => $colorCount,
                 'multiplier_price' => $this->normalizeDecimal($row['multiplier_price'] ?? 0, 0),
                 'sort_order' => $sort * 10,
@@ -379,11 +454,11 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             $sort++;
         }
 
-        $this->deleteRemovedRows(ColorDimensionMultiplier::class, $keptIds);
+        $this->deleteRemovedRows(ColorDimensionMultiplier::class, $keptIds, $printTechniqueSlug);
     }
 
     /** @param  list<array<string, mixed>>  $rows */
-    private function persistQuantityRows(array $rows): void
+    private function persistQuantityRows(array $rows, string $printTechniqueSlug): void
     {
         $keptIds = [];
         $sort = 0;
@@ -396,6 +471,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             }
 
             $attrs = [
+                'print_technique_slug' => $printTechniqueSlug,
                 'quantity_from' => $from,
                 'quantity_to' => $to,
                 'multiplier_price' => $this->normalizeDecimal($row['multiplier_price'] ?? 0, 0),
@@ -407,7 +483,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
             $sort++;
         }
 
-        $this->deleteRemovedRows(QuantityDimensionMultiplier::class, $keptIds);
+        $this->deleteRemovedRows(QuantityDimensionMultiplier::class, $keptIds, $printTechniqueSlug);
     }
 
     /**
@@ -435,11 +511,23 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
      * @param  class-string<Model>  $modelClass
      * @param  list<int>  $keptIds
      */
-    private function deleteRemovedRows(string $modelClass, array $keptIds): void
+    private function deleteRemovedRows(string $modelClass, array $keptIds, string $printTechniqueSlug): void
     {
-        $modelClass::query()
-            ->when($keptIds !== [], fn ($q) => $q->whereNotIn('id', $keptIds))
-            ->delete();
+        $table = (new $modelClass)->getTable();
+        $query = $modelClass::query();
+
+        if ($this->supportsPrintTechniqueColumn($table)) {
+            $query->where('print_technique_slug', $printTechniqueSlug);
+        } elseif ($printTechniqueSlug !== PrintTechniqueDimensionMultiplierTypes::SLUG_EMPRIME) {
+            return;
+        }
+
+        $query->when($keptIds !== [], fn ($q) => $q->whereNotIn('id', $keptIds))->delete();
+    }
+
+    private function supportsPrintTechniqueColumn(string $table): bool
+    {
+        return Schema::hasTable($table) && Schema::hasColumn($table, 'print_technique_slug');
     }
 
     /** @return array<int, string> */

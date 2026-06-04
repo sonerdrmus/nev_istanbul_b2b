@@ -12,11 +12,11 @@ use App\Models\Product;
 use App\Models\ProductVariationOption;
 use App\Models\ShippingMethod;
 use App\Models\SizeTable;
+use App\Support\ProductVariationFlowSteps;
 use App\Support\MediaUrl;
-use App\Support\ColorDimensionMultiplierCatalog;
+use App\Support\DimensionMultiplierCatalog;
+use App\Support\PackagingPreferenceCatalog;
 use App\Support\ProductCustomizationCatalog;
-use App\Support\QuantityDimensionMultiplierCatalog;
-use App\Support\SizeDimensionMultiplierCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -119,6 +119,7 @@ class StoreController extends Controller
             if (is_array($variationData) && $variationData !== []) {
                 $product->loadMissing('variations.options');
                 $unitTry *= ProductVariationOption::combinedMultiplierForSelections($product, $variationData);
+                $unitTry += ProductVariationOption::additiveExtraTryForSelections($variationData);
             }
 
             $sizeQuantities = $item['size_quantities'] ?? null;
@@ -285,7 +286,12 @@ class StoreController extends Controller
             'category.parent',
             'currency',
             'productImages',
-            'variations.options' => fn ($q) => $q->with(['interfaceColorVariation.fabricTypeVariation']),
+            'variations.options' => fn ($q) => $q->with([
+                'interfaceColorVariation.fabricTypeVariation',
+                'interfaceLabelTypeVariation',
+                'interfacePackagingPreferenceVariation',
+                'sizeTable.columns',
+            ]),
         ]);
         $variations = $product->variations;
         $sorted = collect();
@@ -295,6 +301,10 @@ class StoreController extends Controller
                 if (empty($v->depends_on)) {
                     return true;
                 }
+                if (ProductVariationFlowSteps::isCustomizationDependency($v->depends_on)) {
+                    return true;
+                }
+
                 return $sorted->contains('name', $v->depends_on);
             });
             if ($added->isEmpty()) {
@@ -320,12 +330,13 @@ class StoreController extends Controller
         }
 
         $sizeTables = SizeTable::with('columns')->orderBy('sort_order')->get();
-        $productCustomization = ProductCustomizationCatalog::forStore();
-        $sizeEbatMultipliers = SizeDimensionMultiplierCatalog::rowsForStoreMatcher();
-        $quantityDimensionMultipliers = QuantityDimensionMultiplierCatalog::rowsForStoreMatcher();
-        $colorDimensionMultipliers = ColorDimensionMultiplierCatalog::rowsForStoreMatcher();
+        $productCustomization = ($product->customization_enabled ?? true)
+            ? ProductCustomizationCatalog::forStore()
+            : ['rows' => [], 'print_techniques' => [], 'default_print_slug' => 'emprime', 'max_color_count' => 7];
+        $dimensionMultipliersByPrint = DimensionMultiplierCatalog::groupedForStore();
+        $packagingCatalog = PackagingPreferenceCatalog::forStore();
 
-        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'sizeEbatMultipliers', 'quantityDimensionMultipliers', 'colorDimensionMultipliers'));
+        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'dimensionMultipliersByPrint', 'packagingCatalog'));
     }
 
     /** Header arama için: 3+ karakterde ürün listesi (görsel + isim) JSON döner. */
@@ -430,6 +441,13 @@ class StoreController extends Controller
                     return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                 }
                 $val = $variationData[$variationName];
+                if (is_array($val) && array_key_exists('option', $val)) {
+                    if (trim((string) ($val['option'] ?? '')) === '') {
+                        return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                    }
+
+                    continue;
+                }
                 if (is_array($val)) {
                     $nonEmpty = array_values(array_filter($val, fn ($x) => $x !== null && trim((string) $x) !== ''));
                     if ($nonEmpty === []) {

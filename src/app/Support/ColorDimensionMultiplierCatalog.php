@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ColorDimensionMultiplier;
+use App\Support\PrintTechniqueDimensionMultiplierTypes;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -13,13 +14,18 @@ final class ColorDimensionMultiplierCatalog
     /**
      * @return list<array{color_count: int, multiplier_price: float}>
      */
-    public static function rowsForStoreMatcher(): array
+    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null): array
     {
         if (! Schema::hasTable('color_dimension_multipliers')) {
             return [];
         }
 
-        return ColorDimensionMultiplier::activeOrdered()
+        $slug = self::resolvePrintTechniqueSlug($printTechniqueSlug);
+        if ($slug === null || ! PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($slug)) {
+            return [];
+        }
+
+        return ColorDimensionMultiplier::activeOrdered($slug)
             ->map(fn (ColorDimensionMultiplier $row): array => [
                 'color_count' => (int) $row->color_count,
                 'multiplier_price' => round((float) $row->multiplier_price, 4),
@@ -31,18 +37,27 @@ final class ColorDimensionMultiplierCatalog
     /**
      * @return array{color_count: int, multiplier_price: float}|null
      */
-    public static function matchRowForColorCount(?int $colorCount): ?array
+    public static function matchRowForColorCount(?int $colorCount, ?string $printTechniqueSlug = null): ?array
     {
         if ($colorCount === null || $colorCount <= 0) {
             return null;
         }
 
-        foreach (self::rowsForStoreMatcher() as $row) {
+        foreach (self::rowsForStoreMatcher($printTechniqueSlug) as $row) {
             if ($row['color_count'] === $colorCount) {
                 return $row;
             }
         }
 
         return null;
+    }
+
+    private static function resolvePrintTechniqueSlug(?string $printTechniqueSlug): ?string
+    {
+        if (! DimensionMultiplierCatalog::hasPrintTechniqueColumn()) {
+            return PrintTechniqueDimensionMultiplierTypes::SLUG_EMPRIME;
+        }
+
+        return PrintTechniqueSlugResolver::canonical($printTechniqueSlug);
     }
 }

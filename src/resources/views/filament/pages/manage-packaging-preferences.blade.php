@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        Sekmeler Ürün Özelleştirme sayfasındaki baskı teknikleri listesinden gelir. Her teknik için ayrı ebat ve adet çarpan tabloları tanımlayın. Renk çarpanı yalnızca Emprime baskı sekmesinde geçerlidir. Sırayı sol tutamaçtan sürükleyerek değiştirebilirsiniz.
+        Ambalaj türleri, kilitli poşet malzemeleri, özelleştirme seçenekleri ve barkod/etiket alanı ayarlarını tek sayfadan yönetin.
+        Ürün varyasyonu tipi <strong>Ambalaj Türü</strong> seçildiğinde ambalaj türleri otomatik içe aktarılır; mağazada malzeme ve özelleştirme adımları bu kayıtlardan gelir.
     </p>
     <form wire:submit="save">
         {{ $this->form }}

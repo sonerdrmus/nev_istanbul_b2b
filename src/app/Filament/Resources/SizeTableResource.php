@@ -17,7 +17,7 @@ class SizeTableResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-table-cells';
 
-    protected static ?string $navigationGroup = 'E-Ticaret';
+    protected static ?string $navigationGroup = 'Varyasyon yönetimi';
 
     protected static bool $shouldRegisterNavigation = false;
 

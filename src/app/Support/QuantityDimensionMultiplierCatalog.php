@@ -13,13 +13,15 @@ final class QuantityDimensionMultiplierCatalog
     /**
      * @return list<array{quantity_from: int, quantity_to: int, multiplier_price: float}>
      */
-    public static function rowsForStoreMatcher(): array
+    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null): array
     {
         if (! Schema::hasTable('quantity_dimension_multipliers')) {
             return [];
         }
 
-        return QuantityDimensionMultiplier::activeOrdered()
+        $slug = self::resolvePrintTechniqueSlug($printTechniqueSlug);
+
+        return QuantityDimensionMultiplier::activeOrdered($slug)
             ->map(fn (QuantityDimensionMultiplier $row): array => [
                 'quantity_from' => (int) $row->quantity_from,
                 'quantity_to' => (int) $row->quantity_to,
@@ -32,13 +34,13 @@ final class QuantityDimensionMultiplierCatalog
     /**
      * @return array{quantity_from: int, quantity_to: int, multiplier_price: float}|null
      */
-    public static function matchRowForQuantity(?int $quantity): ?array
+    public static function matchRowForQuantity(?int $quantity, ?string $printTechniqueSlug = null): ?array
     {
         if ($quantity === null || $quantity <= 0) {
             return null;
         }
 
-        $rows = self::rowsForStoreMatcher();
+        $rows = self::rowsForStoreMatcher($printTechniqueSlug);
         if ($rows === []) {
             return null;
         }
@@ -57,5 +59,14 @@ final class QuantityDimensionMultiplierCatalog
         }
 
         return $fallback;
+    }
+
+    private static function resolvePrintTechniqueSlug(?string $printTechniqueSlug): ?string
+    {
+        if (! DimensionMultiplierCatalog::hasPrintTechniqueColumn()) {
+            return null;
+        }
+
+        return PrintTechniqueSlugResolver::canonical($printTechniqueSlug);
     }
 }

@@ -30,6 +30,8 @@ class Product extends Model
         'home_showcase_order',
         'home_showcase_image',
         'size_table_trigger_variation',
+        'customization_enabled',
+        'customization_trigger_variation',
     ];
 
     protected function casts(): array
@@ -37,6 +39,7 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'is_active' => 'boolean',
+            'customization_enabled' => 'boolean',
             'sort_order' => 'integer',
             'show_on_home' => 'boolean',
             'home_showcase_order' => 'integer',

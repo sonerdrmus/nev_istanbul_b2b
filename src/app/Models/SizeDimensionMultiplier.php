@@ -10,6 +10,7 @@ class SizeDimensionMultiplier extends Model
     use HasDimensionMultiplierAttributes;
 
     protected $fillable = [
+        'print_technique_slug',
         'size_label',
         'width',
         'height',

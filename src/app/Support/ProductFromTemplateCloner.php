@@ -53,6 +53,8 @@ final class ProductFromTemplateCloner
             'home_showcase_order' => $overrides['home_showcase_order'] ?? 0,
             'home_showcase_image' => $overrides['home_showcase_image'] ?? null,
             'size_table_trigger_variation' => $overrides['size_table_trigger_variation'] ?? $template->size_table_trigger_variation,
+            'customization_enabled' => $overrides['customization_enabled'] ?? $template->customization_enabled,
+            'customization_trigger_variation' => $overrides['customization_trigger_variation'] ?? $template->customization_trigger_variation,
         ];
 
         $product = Product::query()->create($attributes);
@@ -87,6 +89,8 @@ final class ProductFromTemplateCloner
                     'product_variation_id' => $variationIdMap[(int) $variation->getKey()],
                     'interface_color_variation_id' => $option->interface_color_variation_id,
                     'interface_fabric_type_variation_id' => $option->interface_fabric_type_variation_id,
+                    'interface_label_type_variation_id' => $option->interface_label_type_variation_id,
+                    'size_table_id' => $option->size_table_id,
                     'option_value' => $option->option_value,
                     'option_color' => $option->option_color,
                     'option_image' => $option->option_image,
@@ -100,6 +104,17 @@ final class ProductFromTemplateCloner
 
                 $optionIdMap[(int) $option->getKey()] = (int) $newOption->getKey();
             }
+        }
+
+        foreach ($template->variations as $variation) {
+            $mappedDependsOnOptionIds = $this->mapParentOptionIds($variation->depends_on_option_ids, $optionIdMap);
+            if ($mappedDependsOnOptionIds === null) {
+                continue;
+            }
+
+            ProductVariation::query()
+                ->whereKey($variationIdMap[(int) $variation->getKey()])
+                ->update(['depends_on_option_ids' => $mappedDependsOnOptionIds]);
         }
 
         return $product->fresh(['variations.options']);

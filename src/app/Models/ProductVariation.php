@@ -11,6 +11,7 @@ class ProductVariation extends Model
         'name',
         'type',
         'depends_on',
+        'depends_on_option_ids',
         'sort_order',
         'replace_main_gallery_image',
         'allows_multiple',
@@ -22,7 +23,19 @@ class ProductVariation extends Model
         return [
             'replace_main_gallery_image' => 'boolean',
             'allows_multiple' => 'boolean',
+            'depends_on_option_ids' => 'array',
         ];
+    }
+
+    /** Bağlı varyasyondaki hangi seçeneklerde bu adım görünsün (boş = üst varyasyonda herhangi bir seçim). */
+    public function getDependsOnOptionIdsList(): array
+    {
+        $ids = $this->depends_on_option_ids ?? [];
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('intval', $ids)));
     }
 
     public function product()

@@ -4,9 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Filament\Resources\BannerSlideResource;
 use App\Filament\Resources\CategoryResource;
+use App\Filament\Pages\ManagePackagingPreferences;
 use App\Filament\Pages\ManageProductCustomization;
 use App\Filament\Resources\InterfaceColorVariationResource;
 use App\Filament\Resources\InterfaceFabricTypeVariationResource;
+use App\Filament\Resources\InterfaceLabelTypeVariationResource;
 use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
 use App\Filament\Resources\ProductResource;
@@ -155,6 +157,9 @@ class AdminPanelProvider extends PanelProvider
                 ->sort(1)
                 ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceColorVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceLabelTypeVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs('filament.admin.pages.packaging-preferences')
+                    || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs('filament.admin.pages.product-customization')
                     || request()->routeIs('filament.admin.pages.size-dimension-multipliers'))
                 ->childItems([
@@ -166,6 +171,18 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => InterfaceFabricTypeVariationResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-queue-list')
                         ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Beden tabloları')
+                        ->url(fn (): string => SizeTableResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-table-cells')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Etiket Türü Yönetimi')
+                        ->url(fn (): string => InterfaceLabelTypeVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-tag')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceLabelTypeVariationResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Ambalaj Tercih Yönetimi')
+                        ->url(fn (): string => ManagePackagingPreferences::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-gift')
+                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.packaging-preferences')),
                     NavigationItem::make('Ürün Özelleştirme')
                         ->url(fn (): string => ManageProductCustomization::getUrl(panel: $panelId))
                         ->icon('heroicon-o-table-cells')
@@ -178,13 +195,8 @@ class AdminPanelProvider extends PanelProvider
                 ->sort(4)
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*'))
+                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*'))
                 ->childItems([
-                    NavigationItem::make('Beden tabloları')
-                        ->url(fn (): string => SizeTableResource::getUrl(panel: $panelId))
-                        ->icon('heroicon-o-table-cells')
-                        ->isActiveWhen(fn (): bool => request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Banner Slaytlar')
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-photo')

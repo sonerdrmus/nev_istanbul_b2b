@@ -169,6 +169,27 @@ class CopyProductVariationsToCategoryProducts extends Command
                             $remaining->forget($oldOpt->id);
                         }
                     }
+
+                    foreach ($source->variations as $oldVar) {
+                        if (! isset($variationMap[$oldVar->id])) {
+                            continue;
+                        }
+                        $rawDependsOnOptionIds = $oldVar->depends_on_option_ids;
+                        if (! is_array($rawDependsOnOptionIds) || $rawDependsOnOptionIds === []) {
+                            continue;
+                        }
+                        $mapped = [];
+                        foreach ($rawDependsOnOptionIds as $pid) {
+                            $pid = (int) $pid;
+                            if (isset($optionIdMap[$pid])) {
+                                $mapped[] = $optionIdMap[$pid];
+                            }
+                        }
+                        if ($mapped === []) {
+                            continue;
+                        }
+                        $variationMap[$oldVar->id]->update(['depends_on_option_ids' => $mapped]);
+                    }
                 });
                 $this->info("  Tamam: ürün #{$target->id} {$target->name}");
             } catch (\Throwable $e) {
