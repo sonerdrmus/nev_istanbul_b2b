@@ -3,19 +3,20 @@
 namespace App\Models;
 
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
-class InterfaceFabricTypeVariation extends Model
+class InterfaceDeliveryMethodVariation extends Model
 {
     use SyncsLinkedProductVariationOptions;
 
-    protected $table = 'interface_fabric_type_variations';
+    protected $table = 'interface_delivery_method_variations';
 
     protected $fillable = [
         'name',
+        'description',
         'image_path',
-        'detail_text',
+        'price_multiplier',
         'sort_order',
         'is_active',
     ];
@@ -23,6 +24,7 @@ class InterfaceFabricTypeVariation extends Model
     protected function casts(): array
     {
         return [
+            'price_multiplier' => 'decimal:4',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -30,21 +32,15 @@ class InterfaceFabricTypeVariation extends Model
 
     protected static function linkedProductVariationType(): string
     {
-        return 'fabric';
+        return 'delivery_type';
     }
 
     public function productVariationOptions()
     {
-        return $this->hasMany(ProductVariationOption::class, 'interface_fabric_type_variation_id');
+        return $this->hasMany(ProductVariationOption::class, 'interface_delivery_method_variation_id');
     }
 
-    /** Bu kumaş türüne bağlı arayüz renk swatch'ları (Renk Varyasyonları). */
-    public function interfaceColorVariations()
-    {
-        return $this->hasMany(InterfaceColorVariation::class, 'interface_fabric_type_variation_id');
-    }
-
-    /** Mağaza / ürün varyasyonunda kullanım için aktif kayıtlar. */
+    /** Mağaza / ürün tarafında kullanım için aktif kayıtlar. */
     public static function forDisplay(): Collection
     {
         return static::query()

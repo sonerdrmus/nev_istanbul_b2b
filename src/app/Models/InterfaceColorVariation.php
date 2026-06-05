@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 
 class InterfaceColorVariation extends Model
 {
+    use SyncsLinkedProductVariationOptions;
+
     protected $table = 'interface_color_variations';
 
     protected $fillable = [
@@ -24,6 +27,11 @@ class InterfaceColorVariation extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    protected static function linkedProductVariationType(): string
+    {
+        return 'color';
     }
 
     public function productVariationOptions()

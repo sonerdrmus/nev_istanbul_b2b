@@ -15,6 +15,22 @@ class LabelTypeVariationDisplay
             return PackagingTypeVariationDisplay::formatPackagingSelection($value);
         }
 
+        if (is_array($value) && $value !== [] && ! self::isLabelTypeSelection($value)) {
+            $parts = [];
+            foreach ($value as $item) {
+                if (self::isLabelTypeSelection($item)) {
+                    $parts[] = self::formatLabelTypeSelection($item);
+                } elseif (is_scalar($item)) {
+                    $label = trim((string) $item);
+                    if ($label !== '') {
+                        $parts[] = $label;
+                    }
+                }
+            }
+
+            return $parts !== [] ? implode(' · ', $parts) : null;
+        }
+
         if (self::isLabelTypeSelection($value)) {
             return self::formatLabelTypeSelection($value);
         }
@@ -68,6 +84,13 @@ class LabelTypeVariationDisplay
                 $parts[] = __('store.product.label_position_summary', [
                     'positions' => implode(', ', $posLabels),
                 ]);
+            }
+        }
+
+        if (! empty($value['description']) && is_string($value['description'])) {
+            $desc = trim($value['description']);
+            if ($desc !== '') {
+                $parts[] = __('store.product.label_description_summary', ['text' => $desc]);
             }
         }
 

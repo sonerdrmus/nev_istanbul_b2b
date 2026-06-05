@@ -79,6 +79,7 @@ final class ProductCustomizationCatalog
             $rows->push((object) [
                 'id' => $cr,
                 'position_name' => (string) __('store.product.customization_row'.$cr.'_konum'),
+                'position_image' => null,
                 'default_width' => isset($dimParts[0]) ? (float) str_replace(',', '.', trim($dimParts[0])) : null,
                 'default_height' => isset($dimParts[1]) ? (float) str_replace(',', '.', trim($dimParts[1])) : null,
                 'default_color_count' => max(1, min(7, (int) preg_replace('/\D/', '', (string) __('store.product.customization_row'.$cr.'_renk')) ?: 3)),

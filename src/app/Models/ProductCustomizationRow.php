@@ -9,6 +9,7 @@ class ProductCustomizationRow extends Model
 {
     protected $fillable = [
         'position_name',
+        'position_image',
         'default_width',
         'default_height',
         'default_color_count',

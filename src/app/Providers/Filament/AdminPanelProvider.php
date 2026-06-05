@@ -6,7 +6,9 @@ use App\Filament\Resources\BannerSlideResource;
 use App\Filament\Resources\CategoryResource;
 use App\Filament\Pages\ManagePackagingPreferences;
 use App\Filament\Pages\ManageProductCustomization;
+use App\Filament\Resources\InterfaceCertificateVariationResource;
 use App\Filament\Resources\InterfaceColorVariationResource;
+use App\Filament\Resources\InterfaceDeliveryMethodVariationResource;
 use App\Filament\Resources\InterfaceFabricTypeVariationResource;
 use App\Filament\Resources\InterfaceLabelTypeVariationResource;
 use App\Filament\Resources\FooterMenuGroupResource;
@@ -158,6 +160,8 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceColorVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceLabelTypeVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceCertificateVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceDeliveryMethodVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs('filament.admin.pages.packaging-preferences')
                     || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs('filament.admin.pages.product-customization')
@@ -183,6 +187,14 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => ManagePackagingPreferences::getUrl(panel: $panelId))
                         ->icon('heroicon-o-gift')
                         ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.packaging-preferences')),
+                    NavigationItem::make('Sertifika Yönetimi')
+                        ->url(fn (): string => InterfaceCertificateVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-document-check')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceCertificateVariationResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Teslim Şeklini Yönet')
+                        ->url(fn (): string => InterfaceDeliveryMethodVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-truck')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceDeliveryMethodVariationResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Ürün Özelleştirme')
                         ->url(fn (): string => ManageProductCustomization::getUrl(panel: $panelId))
                         ->icon('heroicon-o-table-cells')

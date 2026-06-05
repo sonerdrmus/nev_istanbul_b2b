@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\InterfaceFabricTypeVariationResource\Pages;
-use App\Models\InterfaceFabricTypeVariation;
+use App\Filament\Resources\InterfaceCertificateVariationResource\Pages;
+use App\Models\InterfaceCertificateVariation;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,20 +12,22 @@ use Filament\Tables\Table;
 
 /**
  * Ana menü bağlantısı {@see \App\Providers\Filament\AdminPanelProvider} içinde özelleştirilir.
- *
- * Kayıtlar mağaza tarafında bağlamak için: {@see InterfaceFabricTypeVariation::forDisplay()}.
  */
-class InterfaceFabricTypeVariationResource extends Resource
+class InterfaceCertificateVariationResource extends Resource
 {
-    protected static ?string $model = InterfaceFabricTypeVariation::class;
+    protected static ?string $model = InterfaceCertificateVariation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-queue-list';
+    protected static ?string $navigationIcon = 'heroicon-o-document-check';
 
-    protected static ?string $modelLabel = 'Kumaş türü varyasyonu';
-
-    protected static ?string $pluralModelLabel = 'Kumaş türü varyasyonları';
+    protected static ?string $navigationGroup = 'Varyasyon yönetimi';
 
     protected static bool $shouldRegisterNavigation = false;
+
+    protected static ?string $modelLabel = 'Sertifika';
+
+    protected static ?string $pluralModelLabel = 'Sertifikalar';
+
+    protected static ?string $navigationLabel = 'Sertifika Yönetimi';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -33,30 +35,28 @@ class InterfaceFabricTypeVariationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Kumaş türü varyasyonu')
+                Forms\Components\Section::make('Sertifika')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Kumaş / tür adı (opsiyonel)')
+                            ->label('Sertifika adı')
+                            ->required()
                             ->maxLength(255),
-                        Forms\Components\Section::make('Kumaş görseli')
-                            ->description('Görsel opsiyoneldir. Altına detay metni ekleyebilirsiniz; mağazada «detaylı bilgi» modalında gösterilir.')
-                            ->schema([
-                                Forms\Components\FileUpload::make('image_path')
-                                    ->label('Görsel')
-                                    ->directory('interface_fabric_type_variations')
-                                    ->visibility('public')
-                                    ->image()
-                                    ->imageEditor()
-                                    ->nullable()
-                                    ->helperText('Opsiyonel. Örn. doku / kumaş örneği swatch görseli.'),
-                                Forms\Components\Textarea::make('detail_text')
-                                    ->label('Detaylı bilgi metni')
-                                    ->rows(4)
-                                    ->maxLength(5000)
-                                    ->nullable()
-                                    ->helperText('Opsiyonel. Mağazada kumaş adının yanında info ikonu ve «detaylı bilgi» ile modalda açılır.'),
-                            ])
-                            ->columns(1),
+                        Forms\Components\FileUpload::make('image_path')
+                            ->label('Görsel')
+                            ->directory('interface_certificate_variations')
+                            ->visibility('public')
+                            ->image()
+                            ->imageEditor()
+                            ->nullable()
+                            ->helperText('Opsiyonel. Sertifika önizleme görseli.'),
+                        Forms\Components\TextInput::make('price_multiplier')
+                            ->label('Fiyat çarpanı (×)')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->required()
+                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde birim fiyat × 1,50 olur.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -80,14 +80,13 @@ class InterfaceFabricTypeVariationResource extends Resource
                     ->visibility('public')
                     ->height(50),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Ad'),
-                Tables\Columns\IconColumn::make('detail_text')
-                    ->label('Detay')
-                    ->boolean()
-                    ->getStateUsing(fn (InterfaceFabricTypeVariation $record): bool => filled($record->detail_text))
-                    ->trueIcon('heroicon-o-information-circle')
-                    ->falseIcon('heroicon-o-minus')
-                    ->trueColor('info'),
+                    ->label('Sertifika adı')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('price_multiplier')
+                    ->label('Fiyat çarpanı')
+                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')
                     ->sortable(),
@@ -124,9 +123,9 @@ class InterfaceFabricTypeVariationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInterfaceFabricTypeVariations::route('/'),
-            'create' => Pages\CreateInterfaceFabricTypeVariation::route('/create'),
-            'edit' => Pages\EditInterfaceFabricTypeVariation::route('/{record}/edit'),
+            'index' => Pages\ListInterfaceCertificateVariations::route('/'),
+            'create' => Pages\CreateInterfaceCertificateVariation::route('/create'),
+            'edit' => Pages\EditInterfaceCertificateVariation::route('/{record}/edit'),
         ];
     }
 }

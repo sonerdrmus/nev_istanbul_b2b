@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Product;
+use App\Models\ProductVariation;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,6 +22,72 @@ final class ProductVariationFlowSteps
     public static function isCustomizationDependency(?string $dependsOn): bool
     {
         return trim((string) $dependsOn) === self::CUSTOMIZATION_DEPENDS_ON;
+    }
+
+    /**
+     * Mağaza akışı: bağımlılık sırasına göre tek tek ilerler; kopuk bağımlılıkta kalanlar sort_order ile eklenir.
+     *
+     * @param  Collection<int, ProductVariation>  $variations
+     * @return Collection<int, ProductVariation>
+     */
+    public static function topologicallySorted(Collection $variations): Collection
+    {
+        $sorted = collect();
+        $addedNames = [];
+        $total = $variations->count();
+
+        while ($sorted->count() < $total) {
+            $eligible = $variations->filter(function (ProductVariation $variation) use ($addedNames): bool {
+                $name = (string) $variation->name;
+                if (in_array($name, $addedNames, true)) {
+                    return false;
+                }
+                $dependsOn = trim((string) ($variation->depends_on ?? ''));
+                if ($dependsOn === '' || self::isCustomizationDependency($dependsOn)) {
+                    return true;
+                }
+
+                return in_array($dependsOn, $addedNames, true);
+            });
+
+            if ($eligible->isEmpty()) {
+                $left = $variations->filter(fn (ProductVariation $variation): bool => ! in_array((string) $variation->name, $addedNames, true));
+                foreach (self::sortVariationCandidates($left) as $variation) {
+                    $sorted->push($variation);
+                    $addedNames[] = (string) $variation->name;
+                }
+
+                break;
+            }
+
+            $next = self::sortVariationCandidates($eligible)->first();
+            if (! $next instanceof ProductVariation) {
+                break;
+            }
+
+            $sorted->push($next);
+            $addedNames[] = (string) $next->name;
+        }
+
+        return $sorted->values();
+    }
+
+    /**
+     * @param  Collection<int, ProductVariation>  $items
+     * @return Collection<int, ProductVariation>
+     */
+    private static function sortVariationCandidates(Collection $items): Collection
+    {
+        return $items
+            ->sort(function (ProductVariation $a, ProductVariation $b): int {
+                $order = ((int) ($a->sort_order ?? 0)) <=> ((int) ($b->sort_order ?? 0));
+                if ($order !== 0) {
+                    return $order;
+                }
+
+                return strcmp((string) $a->name, (string) $b->name);
+            })
+            ->values();
     }
 
     /**

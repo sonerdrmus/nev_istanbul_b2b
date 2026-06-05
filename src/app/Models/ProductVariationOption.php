@@ -12,8 +12,11 @@ class ProductVariationOption extends Model
         'interface_fabric_type_variation_id',
         'interface_label_type_variation_id',
         'interface_packaging_preference_variation_id',
+        'interface_certificate_variation_id',
+        'interface_delivery_method_variation_id',
         'size_table_id',
         'option_value',
+        'info_text',
         'option_color',
         'option_image',
         'option_image_size',
@@ -98,6 +101,16 @@ class ProductVariationOption extends Model
     public function interfacePackagingPreferenceVariation()
     {
         return $this->belongsTo(InterfacePackagingPreferenceVariation::class, 'interface_packaging_preference_variation_id');
+    }
+
+    public function interfaceCertificateVariation()
+    {
+        return $this->belongsTo(InterfaceCertificateVariation::class, 'interface_certificate_variation_id');
+    }
+
+    public function interfaceDeliveryMethodVariation()
+    {
+        return $this->belongsTo(InterfaceDeliveryMethodVariation::class, 'interface_delivery_method_variation_id');
     }
 
     public function sizeTable()

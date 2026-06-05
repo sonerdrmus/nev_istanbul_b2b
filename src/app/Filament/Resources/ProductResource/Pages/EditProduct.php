@@ -21,6 +21,11 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $this->record->loadMissing([
+            'variations' => fn ($query) => $query->orderBy('sort_order'),
+            'variations.options' => fn ($query) => $query->orderBy('sort_order'),
+        ]);
+
         $data['_product_id'] = $this->record->getKey();
 
         return $data;

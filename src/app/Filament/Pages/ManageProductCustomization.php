@@ -79,6 +79,7 @@ class ManageProductCustomization extends Page implements HasForms
                 ->map(fn (ProductCustomizationRow $r): array => [
                     'id' => $r->id,
                     'position_name' => $r->position_name,
+                    'position_image' => $r->position_image,
                     'default_width' => $r->default_width,
                     'default_height' => $r->default_height,
                     'default_color_count' => $r->default_color_count,
@@ -161,7 +162,7 @@ class ManageProductCustomization extends Page implements HasForms
                             ->cloneable(false),
                     ]),
                 Forms\Components\Section::make('Tablo satırları')
-                    ->description('Ürün sayfasında müşterinin seçeceği baskı konumları ve varsayılan değerler.')
+                    ->description('Ürün sayfasında müşterinin seçeceği baskı konumları ve varsayılan değerler. Her satıra opsiyonel konum görseli ekleyebilirsiniz; görseli olan satırlarda mağazada Konum sütununda “İncele” butonu gösterilir.')
                     ->schema([
                         Forms\Components\Repeater::make('rows')
                             ->label('')
@@ -169,6 +170,7 @@ class ManageProductCustomization extends Page implements HasForms
                             ->viewData([
                                 'tableHeaders' => [
                                     'Konum',
+                                    'Görsel',
                                     'En (cm)',
                                     'Boy (cm)',
                                     'Renk sayısı',
@@ -176,7 +178,7 @@ class ManageProductCustomization extends Page implements HasForms
                                     ['label' => 'Aktif', 'align' => 'center'],
                                 ],
                                 'emptyMessage' => 'Henüz konum satırı yok. Aşağıdan satır ekleyin.',
-                                'tableMinWidth' => '52rem',
+                                'tableMinWidth' => '58rem',
                             ])
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
@@ -184,6 +186,14 @@ class ManageProductCustomization extends Page implements HasForms
                                     ->label('Konum')
                                     ->required()
                                     ->maxLength(255)
+                                    ->hiddenLabel(),
+                                Forms\Components\FileUpload::make('position_image')
+                                    ->label('Görsel')
+                                    ->directory('product_customization_positions')
+                                    ->visibility('public')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->nullable()
                                     ->hiddenLabel(),
                                 Forms\Components\TextInput::make('default_width')
                                     ->label('En (cm)')
@@ -314,6 +324,7 @@ class ManageProductCustomization extends Page implements HasForms
             }
             $attrs = [
                 'position_name' => $position,
+                'position_image' => self::normalizeUploadedPath($row['position_image'] ?? null),
                 'default_width' => filled($row['default_width'] ?? null) ? $row['default_width'] : null,
                 'default_height' => filled($row['default_height'] ?? null) ? $row['default_height'] : null,
                 'default_color_count' => max(1, min(20, (int) ($row['default_color_count'] ?? 3))),
@@ -358,5 +369,18 @@ class ManageProductCustomization extends Page implements HasForms
             ->orderBy('id')
             ->pluck('name', 'slug')
             ->all();
+    }
+
+    private static function normalizeUploadedPath(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_array($value)) {
+            $value = reset($value);
+        }
+        $path = trim((string) $value);
+
+        return $path !== '' ? $path : null;
     }
 }

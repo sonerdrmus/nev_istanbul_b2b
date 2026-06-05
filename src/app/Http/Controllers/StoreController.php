@@ -288,35 +288,15 @@ class StoreController extends Controller
             'productImages',
             'variations.options' => fn ($q) => $q->with([
                 'interfaceColorVariation.fabricTypeVariation',
+                'interfaceFabricTypeVariation',
                 'interfaceLabelTypeVariation',
                 'interfacePackagingPreferenceVariation',
+                'interfaceCertificateVariation',
+                'interfaceDeliveryMethodVariation',
                 'sizeTable.columns',
             ]),
         ]);
-        $variations = $product->variations;
-        $sorted = collect();
-        $remaining = $variations->keyBy('id');
-        while ($remaining->isNotEmpty()) {
-            $added = $remaining->filter(function ($v) use ($sorted) {
-                if (empty($v->depends_on)) {
-                    return true;
-                }
-                if (ProductVariationFlowSteps::isCustomizationDependency($v->depends_on)) {
-                    return true;
-                }
-
-                return $sorted->contains('name', $v->depends_on);
-            });
-            if ($added->isEmpty()) {
-                $sorted = $sorted->merge($remaining->values());
-                break;
-            }
-            foreach ($added->values() as $v) {
-                $sorted->push($v);
-                $remaining->forget($v->id);
-            }
-        }
-        $product->setRelation('variations', $sorted->values());
+        $product->setRelation('variations', ProductVariationFlowSteps::topologicallySorted($product->variations));
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
         $customerGroupId = auth()->check() && auth()->user()->company?->customer_group_id

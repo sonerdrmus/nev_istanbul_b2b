@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class InterfaceLabelTypeVariation extends Model
 {
+    use SyncsLinkedProductVariationOptions;
+
     protected $table = 'interface_label_type_variations';
 
     protected $fillable = [
@@ -15,6 +18,8 @@ class InterfaceLabelTypeVariation extends Model
         'is_custom_print',
         'position_front',
         'position_back',
+        'ask_description',
+        'description_title',
         'sort_order',
         'is_active',
     ];
@@ -25,9 +30,20 @@ class InterfaceLabelTypeVariation extends Model
             'is_custom_print' => 'boolean',
             'position_front' => 'boolean',
             'position_back' => 'boolean',
+            'ask_description' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    protected static function linkedProductVariationType(): string
+    {
+        return 'label_type';
+    }
+
+    public function productVariationOptions()
+    {
+        return $this->hasMany(ProductVariationOption::class, 'interface_label_type_variation_id');
     }
 
     /** Mağaza / ürün tarafında kullanım için aktif kayıtlar. */

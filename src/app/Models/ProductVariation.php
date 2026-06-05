@@ -16,6 +16,7 @@ class ProductVariation extends Model
         'replace_main_gallery_image',
         'allows_multiple',
         'solo_option_value',
+        'info_text',
     ];
 
     protected function casts(): array

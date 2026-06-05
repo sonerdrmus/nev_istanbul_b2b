@@ -71,6 +71,7 @@ final class ProductFromTemplateCloner
                 'replace_main_gallery_image' => $variation->replace_main_gallery_image,
                 'allows_multiple' => $variation->allows_multiple,
                 'solo_option_value' => $variation->solo_option_value,
+                'info_text' => $variation->info_text,
             ]);
             $variationIdMap[(int) $variation->getKey()] = (int) $newVariation->getKey();
         }
@@ -90,8 +91,12 @@ final class ProductFromTemplateCloner
                     'interface_color_variation_id' => $option->interface_color_variation_id,
                     'interface_fabric_type_variation_id' => $option->interface_fabric_type_variation_id,
                     'interface_label_type_variation_id' => $option->interface_label_type_variation_id,
+                    'interface_packaging_preference_variation_id' => $option->interface_packaging_preference_variation_id,
+                    'interface_certificate_variation_id' => $option->interface_certificate_variation_id,
+                    'interface_delivery_method_variation_id' => $option->interface_delivery_method_variation_id,
                     'size_table_id' => $option->size_table_id,
                     'option_value' => $option->option_value,
+                    'info_text' => $option->info_text,
                     'option_color' => $option->option_color,
                     'option_image' => $option->option_image,
                     'option_image_size' => $option->option_image_size,

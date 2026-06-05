@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\InterfaceLabelTypeVariationResource\Pages;
-use App\Models\InterfaceLabelTypeVariation;
+use App\Filament\Resources\InterfaceDeliveryMethodVariationResource\Pages;
+use App\Models\InterfaceDeliveryMethodVariation;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,21 +13,21 @@ use Filament\Tables\Table;
 /**
  * Ana menü bağlantısı {@see \App\Providers\Filament\AdminPanelProvider} içinde özelleştirilir.
  */
-class InterfaceLabelTypeVariationResource extends Resource
+class InterfaceDeliveryMethodVariationResource extends Resource
 {
-    protected static ?string $model = InterfaceLabelTypeVariation::class;
+    protected static ?string $model = InterfaceDeliveryMethodVariation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
+    protected static ?string $navigationIcon = 'heroicon-o-truck';
 
     protected static ?string $navigationGroup = 'Varyasyon yönetimi';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $modelLabel = 'Etiket türü';
+    protected static ?string $modelLabel = 'Teslim şekli';
 
-    protected static ?string $pluralModelLabel = 'Etiket türleri';
+    protected static ?string $pluralModelLabel = 'Teslim şekilleri';
 
-    protected static ?string $navigationLabel = 'Etiket Türü Yönetimi';
+    protected static ?string $navigationLabel = 'Teslim Şeklini Yönet';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -36,44 +35,34 @@ class InterfaceLabelTypeVariationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Etiket türü')
+                Forms\Components\Section::make('Teslim şekli')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Etiket adı')
+                            ->label('Teslimat türü adı')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Açıklama')
+                            ->rows(4)
+                            ->maxLength(2000)
+                            ->nullable()
+                            ->helperText('Opsiyonel. Teslimat türü hakkında kısa açıklama.'),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
-                            ->directory('interface_label_type_variations')
+                            ->directory('interface_delivery_method_variations')
                             ->visibility('public')
                             ->image()
                             ->imageEditor()
                             ->nullable()
-                            ->helperText('Etiket önizleme görseli.'),
-                        Forms\Components\Checkbox::make('is_custom_print')
-                            ->label('Özel baskı seçeneği')
-                            ->default(false),
-                        Forms\Components\Fieldset::make('Konum')
-                            ->schema([
-                                Forms\Components\Checkbox::make('position_front')
-                                    ->label('Ön')
-                                    ->default(false),
-                                Forms\Components\Checkbox::make('position_back')
-                                    ->label('Arka')
-                                    ->default(false),
-                            ])
-                            ->columns(2),
-                        Forms\Components\Toggle::make('ask_description')
-                            ->label('Açıklama metni sorulsun')
-                            ->default(false)
-                            ->live()
-                            ->helperText('Aktifken ürün sayfasında bu etiket seçildiğinde kullanıcıdan kısa açıklama istenir.'),
-                        Forms\Components\TextInput::make('description_title')
-                            ->label('Açıklama başlığı')
-                            ->maxLength(255)
-                            ->required(fn (Get $get): bool => (bool) $get('ask_description'))
-                            ->visible(fn (Get $get): bool => (bool) $get('ask_description'))
-                            ->helperText('Ürün sayfasında metin alanının üstünde görünen başlık.'),
+                            ->helperText('Opsiyonel. Teslim şekli önizleme görseli.'),
+                        Forms\Components\TextInput::make('price_multiplier')
+                            ->label('Fiyat çarpanı (×)')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->required()
+                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde birim fiyat × 1,50 olur.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -97,21 +86,17 @@ class InterfaceLabelTypeVariationResource extends Resource
                     ->visibility('public')
                     ->height(50),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Etiket adı')
+                    ->label('Teslimat türü adı')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_custom_print')
-                    ->label('Özel baskı')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('position_front')
-                    ->label('Ön')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('position_back')
-                    ->label('Arka')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('ask_description')
+                Tables\Columns\TextColumn::make('description')
                     ->label('Açıklama')
-                    ->boolean(),
+                    ->limit(40)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('price_multiplier')
+                    ->label('Fiyat çarpanı')
+                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')
                     ->sortable(),
@@ -129,8 +114,6 @@ class InterfaceLabelTypeVariationResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Yayında'),
-                Tables\Filters\TernaryFilter::make('is_custom_print')
-                    ->label('Özel baskı'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -150,9 +133,9 @@ class InterfaceLabelTypeVariationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInterfaceLabelTypeVariations::route('/'),
-            'create' => Pages\CreateInterfaceLabelTypeVariation::route('/create'),
-            'edit' => Pages\EditInterfaceLabelTypeVariation::route('/{record}/edit'),
+            'index' => Pages\ListInterfaceDeliveryMethodVariations::route('/'),
+            'create' => Pages\CreateInterfaceDeliveryMethodVariation::route('/create'),
+            'edit' => Pages\EditInterfaceDeliveryMethodVariation::route('/{record}/edit'),
         ];
     }
 }

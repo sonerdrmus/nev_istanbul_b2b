@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class InterfacePackagingPreferenceVariation extends Model
 {
+    use SyncsLinkedProductVariationOptions;
+
     protected $table = 'interface_packaging_preference_variations';
 
     protected $fillable = [
@@ -25,6 +28,11 @@ class InterfacePackagingPreferenceVariation extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    protected static function linkedProductVariationType(): string
+    {
+        return 'packaging_type';
     }
 
     public function productVariationOptions()

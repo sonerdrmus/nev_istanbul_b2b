@@ -6,6 +6,7 @@ use App\Models\InterfacePackagingCustomization;
 use App\Models\InterfacePackagingMaterial;
 use App\Models\InterfacePackagingPreferenceVariation;
 use App\Models\InterfacePackagingSetting;
+use App\Support\ProductVariationOptionInterfaceSync;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -309,6 +310,8 @@ class ManagePackagingPreferences extends Page implements HasForms
             ->when($keptTypeIds !== [], fn ($q) => $q->whereNotIn('id', $keptTypeIds))
             ->delete();
 
+        $productSync = ProductVariationOptionInterfaceSync::syncVariationType('packaging_type');
+
         $keptMaterialIds = [];
         $sort = 0;
         foreach ($data['materials'] ?? [] as $row) {
@@ -409,10 +412,16 @@ class ManagePackagingPreferences extends Page implements HasForms
             'barcode_image_path' => $data['barcode_image_path'] ?? null,
         ]);
 
-        Notification::make()
+        $notification = Notification::make()
             ->title('Ambalaj tercihleri kaydedildi')
-            ->success()
-            ->send();
+            ->success();
+
+        $productChanges = ($productSync['added'] ?? 0) + ($productSync['updated'] ?? 0) + ($productSync['removed'] ?? 0);
+        if ($productChanges > 0) {
+            $notification->body('Ürün ambalaj varyasyonları senkronize edildi.');
+        }
+
+        $notification->send();
 
         $this->mount();
     }
