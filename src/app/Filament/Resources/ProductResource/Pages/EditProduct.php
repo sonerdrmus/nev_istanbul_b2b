@@ -28,6 +28,8 @@ class EditProduct extends EditRecord
 
         $data['_product_id'] = $this->record->getKey();
 
+        $data = ProductResource::ensureInterfacePresetOptionsInProductFormData($data);
+
         return $data;
     }
 

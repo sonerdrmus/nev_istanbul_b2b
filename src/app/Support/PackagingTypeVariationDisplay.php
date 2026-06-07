@@ -37,7 +37,11 @@ class PackagingTypeVariationDisplay
         }
 
         if (! empty($value['barcode_area'])) {
-            $parts[] = __('store.product.packaging_barcode_summary_yes');
+            if (! empty($value['sticker_design_label'])) {
+                $parts[] = (string) $value['sticker_design_label'];
+            } else {
+                $parts[] = __('store.product.packaging_barcode_summary_yes');
+            }
         }
 
         return implode(' · ', array_filter($parts, static fn ($part) => $part !== ''));

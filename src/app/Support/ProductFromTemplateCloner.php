@@ -94,6 +94,7 @@ final class ProductFromTemplateCloner
                     'interface_packaging_preference_variation_id' => $option->interface_packaging_preference_variation_id,
                     'interface_certificate_variation_id' => $option->interface_certificate_variation_id,
                     'interface_delivery_method_variation_id' => $option->interface_delivery_method_variation_id,
+                    'interface_mold_model_variation_id' => $option->interface_mold_model_variation_id,
                     'size_table_id' => $option->size_table_id,
                     'option_value' => $option->option_value,
                     'info_text' => $option->info_text,

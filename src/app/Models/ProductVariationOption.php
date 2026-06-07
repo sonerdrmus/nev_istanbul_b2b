@@ -14,6 +14,7 @@ class ProductVariationOption extends Model
         'interface_packaging_preference_variation_id',
         'interface_certificate_variation_id',
         'interface_delivery_method_variation_id',
+        'interface_mold_model_variation_id',
         'size_table_id',
         'option_value',
         'info_text',
@@ -111,6 +112,11 @@ class ProductVariationOption extends Model
     public function interfaceDeliveryMethodVariation()
     {
         return $this->belongsTo(InterfaceDeliveryMethodVariation::class, 'interface_delivery_method_variation_id');
+    }
+
+    public function interfaceMoldModelVariation()
+    {
+        return $this->belongsTo(InterfaceMoldModelVariation::class, 'interface_mold_model_variation_id');
     }
 
     public function sizeTable()

@@ -14,6 +14,7 @@ use App\Models\ShippingMethod;
 use App\Models\SizeTable;
 use App\Support\ProductVariationFlowSteps;
 use App\Support\MediaUrl;
+use App\Support\DeliveryMethodCatalog;
 use App\Support\DimensionMultiplierCatalog;
 use App\Support\PackagingPreferenceCatalog;
 use App\Support\ProductCustomizationCatalog;
@@ -293,6 +294,7 @@ class StoreController extends Controller
                 'interfacePackagingPreferenceVariation',
                 'interfaceCertificateVariation',
                 'interfaceDeliveryMethodVariation',
+                'interfaceMoldModelVariation',
                 'sizeTable.columns',
             ]),
         ]);
@@ -315,8 +317,9 @@ class StoreController extends Controller
             : ['rows' => [], 'print_techniques' => [], 'default_print_slug' => 'emprime', 'max_color_count' => 7];
         $dimensionMultipliersByPrint = DimensionMultiplierCatalog::groupedForStore();
         $packagingCatalog = PackagingPreferenceCatalog::forStore();
+        $deliveryCatalog = DeliveryMethodCatalog::forStore();
 
-        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'dimensionMultipliersByPrint', 'packagingCatalog'));
+        return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'dimensionMultipliersByPrint', 'packagingCatalog', 'deliveryCatalog'));
     }
 
     /** Header arama için: 3+ karakterde ürün listesi (görsel + isim) JSON döner. */

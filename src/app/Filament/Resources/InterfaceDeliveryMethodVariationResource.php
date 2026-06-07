@@ -47,6 +47,12 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                             ->maxLength(2000)
                             ->nullable()
                             ->helperText('Opsiyonel. Teslimat türü hakkında kısa açıklama.'),
+                        Forms\Components\TextInput::make('estimated_delivery_time')
+                            ->label('Tahmini teslimat süresi')
+                            ->maxLength(255)
+                            ->nullable()
+                            ->placeholder('Örn. 15-20 iş günü, 3-5 hafta')
+                            ->helperText('Mağazada teslim şekli seçildiğinde “Seçilen seçenekler” bölümünde belirgin şekilde gösterilir.'),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_delivery_method_variations')
@@ -73,6 +79,51 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                             ->default(true),
                     ])
                     ->columns(1),
+                Forms\Components\Section::make('Alt teslim şekilleri')
+                    ->description('Bu teslim şekli seçildiğinde mağaza ürün sayfasında alt seçenekler bilgi paneli olarak gösterilir. Boş bırakılırsa alt adım çıkmaz.')
+                    ->schema([
+                        Forms\Components\Repeater::make('subOptions')
+                            ->relationship('subOptions')
+                            ->label('')
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Alt teslim şekli')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Bilgi metni')
+                                    ->rows(3)
+                                    ->maxLength(2000)
+                                    ->nullable()
+                                    ->helperText('Seçildiğinde alt panelde gösterilir.'),
+                                Forms\Components\TextInput::make('price_multiplier')
+                                    ->label('Fiyat çarpanı (×)')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(0)
+                                    ->step(0.01)
+                                    ->required()
+                                    ->helperText('Ana teslim şekli çarpanına ek olarak uygulanır.'),
+                                Forms\Components\TextInput::make('sort_order')
+                                    ->label('Sıra')
+                                    ->numeric()
+                                    ->default(0),
+                                Forms\Components\Toggle::make('is_default')
+                                    ->label('Varsayılan')
+                                    ->default(false)
+                                    ->inline(false),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Aktif')
+                                    ->default(true)
+                                    ->inline(false),
+                            ])
+                            ->orderColumn('sort_order')
+                            ->reorderableWithDragAndDrop()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                            ->addActionLabel('Alt teslim şekli ekle')
+                            ->defaultItems(0),
+                    ]),
             ]);
     }
 
@@ -89,10 +140,18 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                     ->label('Teslimat türü adı')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('estimated_delivery_time')
+                    ->label('Tahmini süre')
+                    ->limit(30)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Açıklama')
                     ->limit(40)
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('sub_options_count')
+                    ->label('Alt seçenek')
+                    ->counts('subOptions')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')
                     ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))

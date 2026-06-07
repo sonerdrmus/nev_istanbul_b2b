@@ -5,19 +5,17 @@ namespace App\Models;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class InterfaceDeliveryMethodVariation extends Model
+class InterfaceMoldModelVariation extends Model
 {
     use SyncsLinkedProductVariationOptions;
 
-    protected $table = 'interface_delivery_method_variations';
+    protected $table = 'interface_mold_model_variations';
 
     protected $fillable = [
         'name',
-        'description',
-        'estimated_delivery_time',
         'image_path',
+        'size_table_image_path',
         'price_multiplier',
         'sort_order',
         'is_active',
@@ -34,20 +32,12 @@ class InterfaceDeliveryMethodVariation extends Model
 
     protected static function linkedProductVariationType(): string
     {
-        return 'delivery_type';
+        return 'mold_model_type';
     }
 
     public function productVariationOptions()
     {
-        return $this->hasMany(ProductVariationOption::class, 'interface_delivery_method_variation_id');
-    }
-
-    public function subOptions(): HasMany
-    {
-        return $this->hasMany(
-            InterfaceDeliveryMethodSubOption::class,
-            'interface_delivery_method_variation_id'
-        )->orderBy('sort_order')->orderBy('id');
+        return $this->hasMany(ProductVariationOption::class, 'interface_mold_model_variation_id');
     }
 
     /** Mağaza / ürün tarafında kullanım için aktif kayıtlar. */

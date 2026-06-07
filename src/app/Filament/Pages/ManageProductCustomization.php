@@ -79,7 +79,7 @@ class ManageProductCustomization extends Page implements HasForms
                 ->map(fn (ProductCustomizationRow $r): array => [
                     'id' => $r->id,
                     'position_name' => $r->position_name,
-                    'position_image' => $r->position_image,
+                    'position_image' => filled($r->position_image) ? [$r->position_image] : null,
                     'default_width' => $r->default_width,
                     'default_height' => $r->default_height,
                     'default_color_count' => $r->default_color_count,
@@ -162,7 +162,7 @@ class ManageProductCustomization extends Page implements HasForms
                             ->cloneable(false),
                     ]),
                 Forms\Components\Section::make('Tablo satırları')
-                    ->description('Ürün sayfasında müşterinin seçeceği baskı konumları ve varsayılan değerler. Her satıra opsiyonel konum görseli ekleyebilirsiniz; görseli olan satırlarda mağazada Konum sütununda “İncele” butonu gösterilir.')
+                    ->description('Ürün sayfasında müşterinin seçeceği baskı konumları ve varsayılan değerler. Her satıra opsiyonel konum görseli ekleyebilirsiniz; görseli olan satırlarda mağazada konum adının yanında “Resmi görüntüle” linki gösterilir ve tıklanınca modal açılır.')
                     ->schema([
                         Forms\Components\Repeater::make('rows')
                             ->label('')
@@ -178,7 +178,7 @@ class ManageProductCustomization extends Page implements HasForms
                                     ['label' => 'Aktif', 'align' => 'center'],
                                 ],
                                 'emptyMessage' => 'Henüz konum satırı yok. Aşağıdan satır ekleyin.',
-                                'tableMinWidth' => '58rem',
+                                'tableMinWidth' => '62rem',
                             ])
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
@@ -190,10 +190,15 @@ class ManageProductCustomization extends Page implements HasForms
                                 Forms\Components\FileUpload::make('position_image')
                                     ->label('Görsel')
                                     ->directory('product_customization_positions')
+                                    ->disk('public')
                                     ->visibility('public')
                                     ->image()
                                     ->imageEditor()
+                                    ->imagePreviewHeight('4rem')
+                                    ->maxSize(2048)
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                                     ->nullable()
+                                    ->helperText('PNG/JPG/WEBP, en fazla 2 MB.')
                                     ->hiddenLabel(),
                                 Forms\Components\TextInput::make('default_width')
                                     ->label('En (cm)')

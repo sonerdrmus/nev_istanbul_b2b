@@ -11,6 +11,7 @@ use App\Filament\Resources\InterfaceColorVariationResource;
 use App\Filament\Resources\InterfaceDeliveryMethodVariationResource;
 use App\Filament\Resources\InterfaceFabricTypeVariationResource;
 use App\Filament\Resources\InterfaceLabelTypeVariationResource;
+use App\Filament\Resources\InterfaceMoldModelVariationResource;
 use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
 use App\Filament\Resources\ProductResource;
@@ -161,6 +162,7 @@ class AdminPanelProvider extends PanelProvider
                     || request()->routeIs(InterfaceFabricTypeVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceLabelTypeVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceCertificateVariationResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(InterfaceMoldModelVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(InterfaceDeliveryMethodVariationResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs('filament.admin.pages.packaging-preferences')
                     || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')
@@ -191,6 +193,10 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => InterfaceCertificateVariationResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-document-check')
                         ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceCertificateVariationResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Kalıp Modeli Yönetimi')
+                        ->url(fn (): string => InterfaceMoldModelVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-cube')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(InterfaceMoldModelVariationResource::getRouteBaseName($panelId) . '.*')),
                     NavigationItem::make('Teslim Şeklini Yönet')
                         ->url(fn (): string => InterfaceDeliveryMethodVariationResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-truck')

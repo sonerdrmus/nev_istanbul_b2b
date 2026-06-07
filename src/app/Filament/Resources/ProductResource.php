@@ -11,6 +11,7 @@ use App\Models\InterfaceColorVariation;
 use App\Models\InterfaceDeliveryMethodVariation;
 use App\Models\InterfaceFabricTypeVariation;
 use App\Models\InterfaceLabelTypeVariation;
+use App\Models\InterfaceMoldModelVariation;
 use App\Models\InterfacePackagingPreferenceVariation;
 use App\Models\Product;
 use App\Models\ProductCustomizationRow;
@@ -68,6 +69,9 @@ class ProductResource extends Resource
 
     /** @var array<int, string> */
     protected static array $interfaceCertificateLabelCache = [];
+
+    /** @var array<int, string> */
+    protected static array $interfaceMoldModelLabelCache = [];
 
     /** @var array<int, string> */
     protected static array $interfaceDeliveryMethodLabelCache = [];
@@ -426,7 +430,7 @@ class ProductResource extends Resource
                                                     $label .= ' ('.$optionCount.' seçenek)';
                                                 }
                                                 $type = (string) ($state['type'] ?? '');
-                                                if (in_array($type, ['select', 'color', 'fabric', 'image', 'label_type', 'certificate_type', 'delivery_type'], true)) {
+                                                if (in_array($type, ['select', 'color', 'fabric', 'image', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type'], true)) {
                                                     $label .= ! empty($state['allows_multiple']) ? ' · çoklu seçim' : ' · tek seçim';
                                                 } elseif (! empty($state['allows_multiple'])) {
                                                     $label .= ' · çoklu';
@@ -450,6 +454,7 @@ class ProductResource extends Resource
                                                         'fabric' => 'Kumaş Türü',
                                                         'label_type' => 'Etiket Türü',
                                                         'certificate_type' => 'Sertifika Türü',
+                                                        'mold_model_type' => 'Kalıp Modeli',
                                                         'delivery_type' => 'Teslimat Seçenekleri',
                                                         'packaging_type' => 'Ambalaj Türü',
                                                         'image' => 'Görsel',
@@ -471,6 +476,7 @@ class ProductResource extends Resource
                                                                     'color' => ['Renk kaydı bulunamadı', 'Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.'],
                                                                     'label_type' => ['Etiket türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Etiket Türü Yönetimi bölümünden kayıt ekleyin.'],
                                                                     'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
+                                                                    'mold_model_type' => ['Kalıp modeli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünden kayıt ekleyin.'],
                                                                     'delivery_type' => ['Teslim şekli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Teslim Şeklini Yönet bölümünden kayıt ekleyin.'],
                                                                     'packaging_type' => ['Ambalaj tercihi kaydı bulunamadı', 'Önce Varyasyon yönetimi → Ambalaj Tercih Yönetimi → Ambalaj seç bölümünden kayıt ekleyin.'],
                                                                     'size_table' => ['Beden tablosu bulunamadı', 'Önce Varyasyon yönetimi → Beden tabloları bölümünden en az bir tablo tanımlayın.'],
@@ -491,6 +497,7 @@ class ProductResource extends Resource
                                                         'fabric' => 'Seçenekler, Kumaş türü varyasyonları kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
                                                         'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
                                                         'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
+                                                        'mold_model_type' => 'Seçenekler, Kalıp Modeli Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                                                         'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
                                                         'packaging_type' => 'Seçenekler, Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından otomatik doldurulur; malzeme ve özelleştirme mağazada alt adımlarda sorulur.',
                                                         'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
@@ -601,7 +608,7 @@ class ProductResource extends Resource
                                                     ->collapsed()
                                                     ->itemLabel(fn (array $state): ?string => $state['option_value'] ?? 'Seçenek')
                                                     ->addActionLabel('Seçenek ekle')
-                                                    ->addable(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'delivery_type', 'packaging_type', 'size_table'], true))
+                                                    ->addable(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true))
                                                     ->schema([
                                                         Forms\Components\Select::make('size_table_id')
                                                             ->label('Beden tablosu')
@@ -735,6 +742,30 @@ class ProductResource extends Resource
                                                             })
                                                             ->helperText('Varyasyon yönetimi → Sertifika Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
                                                             ->columnSpanFull(),
+                                                        Forms\Components\Select::make('interface_mold_model_variation_id')
+                                                            ->label('Kayıtlı kalıp modeli')
+                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'mold_model_type')
+                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceMoldModelOptions($search))
+                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceMoldModelOptionLabel($value))
+                                                            ->searchable()
+                                                            ->nullable()
+                                                            ->live(debounce: 400)
+                                                            ->afterStateUpdated(function ($state, Set $set): void {
+                                                                if ($state === null || $state === '') {
+                                                                    return;
+                                                                }
+                                                                $preset = InterfaceMoldModelVariation::find((int) $state);
+                                                                if (! $preset) {
+                                                                    return;
+                                                                }
+                                                                $set('option_value', (string) $preset->name);
+                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
+                                                                    $set('option_image', [$preset->image_path]);
+                                                                }
+                                                            })
+                                                            ->helperText('Varyasyon yönetimi → Kalıp Modeli Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                                                            ->columnSpanFull(),
                                                         Forms\Components\Select::make('interface_delivery_method_variation_id')
                                                             ->label('Kayıtlı teslimat seçeneği')
                                                             ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'delivery_type')
@@ -795,7 +826,7 @@ class ProductResource extends Resource
                                                             ->columnSpan(1),
                                                         Forms\Components\FileUpload::make('option_image')
                                                             ->label('Varyasyon görseli')
-                                                            ->visible(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'delivery_type', 'packaging_type', 'size_table'], true))
+                                                            ->visible(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true))
                                                             ->image()
                                                             ->disk('public')
                                                             ->directory('variation_options')
@@ -1043,6 +1074,7 @@ class ProductResource extends Resource
                     'interface_packaging_preference_variation_id' => null,
                     'interface_certificate_variation_id' => null,
                     'interface_delivery_method_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
                     'option_image' => null,
                     'sort_order' => (int) ($table->sort_order ?? ($index * 10)),
                     'price_delta' => 0,
@@ -1065,6 +1097,7 @@ class ProductResource extends Resource
             'color' => static::colorVariationOptionsFromInterfacePresets(),
             'label_type' => static::labelVariationOptionsFromInterfacePresets(),
             'certificate_type' => static::certificateVariationOptionsFromInterfacePresets(),
+            'mold_model_type' => static::moldModelVariationOptionsFromInterfacePresets(),
             'delivery_type' => static::deliveryVariationOptionsFromInterfacePresets(),
             'packaging_type' => static::packagingVariationOptionsFromInterfacePresets(),
             'size_table' => static::sizeTableVariationOptionsFromPresets(),
@@ -1084,7 +1117,7 @@ class ProductResource extends Resource
 
         foreach ($data['variations'] as &$variation) {
             $type = (string) ($variation['type'] ?? '');
-            if (! in_array($type, ['fabric', 'color', 'label_type', 'certificate_type', 'delivery_type', 'packaging_type', 'size_table'], true)) {
+            if (! in_array($type, ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true)) {
                 continue;
             }
 
@@ -1121,6 +1154,7 @@ class ProductResource extends Resource
                     'interface_label_type_variation_id' => $preset->getKey(),
                     'interface_certificate_variation_id' => null,
                     'interface_delivery_method_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
                     'interface_packaging_preference_variation_id' => null,
                     'interface_color_variation_id' => null,
                     'interface_fabric_type_variation_id' => null,
@@ -1153,6 +1187,42 @@ class ProductResource extends Resource
                 return [
                     'option_value' => (string) $preset->name,
                     'interface_certificate_variation_id' => $preset->getKey(),
+                    'interface_delivery_method_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
+                    'interface_packaging_preference_variation_id' => null,
+                    'interface_label_type_variation_id' => null,
+                    'interface_color_variation_id' => null,
+                    'interface_fabric_type_variation_id' => null,
+                    'size_table_id' => null,
+                    'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
+                    'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
+                    'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+                    'stock_quantity' => null,
+                    'parent_option_id' => null,
+                    'parent_option_ids' => null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Ürün varyasyonu tipi "Kalıp Modeli" olduğunda seçenek satırları — Kalıp Modeli Yönetimi kayıtları.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function moldModelVariationOptionsFromInterfacePresets(): array
+    {
+        return InterfaceMoldModelVariation::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(function (InterfaceMoldModelVariation $preset, int $index): array {
+                return [
+                    'option_value' => (string) $preset->name,
+                    'interface_mold_model_variation_id' => $preset->getKey(),
+                    'interface_certificate_variation_id' => null,
                     'interface_delivery_method_variation_id' => null,
                     'interface_packaging_preference_variation_id' => null,
                     'interface_label_type_variation_id' => null,
@@ -1189,6 +1259,7 @@ class ProductResource extends Resource
                     'info_text' => filled($preset->description) ? (string) $preset->description : null,
                     'interface_delivery_method_variation_id' => $preset->getKey(),
                     'interface_certificate_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
                     'interface_packaging_preference_variation_id' => null,
                     'interface_label_type_variation_id' => null,
                     'interface_color_variation_id' => null,
@@ -1223,6 +1294,7 @@ class ProductResource extends Resource
                     'option_value' => (string) $preset->name,
                     'interface_packaging_preference_variation_id' => $preset->getKey(),
                     'interface_certificate_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
                     'interface_delivery_method_variation_id' => null,
                     'interface_label_type_variation_id' => null,
                     'interface_color_variation_id' => null,
@@ -1258,6 +1330,7 @@ class ProductResource extends Resource
                     'interface_label_type_variation_id' => null,
                     'interface_certificate_variation_id' => null,
                     'interface_delivery_method_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
                     'interface_packaging_preference_variation_id' => null,
                     'interface_color_variation_id' => null,
                     'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
@@ -1316,10 +1389,11 @@ class ProductResource extends Resource
             'option_value' => $label,
             'interface_color_variation_id' => $preset->getKey(),
             'interface_fabric_type_variation_id' => null,
-            'interface_label_type_variation_id' => null,
-            'interface_certificate_variation_id' => null,
-            'interface_delivery_method_variation_id' => null,
-            'interface_packaging_preference_variation_id' => null,
+                    'interface_label_type_variation_id' => null,
+                    'interface_certificate_variation_id' => null,
+                    'interface_mold_model_variation_id' => null,
+                    'interface_delivery_method_variation_id' => null,
+                    'interface_packaging_preference_variation_id' => null,
             'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
             'sort_order' => (int) ($preset->sort_order ?? $fallbackSortOrder ?? 0),
             'price_delta' => 0,
@@ -1397,6 +1471,7 @@ class ProductResource extends Resource
             'color' => 'interface_color_variation_id',
             'label_type' => 'interface_label_type_variation_id',
             'certificate_type' => 'interface_certificate_variation_id',
+            'mold_model_type' => 'interface_mold_model_variation_id',
             'delivery_type' => 'interface_delivery_method_variation_id',
             'packaging_type' => 'interface_packaging_preference_variation_id',
             'size_table' => 'size_table_id',
@@ -1456,6 +1531,7 @@ class ProductResource extends Resource
             'interface_fabric_type_variation_id' => $row['interface_fabric_type_variation_id'] ?? null,
             'interface_label_type_variation_id' => $row['interface_label_type_variation_id'] ?? null,
             'interface_certificate_variation_id' => $row['interface_certificate_variation_id'] ?? null,
+            'interface_mold_model_variation_id' => $row['interface_mold_model_variation_id'] ?? null,
             'interface_delivery_method_variation_id' => $row['interface_delivery_method_variation_id'] ?? null,
             'interface_packaging_preference_variation_id' => $row['interface_packaging_preference_variation_id'] ?? null,
             'size_table_id' => $row['size_table_id'] ?? null,
@@ -1513,6 +1589,9 @@ class ProductResource extends Resource
                 }
                 if ($variationType !== 'certificate_type') {
                     $opt['interface_certificate_variation_id'] = null;
+                }
+                if ($variationType !== 'mold_model_type') {
+                    $opt['interface_mold_model_variation_id'] = null;
                 }
                 if ($variationType !== 'delivery_type') {
                     $opt['interface_delivery_method_variation_id'] = null;
@@ -1587,6 +1666,22 @@ class ProductResource extends Resource
                         $pPath = trim((string) ($preset->image_path ?? ''));
                         if ($img !== '' && $pPath !== '' && $img !== $pPath) {
                             $opt['interface_certificate_variation_id'] = null;
+                        } else {
+                            if (trim((string) ($opt['option_value'] ?? '')) === '') {
+                                $opt['option_value'] = (string) $preset->name;
+                            }
+                            $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier);
+                            if ($pPath !== '') {
+                                $opt['option_image'] = $pPath;
+                            }
+                        }
+                    }
+                } elseif ($variationType === 'mold_model_type' && ! empty($opt['interface_mold_model_variation_id'])) {
+                    $preset = InterfaceMoldModelVariation::find((int) $opt['interface_mold_model_variation_id']);
+                    if ($preset) {
+                        $pPath = trim((string) ($preset->image_path ?? ''));
+                        if ($img !== '' && $pPath !== '' && $img !== $pPath) {
+                            $opt['interface_mold_model_variation_id'] = null;
                         } else {
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $opt['option_value'] = (string) $preset->name;
@@ -1687,6 +1782,7 @@ class ProductResource extends Resource
                     'interface_fabric_type_variation_id' => $optionRow['interface_fabric_type_variation_id'] ?? null,
                     'interface_label_type_variation_id' => $optionRow['interface_label_type_variation_id'] ?? null,
                     'interface_certificate_variation_id' => $optionRow['interface_certificate_variation_id'] ?? null,
+                    'interface_mold_model_variation_id' => $optionRow['interface_mold_model_variation_id'] ?? null,
                     'interface_delivery_method_variation_id' => $optionRow['interface_delivery_method_variation_id'] ?? null,
                     'interface_packaging_preference_variation_id' => $optionRow['interface_packaging_preference_variation_id'] ?? null,
                     'size_table_id' => $optionRow['size_table_id'] ?? null,
@@ -2104,6 +2200,46 @@ class ProductResource extends Resource
     }
 
     /** @return array<int, string> */
+    protected static function searchInterfaceMoldModelOptions(string $search): array
+    {
+        return InterfaceMoldModelVariation::query()
+            ->where('is_active', true)
+            ->when($search !== '', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->limit(50)
+            ->get()
+            ->mapWithKeys(function (InterfaceMoldModelVariation $preset): array {
+                $label = static::formatInterfaceMoldModelLabel($preset);
+                static::$interfaceMoldModelLabelCache[(int) $preset->getKey()] = $label;
+
+                return [$preset->getKey() => $label];
+            })
+            ->all();
+    }
+
+    protected static function interfaceMoldModelOptionLabel(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $id = (int) $value;
+        if (isset(static::$interfaceMoldModelLabelCache[$id])) {
+            return static::$interfaceMoldModelLabelCache[$id];
+        }
+        $preset = InterfaceMoldModelVariation::query()->find($id);
+
+        return $preset ? static::formatInterfaceMoldModelLabel($preset) : null;
+    }
+
+    protected static function formatInterfaceMoldModelLabel(InterfaceMoldModelVariation $preset): string
+    {
+        return $preset->name
+            .' · ×'.number_format((float) $preset->price_multiplier, 2, ',', '.')
+            .' · #'.$preset->id;
+    }
+
+    /** @return array<int, string> */
     protected static function searchInterfaceDeliveryMethodOptions(string $search): array
     {
         return InterfaceDeliveryMethodVariation::query()
@@ -2207,7 +2343,7 @@ class ProductResource extends Resource
     /** Select, görsel, etiket vb. tiplerde seçim modu admin tarafından ayarlanabilir. */
     protected static function variationTypeAllowsConfigurableSelectionMode(?string $type): bool
     {
-        return in_array((string) $type, ['select', 'color', 'fabric', 'image', 'label_type', 'certificate_type', 'delivery_type'], true);
+        return in_array((string) $type, ['select', 'color', 'fabric', 'image', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type'], true);
     }
 
     protected static function variationTypeShowsSelectionModeSection(?string $type): bool

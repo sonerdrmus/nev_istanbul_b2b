@@ -249,6 +249,17 @@
                         </div>
                     </div>
                 </div>
+                <div id="variation-delivery-estimate-notice" class="mt-3 hidden rounded-xl border-2 border-sky-400/90 bg-gradient-to-br from-sky-50 via-sky-50/95 to-blue-50 px-4 py-3.5 shadow-md ring-2 ring-sky-200/70" role="status" aria-live="polite">
+                    <div class="flex gap-3 sm:gap-4">
+                        <span class="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm" aria-hidden="true">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm sm:text-base font-bold text-sky-950 leading-snug">{{ __('store.product.delivery_estimated_time_title') }}</p>
+                            <p id="variation-delivery-estimate-notice-text" class="mt-1.5 text-sm sm:text-[0.9375rem] font-semibold leading-relaxed text-sky-900"></p>
+                        </div>
+                    </div>
+                </div>
                 <p id="variation-summary-warning" class="mt-3 text-sm text-amber-700 font-medium hidden" role="alert">
                     {{ __('store.product.summary_cart_warning') }}
                 </p>
@@ -421,6 +432,89 @@
                             background-color: #155fb3;
                             box-shadow: inset 0 0 0 3px #fff;
                         }
+                        .label-type-suboptions-panel {
+                            scroll-margin-top: 1.25rem;
+                        }
+                        .label-type-suboptions-panel .label-type-sub-section {
+                            border-left: 3px solid #93c5fd;
+                        }
+                        .label-type-suboptions-panel .label-type-custom-print-btn.option-selected,
+                        .label-type-suboptions-panel .label-type-custom-print-artwork-btn.option-selected,
+                        .label-type-suboptions-panel .label-type-position-btn.option-selected {
+                            border-color: #155fb3;
+                            background-color: #eff6ff;
+                            color: #1e40af;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.15);
+                        }
+                        .label-type-suboptions-panel .label-type-continue-btn:not(:disabled) {
+                            box-shadow: 0 4px 14px rgba(21, 95, 179, 0.25);
+                        }
+                        .packaging-type-sticker-design-section .packaging-type-sticker-design-btn.option-selected {
+                            border-color: #155fb3;
+                            background-color: #eff6ff;
+                            color: #1e40af;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.15);
+                        }
+                        .label-type-standard-wash-info:not(.hidden) {
+                            animation: labelWashInfoIn 0.35s ease-out;
+                        }
+                        @keyframes labelWashInfoIn {
+                            from { opacity: 0; transform: translateY(-6px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .customization-position-preview-btn {
+                            scroll-margin-top: 0.5rem;
+                        }
+                        .customization-position-preview-btn:hover {
+                            transform: translateY(-1px);
+                        }
+                        .customization-position-preview-btn:active {
+                            transform: translateY(0);
+                        }
+                        .customization-position-preview-btn .customization-position-preview-thumb img {
+                            transition: transform 0.25s ease;
+                        }
+                        .customization-position-preview-btn:hover .customization-position-preview-thumb img {
+                            transform: scale(1.05);
+                        }
+                        .customization-row-card:has(input:checked) .customization-position-preview-btn {
+                            border-color: rgba(21, 95, 179, 0.35);
+                            background: linear-gradient(to bottom right, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
+                            box-shadow: 0 2px 10px rgba(21, 95, 179, 0.08);
+                        }
+                        #mold-model-size-table-zoom-viewport {
+                            touch-action: none;
+                            min-height: 12rem;
+                        }
+                        #mold-model-size-table-zoom-viewport.is-zoomed {
+                            cursor: grab;
+                        }
+                        #mold-model-size-table-zoom-viewport.is-dragging {
+                            cursor: grabbing;
+                        }
+                        #mold-model-size-table-modal-image {
+                            transform-origin: center center;
+                            will-change: transform;
+                            transition: transform 0.12s ease-out;
+                        }
+                        #mold-model-size-table-zoom-viewport.is-dragging #mold-model-size-table-modal-image {
+                            transition: none;
+                        }
+                        .mold-model-option-shell {
+                            min-width: 0;
+                        }
+                        .mold-model-option-shell:has(.product-option.option-selected) {
+                            border-color: #155fb3;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.22);
+                        }
+                        .mold-model-option-shell .product-option {
+                            border-width: 0;
+                            box-shadow: none;
+                        }
+                        .mold-model-option-shell .product-option:hover,
+                        .mold-model-option-shell .product-option:focus {
+                            box-shadow: none;
+                        }
                         .variation-customization-panel .variation-step-summary-value {
                             line-height: 1.5;
                         }
@@ -579,19 +673,31 @@
                                                             <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-11 sm:items-center sm:gap-x-3 sm:gap-y-0">
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
                                                                     <span class="mb-1 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_position') }}</span>
-                                                                    <div class="flex flex-col items-center gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-2">
-                                                                        <span class="customization-konum-text text-center text-sm font-semibold leading-snug text-slate-600 transition-colors sm:text-left">{{ $clKonum }}</span>
-                                                                        @if($rowPositionImageUrl !== '')
-                                                                            <button type="button"
-                                                                                class="customization-position-preview-btn inline-flex shrink-0 items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] font-semibold leading-none text-sky-700 shadow-sm ring-1 ring-sky-200/90 hover:bg-sky-50 hover:text-sky-900 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
-                                                                                data-image-url="{{ $rowPositionImageUrl }}"
-                                                                                data-image-alt="{{ $clKonum }}"
-                                                                                aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonum]) }}">
-                                                                                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                                                <span>{{ __('store.product.customization_position_inspect') }}</span>
-                                                                            </button>
-                                                                        @endif
-                                                                    </div>
+                                                                    @if($rowPositionImageUrl !== '')
+                                                                        <button type="button"
+                                                                            class="customization-position-preview-btn group relative z-[1] flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/50 to-sky-50/40 p-2.5 text-left shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:border-sky-300/90 hover:from-sky-50/80 hover:to-blue-50/50 hover:shadow-md hover:ring-sky-200/70 focus:outline-none focus:ring-2 focus:ring-sky-400/45 focus:ring-offset-1 sm:p-3"
+                                                                            data-image-url="{{ $rowPositionImageUrl }}"
+                                                                            data-image-title="{{ $clKonum }}"
+                                                                            data-image-alt="{{ $clKonum }}"
+                                                                            aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonum]) }}">
+                                                                            <span class="customization-position-preview-thumb relative flex h-11 w-11 shrink-0 overflow-hidden rounded-lg ring-2 ring-white shadow-md sm:h-12 sm:w-12">
+                                                                                <img src="{{ $rowPositionImageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
+                                                                                <span class="absolute inset-0 flex items-center justify-center bg-slate-900/30 transition-colors group-hover:bg-slate-900/45" aria-hidden="true">
+                                                                                    <svg class="h-4 w-4 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                                                                </span>
+                                                                            </span>
+                                                                            <span class="min-w-0 flex-1">
+                                                                                <span class="customization-konum-text block text-sm font-bold leading-snug tracking-tight text-slate-800 transition-colors group-hover:text-slate-900 sm:text-[0.9375rem]">{{ $clKonum }}</span>
+                                                                                <span class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-sky-700 transition-colors group-hover:text-sky-900 sm:text-xs">
+                                                                                    <svg class="h-3.5 w-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                                    <span>{{ __('store.product.customization_position_inspect') }}</span>
+                                                                                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                                                </span>
+                                                                            </span>
+                                                                        </button>
+                                                                    @else
+                                                                        <span class="customization-konum-text block text-center text-sm font-semibold leading-snug text-slate-600 transition-colors sm:text-left">{{ $clKonum }}</span>
+                                                                    @endif
                                                                 </div>
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
                                                                     <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_dimensions') }}</span>
@@ -735,6 +841,65 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Konum görseli modal --}}
+            <div id="customization-position-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="customization-position-modal-title">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="customization-position-modal-backdrop"></div>
+                <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
+                    <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+                        <span class="mt-0.5 shrink-0 text-primary-600" aria-hidden="true">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </span>
+                        <h2 id="customization-position-modal-title" class="min-w-0 flex-1 text-base sm:text-lg font-semibold text-slate-900 leading-snug"></h2>
+                        <button type="button" id="customization-position-modal-close-icon" class="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400/40" aria-label="{{ __('store.product.lightbox_close') }}">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 sm:px-6 sm:py-5">
+                        <img id="customization-position-modal-image" src="" alt="" class="mx-auto max-h-[min(65vh,32rem)] w-auto max-w-full rounded-xl object-contain bg-slate-50">
+                    </div>
+                    <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+                        <button type="button" id="customization-position-modal-close" class="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            {{ __('store.product.zoom_ok') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Kalıp modeli beden tablosu modal --}}
+            <div id="mold-model-size-table-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="mold-model-size-table-modal-title">
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="mold-model-size-table-modal-backdrop"></div>
+                <div class="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
+                    <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+                        <span class="mt-0.5 shrink-0 text-primary-600" aria-hidden="true">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18"/></svg>
+                        </span>
+                        <h2 id="mold-model-size-table-modal-title" class="min-w-0 flex-1 text-base sm:text-lg font-semibold text-slate-900 leading-snug"></h2>
+                        <button type="button" id="mold-model-size-table-modal-close-icon" class="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400/40" aria-label="{{ __('store.product.lightbox_close') }}">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="px-5 py-4 sm:px-6 sm:py-5">
+                        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">{{ __('store.product.mold_model_size_table_zoom_hint') }}</p>
+                            <div class="flex shrink-0 items-center gap-1.5 self-start sm:self-auto">
+                                <button type="button" id="mold-model-size-table-zoom-out" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-lg font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400/40" aria-label="{{ __('store.product.mold_model_size_table_zoom_out') }}">−</button>
+                                <span id="mold-model-size-table-zoom-level" class="min-w-[3.25rem] text-center text-xs font-semibold tabular-nums text-slate-600">100%</span>
+                                <button type="button" id="mold-model-size-table-zoom-in" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-lg font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400/40" aria-label="{{ __('store.product.mold_model_size_table_zoom_in') }}">+</button>
+                                <button type="button" id="mold-model-size-table-zoom-reset" class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400/40">{{ __('store.product.mold_model_size_table_zoom_reset') }}</button>
+                            </div>
+                        </div>
+                        <div id="mold-model-size-table-zoom-viewport" class="relative overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50 max-h-[min(70vh,36rem)]">
+                            <img id="mold-model-size-table-modal-image" src="" alt="" class="mx-auto block max-h-[min(70vh,36rem)] w-auto max-w-full select-none object-contain">
+                        </div>
+                    </div>
+                    <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+                        <button type="button" id="mold-model-size-table-modal-close" class="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                            {{ __('store.product.zoom_ok') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
     @elseif(!$product->isOnSale())
@@ -820,6 +985,7 @@
                 'label_position_back' => __('store.product.label_position_back'),
                 'label_position_summary' => __('store.product.label_position_summary'),
                 'label_subflow_heading' => __('store.product.label_subflow_heading'),
+                'label_suboptions_panel_hint' => __('store.product.label_suboptions_panel_hint'),
                 'label_description_placeholder' => __('store.product.label_description_placeholder'),
                 'label_description_default_title' => __('store.product.label_description_default_title'),
                 'label_description_summary' => __('store.product.label_description_summary'),
@@ -827,6 +993,9 @@
                 'packaging_customization_pick' => __('store.product.packaging_customization_pick'),
                 'packaging_material_summary' => __('store.product.packaging_material_summary'),
                 'packaging_barcode_summary_yes' => __('store.product.packaging_barcode_summary_yes'),
+                'delivery_suboption_summary' => __('store.product.delivery_suboption_summary'),
+                'delivery_estimated_time_title' => __('store.product.delivery_estimated_time_title'),
+                'delivery_estimated_time_panel_prefix' => __('store.product.delivery_estimated_time_panel_prefix'),
             ];
             $dimensionMultipliersByPrint = $dimensionMultipliersByPrint ?? [];
             $printTechniqueSlugCanonical = $printTechniqueSlugCanonical
@@ -843,6 +1012,7 @@
         @endphp
         <script>window.storeProductUi = @json($storeProductUi);</script>
         <script>window.packagingCatalog = @json($packagingCatalog ?? []);</script>
+        <script>window.deliveryCatalog = @json($deliveryCatalog ?? []);</script>
         <script>window.dimensionMultipliersByPrint = @json($dimensionMultipliersByPrint);</script>
         <script>window.printTechniqueSlugCanonical = @json($printTechniqueSlugCanonical);</script>
         <script>window.storeCurrencyConfig = @json($storeCurrencyConfig);</script>
@@ -1024,6 +1194,11 @@
                             var packagingSel = getVisibleSelectedProductOption(block);
                             if (!packagingSel) return false;
                             return (block.getAttribute('data-packaging-options-confirmed') || '') === '1';
+                        }
+                        if ((block.getAttribute('data-variation-type') || '') === 'delivery_type') {
+                            var deliverySel = getVisibleSelectedProductOption(block);
+                            if (!deliverySel) return false;
+                            return (block.getAttribute('data-delivery-options-confirmed') || '') === '1';
                         }
                         var isMulti = (block.getAttribute('data-allows-multiple') || '') === '1';
                         if (isMulti) {
@@ -2088,7 +2263,21 @@
                                 }
                             }
                         });
-                        return product;
+                        return product * getDeliverySubOptionMultiplier();
+                    }
+
+                    function getDeliverySubOptionMultiplier() {
+                        var mult = 1;
+                        document.querySelectorAll('.variation-step-panel[data-variation-type="delivery_type"][data-step-unlocked="1"]').forEach(function(block) {
+                            if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') return;
+                            var wrap = block.querySelector('.delivery-type-suboptions-wrap');
+                            if (!wrap) return;
+                            var subBtn = wrap.querySelector('.delivery-type-suboption-btn[data-selected="1"]');
+                            if (!subBtn) return;
+                            var m = parseFloat(subBtn.getAttribute('data-price-multiplier'));
+                            if (isFinite(m) && m > 0) mult *= m;
+                        });
+                        return mult;
                     }
 
                     function getPackagingAdditiveExtraTry() {
@@ -2177,6 +2366,12 @@
                                     if (packagingPayload) {
                                         var packagingDisplay = formatPackagingTypeSelectionDisplay(packagingPayload);
                                         list.push({ name: name, value: packagingDisplay, payload: packagingPayload, priceDelta: delta, isMulti: false });
+                                    }
+                                } else if ((panel.getAttribute('data-variation-type') || '') === 'delivery_type') {
+                                    var deliveryPayload = buildDeliveryTypeVariationPayload(panel);
+                                    if (deliveryPayload) {
+                                        var deliveryDisplay = formatDeliveryTypeSelectionDisplay(deliveryPayload);
+                                        list.push({ name: name, value: deliveryDisplay, payload: deliveryPayload, priceDelta: delta, isMulti: false });
                                     }
                                 } else if (summary && summaryVal && !summary.classList.contains('hidden')) {
                                     value = (summaryVal.textContent || '').trim();
@@ -2573,6 +2768,47 @@
                         notice.classList.toggle('hidden', !labelSelectionRequiresCustomerArtworkNotice());
                     }
 
+                    function getDeliverySelectedEstimateText() {
+                        var panels = document.querySelectorAll('.variation-step-panel[data-variation-type="delivery_type"][data-step-unlocked="1"]');
+                        for (var i = 0; i < panels.length; i++) {
+                            if (panels[i].style.display === 'none') continue;
+                            var sel = getVisibleSelectedProductOption(panels[i]);
+                            if (!sel) continue;
+                            var est = (sel.getAttribute('data-estimated-delivery-time') || '').trim();
+                            if (est) return est;
+                        }
+                        return '';
+                    }
+
+                    function syncDeliveryEstimateNotice() {
+                        var notice = document.getElementById('variation-delivery-estimate-notice');
+                        var textEl = document.getElementById('variation-delivery-estimate-notice-text');
+                        if (!notice || !textEl) return;
+                        var est = getDeliverySelectedEstimateText();
+                        if (est) {
+                            textEl.textContent = est;
+                            notice.classList.remove('hidden');
+                        } else {
+                            textEl.textContent = '';
+                            notice.classList.add('hidden');
+                        }
+                    }
+
+                    function updateDeliverySubPanelEstimate(wrap, sel) {
+                        if (!wrap) return;
+                        var estEl = wrap.querySelector('.delivery-type-estimated-time');
+                        if (!estEl) return;
+                        var est = sel ? (sel.getAttribute('data-estimated-delivery-time') || '').trim() : '';
+                        if (est) {
+                            var prefix = PU.delivery_estimated_time_panel_prefix || 'Tahmini teslimat süresi:';
+                            estEl.textContent = prefix + ' ' + est;
+                            estEl.classList.remove('hidden');
+                        } else {
+                            estEl.textContent = '';
+                            estEl.classList.add('hidden');
+                        }
+                    }
+
                     function updateVariationSummaryAndButton() {
                         updateSizeTotalDisplays();
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
@@ -2662,6 +2898,7 @@
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
                         syncMainGalleryFromVariations();
                         syncLabelArtworkCustomerNotice();
+                        syncDeliveryEstimateNotice();
                     }
 
                     /** Admin’de işaretlenen varyasyon(lar): seçilen seçeneğin görseli sol galerinin ilk slaytında (sıra önceliği). */
@@ -2741,6 +2978,14 @@
                             }
                             syncPackagingTypeSubOptionsPanel(block);
                             updatePackagingTypePanelSummary(block);
+                        });
+                        document.querySelectorAll('.variation-step-panel[data-variation-type="delivery_type"][data-step-unlocked="1"]').forEach(function(block) {
+                            if ((block.getAttribute('data-delivery-options-confirmed') || '') === '1') {
+                                updateDeliveryTypePanelSummary(block);
+                                return;
+                            }
+                            syncDeliveryTypeSubOptionsPanel(block);
+                            updateDeliveryTypePanelSummary(block);
                         });
                         updateSizeTableVisibility();
                         updateVariationSummaryAndButton();
@@ -2922,7 +3167,13 @@
                         var noSelected = wrap.querySelector('.label-type-custom-print-btn[data-value="0"][data-selected="1"]');
                         var standardInfo = wrap.querySelector('.label-type-standard-wash-info');
                         if (standardInfo) {
-                            standardInfo.classList.toggle('hidden', !noSelected);
+                            var showStandard = !!noSelected;
+                            standardInfo.classList.toggle('hidden', !showStandard);
+                            if (showStandard) {
+                                requestAnimationFrame(function() {
+                                    standardInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                });
+                            }
                         }
                         if (!section) return;
                         var show = !!yesSelected;
@@ -3093,7 +3344,6 @@
                         var optionName = (sel.getAttribute('data-option') || '').trim();
                         if (!optionName || !labelOptionNeedsSubOptions(sel)) {
                             heading.textContent = '';
-                            heading.classList.add('hidden');
                             return;
                         }
                         if (isLabelTypeMulti(block) && (block.getAttribute('data-label-sub-flow-active') || '') === '1') {
@@ -3104,11 +3354,17 @@
                                 .replace(':name', optionName)
                                 .replace(':current', String(idx + 1))
                                 .replace(':total', String(queue.length));
-                            heading.classList.remove('hidden');
                             return;
                         }
                         heading.textContent = optionName;
-                        heading.classList.remove('hidden');
+                    }
+
+                    function scrollLabelSuboptionsIntoView(wrap) {
+                        if (!wrap || wrap.classList.contains('hidden')) return;
+                        requestAnimationFrame(function() {
+                            var panel = wrap.querySelector('.label-type-suboptions-panel') || wrap;
+                            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
                     }
 
                     function updateLabelTypePanelSummary(block) {
@@ -3183,6 +3439,7 @@
                             syncLabelTypeDescriptionSection(wrap, sel);
                             updateLabelTypeSuboptionsHeading(block, sel, wrap);
                             updateLabelTypeContinueButton(block);
+                            scrollLabelSuboptionsIntoView(wrap);
                             if (isLabelTypeMulti(block)) updateMultiContinueUi(block);
                         }
                     }
@@ -3215,6 +3472,8 @@
                         updateLabelTypeContinueButton(block);
                         updateLabelTypePanelSummary(block);
                         updateMultiContinueUi(block);
+                        var subWrap = block.querySelector('.label-type-suboptions-wrap');
+                        if (subWrap) scrollLabelSuboptionsIntoView(subWrap);
                         return true;
                     }
 
@@ -3266,14 +3525,31 @@
                         var wrap = block.querySelector('.packaging-type-suboptions-wrap');
                         if (!wrap) return;
                         wrap.classList.add('hidden');
-                        wrap.querySelectorAll('.packaging-type-material-btn, .packaging-type-customization-btn').forEach(function(b) {
+                        wrap.querySelectorAll('.packaging-type-material-btn, .packaging-type-customization-btn, .packaging-type-sticker-design-btn').forEach(function(b) {
                             setProductOptionVisual(b, false);
                             b.removeAttribute('data-selected');
                         });
                         var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
                         if (barcodeCheck) barcodeCheck.checked = false;
+                        syncPackagingStickerDesignSection(wrap);
                         var cont = wrap.querySelector('.packaging-type-continue-btn');
                         if (cont) cont.disabled = true;
+                    }
+
+                    function syncPackagingStickerDesignSection(wrap) {
+                        if (!wrap) return;
+                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
+                        var section = wrap.querySelector('.packaging-type-sticker-design-section');
+                        if (!section) return;
+                        if (barcodeCheck && barcodeCheck.checked) {
+                            section.classList.remove('hidden');
+                            return;
+                        }
+                        section.classList.add('hidden');
+                        wrap.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(b) {
+                            setProductOptionVisual(b, false);
+                            b.removeAttribute('data-selected');
+                        });
                     }
 
                     function selectDefaultPackagingCustomization(wrap) {
@@ -3318,6 +3594,7 @@
                         });
                         var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
                         if (barcodeCheck) barcodeCheck.checked = false;
+                        syncPackagingStickerDesignSection(wrap);
                         updatePackagingTypeContinueButton(block);
                     }
 
@@ -3332,6 +3609,10 @@
                         var customizationBtns = wrap.querySelectorAll('.packaging-type-customization-btn');
                         if (customizationBtns.length > 0 && !wrap.querySelector('.packaging-type-customization-btn[data-selected="1"]')) {
                             return false;
+                        }
+                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
+                        if (barcodeCheck && barcodeCheck.checked) {
+                            if (!wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]')) return false;
                         }
                         return true;
                     }
@@ -3373,6 +3654,11 @@
                             var catalog = window.packagingCatalog || {};
                             var barcodeCfg = catalog.barcode || {};
                             payload.extra_price_try += parseFloat(barcodeCfg.extra_price || 0) || 0;
+                            var stickerBtn = wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]');
+                            if (stickerBtn) {
+                                payload.sticker_design = stickerBtn.getAttribute('data-sticker-design') || '';
+                                payload.sticker_design_label = stickerBtn.getAttribute('data-sticker-label') || '';
+                            }
                         } else {
                             payload.barcode_area = false;
                         }
@@ -3393,7 +3679,11 @@
                             parts.push(String(payload.customization_label));
                         }
                         if (payload.barcode_area) {
-                            parts.push(PU.packaging_barcode_summary_yes || 'Barkod / etiket alanı: Evet');
+                            if (payload.sticker_design_label) {
+                                parts.push(String(payload.sticker_design_label));
+                            } else {
+                                parts.push(PU.packaging_barcode_summary_yes || 'Barkod / etiket alanı talep edildi');
+                            }
                         }
                         return parts.filter(Boolean).join(' · ');
                     }
@@ -3411,6 +3701,187 @@
                         }
                         var payload = buildPackagingTypeVariationPayload(block);
                         updatePanelSummary(block, formatPackagingTypeSelectionDisplay(payload) || optionVal);
+                    }
+
+                    function getDeliverySubOptionsForPreset(presetId) {
+                        var catalog = window.deliveryCatalog || {};
+                        var map = catalog.sub_options || {};
+                        var key = String(presetId || '');
+                        return Array.isArray(map[key]) ? map[key] : [];
+                    }
+
+                    function resetDeliveryTypeSubOptions(block) {
+                        if (!block) return;
+                        block.setAttribute('data-delivery-options-confirmed', '0');
+                        var wrap = block.querySelector('.delivery-type-suboptions-wrap');
+                        if (!wrap) return;
+                        wrap.classList.add('hidden');
+                        var list = wrap.querySelector('.delivery-type-suboptions-list');
+                        if (list) list.innerHTML = '';
+                        var info = wrap.querySelector('.delivery-type-suboption-info');
+                        if (info) info.classList.add('hidden');
+                        var infoText = wrap.querySelector('.delivery-type-suboption-info-text');
+                        if (infoText) infoText.textContent = '';
+                        var cont = wrap.querySelector('.delivery-type-continue-btn');
+                        if (cont) cont.disabled = true;
+                    }
+
+                    function updateDeliverySubOptionInfo(wrap) {
+                        if (!wrap) return;
+                        var selected = wrap.querySelector('.delivery-type-suboption-btn[data-selected="1"]');
+                        var info = wrap.querySelector('.delivery-type-suboption-info');
+                        var infoText = wrap.querySelector('.delivery-type-suboption-info-text');
+                        if (!info || !infoText) return;
+                        var desc = selected ? (selected.getAttribute('data-suboption-description') || '').trim() : '';
+                        if (desc) {
+                            infoText.textContent = desc;
+                            info.classList.remove('hidden');
+                        } else {
+                            infoText.textContent = '';
+                            info.classList.add('hidden');
+                        }
+                    }
+
+                    function selectDefaultDeliverySubOption(wrap) {
+                        if (!wrap) return;
+                        var list = wrap.querySelector('.delivery-type-suboptions-list');
+                        if (!list) return;
+                        var defaultBtn = list.querySelector('.delivery-type-suboption-btn[data-is-default="1"]')
+                            || list.querySelector('.delivery-type-suboption-btn');
+                        if (!defaultBtn) return;
+                        list.querySelectorAll('.delivery-type-suboption-btn').forEach(function(b) {
+                            var on = b === defaultBtn;
+                            setProductOptionVisual(b, on);
+                            if (on) b.setAttribute('data-selected', '1');
+                            else b.removeAttribute('data-selected');
+                        });
+                        updateDeliverySubOptionInfo(wrap);
+                    }
+
+                    function syncDeliveryTypeSubOptionsPanel(block) {
+                        var wrap = block.querySelector('.delivery-type-suboptions-wrap');
+                        if (!wrap) return;
+                        var sel = getVisibleSelectedProductOption(block);
+                        if (!sel) {
+                            resetDeliveryTypeSubOptions(block);
+                            return;
+                        }
+                        if ((block.getAttribute('data-delivery-options-confirmed') || '') === '1') {
+                            updateDeliveryTypeContinueButton(block);
+                            return;
+                        }
+                        var presetId = sel.getAttribute('data-delivery-preset-id') || '';
+                        var subOptions = getDeliverySubOptionsForPreset(presetId);
+                        if (!subOptions.length) {
+                            block.setAttribute('data-delivery-options-confirmed', '1');
+                            wrap.classList.add('hidden');
+                            updateDeliveryTypeContinueButton(block);
+                            return;
+                        }
+                        block.setAttribute('data-delivery-options-confirmed', '0');
+                        wrap.classList.remove('hidden');
+                        var heading = wrap.querySelector('.delivery-type-suboptions-heading');
+                        if (heading) heading.textContent = (sel.getAttribute('data-option') || '').trim();
+                        updateDeliverySubPanelEstimate(wrap, sel);
+                        var list = wrap.querySelector('.delivery-type-suboptions-list');
+                        if (list) {
+                            list.innerHTML = '';
+                            subOptions.forEach(function(opt) {
+                                var btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'delivery-type-suboption-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-300 text-sm sm:text-base font-semibold text-slate-700 hover:bg-slate-50 min-h-[3rem] flex items-center justify-between gap-3';
+                                btn.setAttribute('data-suboption-id', String(opt.id || ''));
+                                btn.setAttribute('data-suboption-name', String(opt.name || ''));
+                                btn.setAttribute('data-suboption-description', String(opt.description || ''));
+                                btn.setAttribute('data-is-default', opt.is_default ? '1' : '0');
+                                var subMult = parseFloat(opt.price_multiplier);
+                                if (!isFinite(subMult) || subMult <= 0) subMult = 1;
+                                btn.setAttribute('data-price-multiplier', String(subMult));
+                                var multHtml = subMult > 0 && Math.abs(subMult - 1) > 0.0001
+                                    ? '<span class="shrink-0 text-xs font-semibold text-slate-500">' + escapeHtml(formatVariationMultiplier(subMult)) + '</span>'
+                                    : '';
+                                btn.innerHTML = '<span class="min-w-0">' + escapeHtml(String(opt.name || '')) + '</span>' + multHtml;
+                                list.appendChild(btn);
+                            });
+                            selectDefaultDeliverySubOption(wrap);
+                        }
+                        updateDeliveryTypeContinueButton(block);
+                    }
+
+                    function isDeliveryTypeSubOptionsValid(block) {
+                        var sel = getVisibleSelectedProductOption(block);
+                        if (!sel) return false;
+                        var presetId = sel.getAttribute('data-delivery-preset-id') || '';
+                        var subOptions = getDeliverySubOptionsForPreset(presetId);
+                        if (!subOptions.length) return true;
+                        var wrap = block.querySelector('.delivery-type-suboptions-wrap');
+                        if (!wrap) return false;
+                        return !!wrap.querySelector('.delivery-type-suboption-btn[data-selected="1"]');
+                    }
+
+                    function updateDeliveryTypeContinueButton(block) {
+                        var wrap = block ? block.querySelector('.delivery-type-suboptions-wrap') : null;
+                        if (!wrap) return;
+                        var cont = wrap.querySelector('.delivery-type-continue-btn');
+                        if (cont) cont.disabled = !isDeliveryTypeSubOptionsValid(block);
+                    }
+
+                    function buildDeliveryTypeVariationPayload(block) {
+                        var sel = getVisibleSelectedProductOption(block);
+                        if (!sel) return null;
+                        var optionVal = (sel.getAttribute('data-option') || '').trim();
+                        if (!optionVal) return null;
+                        if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') return null;
+                        var payload = {
+                            option: optionVal,
+                            delivery_preset_id: sel.getAttribute('data-delivery-preset-id') || ''
+                        };
+                        var est = (sel.getAttribute('data-estimated-delivery-time') || '').trim();
+                        if (est) payload.estimated_delivery_time = est;
+                        var subOptions = getDeliverySubOptionsForPreset(payload.delivery_preset_id);
+                        if (subOptions.length) {
+                            var wrap = block.querySelector('.delivery-type-suboptions-wrap');
+                            var subBtn = wrap ? wrap.querySelector('.delivery-type-suboption-btn[data-selected="1"]') : null;
+                            if (subBtn) {
+                                payload.sub_option = subBtn.getAttribute('data-suboption-name') || '';
+                                payload.sub_option_id = subBtn.getAttribute('data-suboption-id') || '';
+                                var subMult = parseFloat(subBtn.getAttribute('data-price-multiplier'));
+                                if (isFinite(subMult) && subMult > 0) payload.sub_option_multiplier = subMult;
+                                var desc = (subBtn.getAttribute('data-suboption-description') || '').trim();
+                                if (desc) payload.sub_option_description = desc;
+                            }
+                        }
+                        return payload;
+                    }
+
+                    function formatDeliveryTypeSelectionDisplay(payload) {
+                        if (!payload || typeof payload !== 'object') return '';
+                        if (typeof payload === 'string') return payload;
+                        var parts = [String(payload.option || '').trim()];
+                        if (payload.sub_option) {
+                            var tpl = PU.delivery_suboption_summary || 'Alt teslim: :suboption';
+                            parts.push(tpl.replace(':suboption', payload.sub_option));
+                        }
+                        if (payload.estimated_delivery_time) {
+                            var estTpl = PU.delivery_estimated_time_panel_prefix || 'Tahmini teslimat süresi:';
+                            parts.push(estTpl + ' ' + payload.estimated_delivery_time);
+                        }
+                        return parts.filter(Boolean).join(' · ');
+                    }
+
+                    function updateDeliveryTypePanelSummary(block) {
+                        var sel = getVisibleSelectedProductOption(block);
+                        if (!sel) {
+                            updatePanelSummary(block, '—');
+                            return;
+                        }
+                        var optionVal = (sel.getAttribute('data-option') || '').trim();
+                        if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') {
+                            updatePanelSummary(block, optionVal);
+                            return;
+                        }
+                        var payload = buildDeliveryTypeVariationPayload(block);
+                        updatePanelSummary(block, formatDeliveryTypeSelectionDisplay(payload) || optionVal);
                     }
 
                     function clampVariationStepIndex(requested) {
@@ -3670,6 +4141,14 @@
                                 updatePanelSummary(panel, '—');
                             }
 
+                            if ((panel.getAttribute('data-variation-type') || '') === 'delivery_type') {
+                                panel.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                                    setProductOptionVisual(b, false);
+                                });
+                                resetDeliveryTypeSubOptions(panel);
+                                updatePanelSummary(panel, '—');
+                            }
+
                             if ((panel.getAttribute('data-allows-multiple') || '') === '1') {
                                 panel.setAttribute('data-multi-confirmed', '0');
                             }
@@ -3829,6 +4308,18 @@
                             updateVariationSummaryAndButton();
                             return;
                         }
+                        if ((container.getAttribute('data-variation-type') || '') === 'delivery_type') {
+                            syncDeliveryTypeSubOptionsPanel(container);
+                            updateDeliveryTypePanelSummary(container);
+                            if ((container.getAttribute('data-delivery-options-confirmed') || '') === '1') {
+                                syncVariationJsonFromSelections();
+                                finishVariationStepIfReady(container);
+                            }
+                            updateSizeTableVisibility();
+                            scheduleApplyDependencyChain();
+                            updateVariationSummaryAndButton();
+                            return;
+                        }
                         updateSizeTableVisibility();
                         syncVariationJsonFromSelections();
                         finishVariationStepIfReady(container);
@@ -3949,7 +4440,24 @@
                     document.querySelectorAll('.packaging-type-barcode-check').forEach(function(checkbox) {
                         checkbox.addEventListener('change', function() {
                             var block = checkbox.closest('.product-variation-block');
+                            var wrap = checkbox.closest('.packaging-type-suboptions-wrap');
+                            if (wrap) syncPackagingStickerDesignSection(wrap);
                             if (block) updatePackagingTypeContinueButton(block);
+                        });
+                    });
+
+                    document.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var block = btn.closest('.product-variation-block');
+                            var wrap = btn.closest('.packaging-type-suboptions-wrap');
+                            if (!wrap || !block) return;
+                            wrap.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(b) {
+                                var on = b === btn;
+                                setProductOptionVisual(b, on);
+                                if (on) b.setAttribute('data-selected', '1');
+                                else b.removeAttribute('data-selected');
+                            });
+                            updatePackagingTypeContinueButton(block);
                         });
                     });
 
@@ -3964,6 +4472,36 @@
                             finishVariationStepIfReady(block);
                             updateVariationSummaryAndButton();
                         });
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        var deliverySubBtn = e.target.closest('.delivery-type-suboption-btn');
+                        if (deliverySubBtn) {
+                            var block = deliverySubBtn.closest('.product-variation-block');
+                            var wrap = deliverySubBtn.closest('.delivery-type-suboptions-wrap');
+                            if (!wrap || !block) return;
+                            wrap.querySelectorAll('.delivery-type-suboption-btn').forEach(function(b) {
+                                var on = b === deliverySubBtn;
+                                setProductOptionVisual(b, on);
+                                if (on) b.setAttribute('data-selected', '1');
+                                else b.removeAttribute('data-selected');
+                            });
+                            updateDeliverySubOptionInfo(wrap);
+                            updateDeliveryTypeContinueButton(block);
+                            updateVariationSummaryAndButton();
+                            return;
+                        }
+                        var deliveryContinueBtn = e.target.closest('.delivery-type-continue-btn');
+                        if (deliveryContinueBtn) {
+                            var deliveryBlock = deliveryContinueBtn.closest('.product-variation-block');
+                            if (!deliveryBlock || !isDeliveryTypeSubOptionsValid(deliveryBlock)) return;
+                            deliveryBlock.setAttribute('data-delivery-options-confirmed', '1');
+                            updateDeliveryTypePanelSummary(deliveryBlock);
+                            syncVariationJsonFromSelections();
+                            updatePriceAndInput();
+                            finishVariationStepIfReady(deliveryBlock);
+                            updateVariationSummaryAndButton();
+                        }
                     });
 
                     document.querySelectorAll('.variation-multi-continue-btn').forEach(function(btn) {
@@ -4057,14 +4595,40 @@
                             e.preventDefault();
                             e.stopPropagation();
                             var previewUrl = previewBtn.getAttribute('data-image-url');
-                            var previewAlt = previewBtn.getAttribute('data-image-alt') || '';
-                            var lb = document.getElementById('variation-image-lightbox');
-                            var lbImg = document.getElementById('variation-lightbox-image');
-                            if (lb && lbImg && previewUrl) {
-                                lbImg.src = previewUrl;
-                                lbImg.alt = previewAlt;
-                                lb.classList.remove('hidden');
-                                lb.classList.add('flex');
+                            var previewTitle = previewBtn.getAttribute('data-image-title') || previewBtn.getAttribute('data-image-alt') || '';
+                            var previewAlt = previewBtn.getAttribute('data-image-alt') || previewTitle;
+                            var posModal = document.getElementById('customization-position-modal');
+                            var posModalTitle = document.getElementById('customization-position-modal-title');
+                            var posModalImg = document.getElementById('customization-position-modal-image');
+                            if (posModal && posModalTitle && posModalImg && previewUrl) {
+                                posModalTitle.textContent = previewTitle;
+                                posModalImg.src = previewUrl;
+                                posModalImg.alt = previewAlt;
+                                posModal.classList.remove('hidden');
+                                posModal.classList.add('flex');
+                                document.body.style.overflow = 'hidden';
+                            }
+                            return;
+                        }
+                        var moldSizeTableBtn = e.target.closest('.mold-model-size-table-btn');
+                        if (moldSizeTableBtn) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var sizeTableUrl = moldSizeTableBtn.getAttribute('data-image-url');
+                            var sizeTableTitle = moldSizeTableBtn.getAttribute('data-image-title') || moldSizeTableBtn.getAttribute('data-image-alt') || '';
+                            var sizeTableAlt = moldSizeTableBtn.getAttribute('data-image-alt') || sizeTableTitle;
+                            var sizeTableModal = document.getElementById('mold-model-size-table-modal');
+                            var sizeTableModalTitle = document.getElementById('mold-model-size-table-modal-title');
+                            var sizeTableModalImg = document.getElementById('mold-model-size-table-modal-image');
+                            if (sizeTableModal && sizeTableModalTitle && sizeTableModalImg && sizeTableUrl) {
+                                sizeTableModalTitle.textContent = sizeTableTitle;
+                                sizeTableModalImg.src = sizeTableUrl;
+                                sizeTableModalImg.alt = sizeTableAlt;
+                                if (typeof window.resetMoldSizeTableZoom === 'function') {
+                                    window.resetMoldSizeTableZoom();
+                                }
+                                sizeTableModal.classList.remove('hidden');
+                                sizeTableModal.classList.add('flex');
                                 document.body.style.overflow = 'hidden';
                             }
                             return;
@@ -4094,6 +4658,156 @@
                             document.body.style.overflow = '';
                         }
                     }
+
+                    function closeCustomizationPositionModal() {
+                        var modal = document.getElementById('customization-position-modal');
+                        if (modal) {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                            document.body.style.overflow = '';
+                        }
+                    }
+
+                    function closeMoldModelSizeTableModal() {
+                        var modal = document.getElementById('mold-model-size-table-modal');
+                        if (modal) {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                            document.body.style.overflow = '';
+                            if (typeof window.resetMoldSizeTableZoom === 'function') {
+                                window.resetMoldSizeTableZoom();
+                            }
+                        }
+                    }
+
+                    (function initMoldSizeTableZoom() {
+                        var viewport = document.getElementById('mold-model-size-table-zoom-viewport');
+                        var img = document.getElementById('mold-model-size-table-modal-image');
+                        var zoomIn = document.getElementById('mold-model-size-table-zoom-in');
+                        var zoomOut = document.getElementById('mold-model-size-table-zoom-out');
+                        var zoomReset = document.getElementById('mold-model-size-table-zoom-reset');
+                        var zoomLabel = document.getElementById('mold-model-size-table-zoom-level');
+                        if (!viewport || !img) {
+                            return;
+                        }
+
+                        var state = { scale: 1, tx: 0, ty: 0, min: 1, max: 4, step: 0.25 };
+                        var dragging = false;
+                        var lastX = 0;
+                        var lastY = 0;
+
+                        function clampPan() {
+                            if (state.scale <= 1) {
+                                state.tx = 0;
+                                state.ty = 0;
+
+                                return;
+                            }
+                            var rect = viewport.getBoundingClientRect();
+                            var maxX = (rect.width * (state.scale - 1)) / 2;
+                            var maxY = (rect.height * (state.scale - 1)) / 2;
+                            state.tx = Math.max(-maxX, Math.min(maxX, state.tx));
+                            state.ty = Math.max(-maxY, Math.min(maxY, state.ty));
+                        }
+
+                        function applyTransform() {
+                            clampPan();
+                            img.style.transform = 'translate(' + state.tx + 'px, ' + state.ty + 'px) scale(' + state.scale + ')';
+                            viewport.classList.toggle('is-zoomed', state.scale > 1);
+                            if (zoomLabel) {
+                                zoomLabel.textContent = Math.round(state.scale * 100) + '%';
+                            }
+                        }
+
+                        window.resetMoldSizeTableZoom = function () {
+                            state.scale = 1;
+                            state.tx = 0;
+                            state.ty = 0;
+                            applyTransform();
+                        };
+
+                        function setScale(next) {
+                            state.scale = Math.max(state.min, Math.min(state.max, next));
+                            if (state.scale <= 1) {
+                                state.tx = 0;
+                                state.ty = 0;
+                            }
+                            applyTransform();
+                        }
+
+                        if (zoomIn) {
+                            zoomIn.addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                setScale(state.scale + state.step);
+                            });
+                        }
+                        if (zoomOut) {
+                            zoomOut.addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                setScale(state.scale - state.step);
+                            });
+                        }
+                        if (zoomReset) {
+                            zoomReset.addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                window.resetMoldSizeTableZoom();
+                            });
+                        }
+
+                        viewport.addEventListener('wheel', function (e) {
+                            e.preventDefault();
+                            setScale(state.scale + (e.deltaY < 0 ? state.step : -state.step));
+                        }, { passive: false });
+
+                        viewport.addEventListener('dblclick', function (e) {
+                            e.preventDefault();
+                            if (state.scale > 1) {
+                                window.resetMoldSizeTableZoom();
+                            } else {
+                                setScale(2);
+                            }
+                        });
+
+                        viewport.addEventListener('pointerdown', function (e) {
+                            if (state.scale <= 1 || e.button !== 0) {
+                                return;
+                            }
+                            dragging = true;
+                            lastX = e.clientX;
+                            lastY = e.clientY;
+                            viewport.setPointerCapture(e.pointerId);
+                            viewport.classList.add('is-dragging');
+                        });
+
+                        viewport.addEventListener('pointermove', function (e) {
+                            if (!dragging) {
+                                return;
+                            }
+                            state.tx += e.clientX - lastX;
+                            state.ty += e.clientY - lastY;
+                            lastX = e.clientX;
+                            lastY = e.clientY;
+                            applyTransform();
+                        });
+
+                        function endDrag(e) {
+                            if (!dragging) {
+                                return;
+                            }
+                            dragging = false;
+                            viewport.classList.remove('is-dragging');
+                            if (e && e.pointerId !== undefined) {
+                                try {
+                                    viewport.releasePointerCapture(e.pointerId);
+                                } catch (_) {}
+                            }
+                        }
+
+                        viewport.addEventListener('pointerup', endDrag);
+                        viewport.addEventListener('pointercancel', endDrag);
+
+                        applyTransform();
+                    })();
 
                     function closeVariationLightbox() {
                         var lb = document.getElementById('variation-image-lightbox');
@@ -4703,9 +5417,27 @@
                     if (fabricDetailModalCloseIcon) fabricDetailModalCloseIcon.addEventListener('click', closeFabricDetailModal);
                     if (fabricDetailModalBackdrop) fabricDetailModalBackdrop.addEventListener('click', closeFabricDetailModal);
 
+                    var customizationPositionModal = document.getElementById('customization-position-modal');
+                    var customizationPositionModalClose = document.getElementById('customization-position-modal-close');
+                    var customizationPositionModalCloseIcon = document.getElementById('customization-position-modal-close-icon');
+                    var customizationPositionModalBackdrop = document.getElementById('customization-position-modal-backdrop');
+                    if (customizationPositionModalClose) customizationPositionModalClose.addEventListener('click', closeCustomizationPositionModal);
+                    if (customizationPositionModalCloseIcon) customizationPositionModalCloseIcon.addEventListener('click', closeCustomizationPositionModal);
+                    if (customizationPositionModalBackdrop) customizationPositionModalBackdrop.addEventListener('click', closeCustomizationPositionModal);
+
+                    var moldModelSizeTableModal = document.getElementById('mold-model-size-table-modal');
+                    var moldModelSizeTableModalClose = document.getElementById('mold-model-size-table-modal-close');
+                    var moldModelSizeTableModalCloseIcon = document.getElementById('mold-model-size-table-modal-close-icon');
+                    var moldModelSizeTableModalBackdrop = document.getElementById('mold-model-size-table-modal-backdrop');
+                    if (moldModelSizeTableModalClose) moldModelSizeTableModalClose.addEventListener('click', closeMoldModelSizeTableModal);
+                    if (moldModelSizeTableModalCloseIcon) moldModelSizeTableModalCloseIcon.addEventListener('click', closeMoldModelSizeTableModal);
+                    if (moldModelSizeTableModalBackdrop) moldModelSizeTableModalBackdrop.addEventListener('click', closeMoldModelSizeTableModal);
+
                     document.addEventListener('keydown', function(ev) {
                         if (ev.key === 'Escape' && warningDialog && !warningDialog.classList.contains('hidden')) closeProductWarningDialog();
                         if (ev.key === 'Escape' && fabricDetailModal && !fabricDetailModal.classList.contains('hidden')) closeFabricDetailModal();
+                        if (ev.key === 'Escape' && customizationPositionModal && !customizationPositionModal.classList.contains('hidden')) closeCustomizationPositionModal();
+                        if (ev.key === 'Escape' && moldModelSizeTableModal && !moldModelSizeTableModal.classList.contains('hidden')) closeMoldModelSizeTableModal();
                     });
                 });
             </script>
