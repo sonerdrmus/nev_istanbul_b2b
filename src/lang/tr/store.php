@@ -44,6 +44,20 @@ return [
         'ok' => 'Tamam',
     ],
 
+    'production_info' => [
+        'badge' => 'Bilgilendirme',
+        'title' => 'Üretim ve Teslimat Modelimiz',
+        'banner_alt' => 'NEVISTANBUL — Textile & promotion & Accessories',
+        'paragraph_1' => 'Bu sitedeki ürünler hazır stoklu olmayıp, tamamen müşterinin seçtiği teknik özelliklere ve tercihlere göre üretilir, sertifikalandırılır ve teslim edilir.',
+        'paragraph_2' => 'Ürün çeşitlerimiz ve detayları, kullanıcı talepleri doğrultusunda sürekli olarak güncellenmekte ve geliştirilmektedir.',
+        'highlight_production' => 'Özel üretim',
+        'highlight_certification' => 'Sertifikasyon',
+        'highlight_delivery' => 'Teslimat',
+        'confirm' => 'Anladım, devam et',
+        'close' => 'Kapat',
+        'once_note' => 'Bu mesaj yalnızca bir kez gösterilir.',
+    ],
+
     'bottom_nav' => [
         'products' => 'Ürünler',
         'categories' => 'Kategoriler',

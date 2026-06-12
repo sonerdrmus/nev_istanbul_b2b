@@ -14,6 +14,7 @@ class InterfaceCertificateVariation extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'image_path',
         'price_multiplier',
         'sort_order',

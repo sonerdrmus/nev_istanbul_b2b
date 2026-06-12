@@ -41,6 +41,12 @@ class InterfaceCertificateVariationResource extends Resource
                             ->label('Sertifika adı')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Açıklama')
+                            ->rows(4)
+                            ->maxLength(2000)
+                            ->nullable()
+                            ->helperText('Opsiyonel. Mağazada sertifika seçeneğinin yanında «detaylı bilgi» ile modalda gösterilir.'),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_certificate_variations')
@@ -83,6 +89,10 @@ class InterfaceCertificateVariationResource extends Resource
                     ->label('Sertifika adı')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Açıklama')
+                    ->limit(40)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')
                     ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))

@@ -286,6 +286,8 @@
     </script>
     @endif
 
+    @include('store.partials.welcome-production-info-modal')
+
     {{-- Anasayfa üst kategori şeridi: üst kategoriler + yazılı alt menü --}}
     @if(isset($topMenuCategories) && $topMenuCategories->isNotEmpty())
         @include('store.partials.home-mega-nav-strip')

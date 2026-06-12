@@ -44,6 +44,20 @@ return [
         'ok' => 'OK',
     ],
 
+    'production_info' => [
+        'badge' => 'Informazione',
+        'title' => 'Il nostro modello di produzione e consegna',
+        'banner_alt' => 'NEVISTANBUL — Textile & promotion & Accessories',
+        'paragraph_1' => 'I prodotti di questo sito non sono disponibili a stock; vengono prodotti, certificati e consegnati interamente in base alle specifiche tecniche e alle preferenze scelte dal cliente.',
+        'paragraph_2' => 'La nostra gamma di prodotti e i relativi dettagli vengono continuamente aggiornati e migliorati in base alle richieste degli utenti.',
+        'highlight_production' => 'Produzione su misura',
+        'highlight_certification' => 'Certificazione',
+        'highlight_delivery' => 'Consegna',
+        'confirm' => 'Ho capito, continua',
+        'close' => 'Chiudi',
+        'once_note' => 'Questo messaggio viene mostrato una sola volta.',
+    ],
+
     'bottom_nav' => [
         'products' => 'Prodotti',
         'categories' => 'Categorie',

@@ -33,8 +33,7 @@
     @php
         $labelArtworkNoticeEmail = 'info@sonerdurmus.com';
         $hasVariations = $product->variations->isNotEmpty();
-        $showPurchasePanel = $product->isOnSale()
-            && ($product->stock_quantity === null || (int) $product->stock_quantity > 0);
+        $showPurchasePanel = $product->isOnSale();
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
         $minOrderProduct = $product->getMinimumOrderQuantity();
         $normalPriceTry = null;
@@ -345,23 +344,10 @@
                 </div>
             @endif
 
-            @if($canSeePrices)
-                <div class="mt-6 flex items-center gap-2 text-sm">
-                    <span class="font-medium text-slate-700">{{ __('store.product.stock_label_short') }}</span>
-                    @if($product->stock_quantity === null)
-                        <span class="text-slate-600">{{ __('store.product.stock_not_tracked') }}</span>
-                    @elseif((int) $product->stock_quantity > 0)
-                        <span class="text-slate-600">{{ __('store.product.stock_units_fmt', ['count' => number_format($product->stock_quantity, 0, ',', '.')]) }}</span>
-                    @else
-                        <span class="text-red-600 font-medium">{{ __('store.index.out_of_stock') }}</span>
-                    @endif
-                </div>
-            @endif
-
     @if($showPurchasePanel)
     @php
         $minOrder = $product->getMinimumOrderQuantity();
-        $availableStock = $product->stock_quantity !== null ? (int) $product->stock_quantity : 999999;
+        $availableStock = 999999;
     @endphp
     <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="max-w-full">
@@ -376,7 +362,7 @@
                 {{-- Normal adet alanı (varyasyon yoksa hemen göster, varyasyon varsa tüm seçenekler seçilince göster) --}}
                 <div id="quantity-simple-wrap" class="{{ $hasVariations ? 'hidden' : '' }}">
                     <label class="block font-semibold text-slate-700 mb-2">{{ __('store.product.qty_label') }}</label>
-                    <input type="number" name="quantity" id="quantity-input" value="{{ $minOrder }}" min="{{ $minOrder }}" max="{{ $availableStock }}" class="w-full max-w-xs sm:max-w-sm lg:max-w-md rounded-xl border border-slate-300 px-4 py-3.5 lg:px-5 lg:py-4 text-base text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
+                    <input type="number" name="quantity" id="quantity-input" value="{{ $minOrder }}" min="{{ $minOrder }}" class="w-full max-w-xs sm:max-w-sm lg:max-w-md rounded-xl border border-slate-300 px-4 py-3.5 lg:px-5 lg:py-4 text-base text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20">
                     @if($minOrder > 1)
                         <p class="mt-1 text-sm text-slate-500">{{ __('store.product.min_order_line', ['count' => $minOrder]) }}</p>
                     @endif
@@ -481,6 +467,42 @@
                             border-color: rgba(21, 95, 179, 0.35);
                             background: linear-gradient(to bottom right, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
                             box-shadow: 0 2px 10px rgba(21, 95, 179, 0.08);
+                        }
+                        .customization-dim-wrap {
+                            border: 2px solid rgba(21, 95, 179, 0.22);
+                            background: linear-gradient(to bottom, rgba(239, 246, 255, 0.55), rgba(255, 255, 255, 0.95));
+                            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+                        }
+                        .customization-row-card:has(input:checked) .customization-dim-wrap {
+                            border-color: rgba(21, 95, 179, 0.42);
+                            background: linear-gradient(to bottom, rgba(219, 234, 254, 0.65), rgba(255, 255, 255, 0.98));
+                            box-shadow: 0 1px 8px rgba(21, 95, 179, 0.1);
+                        }
+                        .customization-dim-en,
+                        .customization-dim-boy {
+                            font-weight: 700;
+                            font-size: 1.0625rem;
+                            letter-spacing: 0.01em;
+                            color: #0f3c6f;
+                            border-width: 2px;
+                            border-color: rgba(21, 95, 179, 0.35);
+                            background-color: #fff;
+                        }
+                        .customization-dim-en:focus,
+                        .customization-dim-boy:focus {
+                            border-color: #155fb3;
+                            color: #0b2a4d;
+                        }
+                        .customization-dim-separator {
+                            font-size: 1.125rem;
+                            font-weight: 800;
+                            color: #155fb3;
+                        }
+                        .customization-summary-metric-dim .customization-summary-dim-value {
+                            font-size: 1.0625rem;
+                            font-weight: 800;
+                            color: #0f3c6f;
+                            letter-spacing: 0.01em;
                         }
                         #mold-model-size-table-zoom-viewport {
                             touch-action: none;
@@ -639,7 +661,7 @@
                                                     </div>
                                                     <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-3 sm:grid-cols-11 sm:items-center">
                                                         <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_position') }}</div>
-                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_dimensions') }}</div>
+                                                        <div class="text-xs font-bold uppercase tracking-wide text-primary-800 sm:col-span-3">{{ __('store.product.customization_col_dimensions') }}</div>
                                                         <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_print') }}</div>
                                                         <div class="customization-colors-header text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-2">{{ __('store.product.customization_col_colors') }}</div>
                                                     </div>
@@ -700,13 +722,13 @@
                                                                     @endif
                                                                 </div>
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
-                                                                    <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_dimensions') }}</span>
-                                                                    <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-center">
+                                                                    <span class="mb-1.5 block text-center text-xs font-bold uppercase tracking-wide text-primary-700 sm:hidden">{{ __('store.product.customization_col_dimensions') }}</span>
+                                                                    <div class="customization-dim-wrap flex flex-wrap items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 sm:justify-center">
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_en') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-10 w-[4.85rem] shrink-0 rounded-xl border border-slate-300/90 bg-white px-2 text-center text-sm tabular-nums leading-none text-slate-800 shadow-sm transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_en') }}, {{ $clKonum }}">
-                                                                        <span class="flex h-10 shrink-0 select-none items-center justify-center text-slate-400" aria-hidden="true">×</span>
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-11 w-[5.35rem] shrink-0 rounded-xl px-2 text-center tabular-nums leading-none shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/30" aria-label="{{ __('store.product.customization_dim_en') }}, {{ $clKonum }}">
+                                                                        <span class="customization-dim-separator flex h-11 shrink-0 select-none items-center justify-center" aria-hidden="true">×</span>
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_boy') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-10 w-[4.85rem] shrink-0 rounded-xl border border-slate-300/90 bg-white px-2 text-center text-sm tabular-nums leading-none text-slate-800 shadow-sm transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ $clKonum }}">
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-11 w-[5.35rem] shrink-0 rounded-xl px-2 text-center tabular-nums leading-none shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/30" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ $clKonum }}">
                                                                     </div>
                                                                 </div>
                                                                 <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
@@ -914,15 +936,6 @@
                         {{ __('store.product.status_coming_detail') }}
                     @endif
                 </p>
-            </div>
-        </div>
-    </section>
-    @elseif($product->stock_quantity !== null && (int) $product->stock_quantity === 0)
-    <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.stock_label_short') }}">
-        <div class="w-full">
-            <div class="p-6 rounded-2xl bg-slate-100 border border-slate-200">
-                <p class="text-red-600 font-medium">{{ __('store.product.stock_out_heading') }}</p>
-                <p class="mt-1 text-sm text-slate-600">{{ __('store.product.stock_out_body') }}</p>
             </div>
         </div>
     </section>
@@ -1804,6 +1817,13 @@
                         return html;
                     }
 
+                    function customizationSummaryMetricDim(label, value) {
+                        return '<div class="customization-summary-metric customization-summary-metric-dim min-w-0 bg-primary-50/45 px-3 py-2.5 sm:px-3.5 sm:py-3">' +
+                            '<span class="block text-[10px] font-bold uppercase tracking-wider text-primary-700/90">' + escapeHtml(label) + '</span>' +
+                            '<span class="customization-summary-dim-value mt-1 block leading-snug" title="' + escapeHtml(value || '—') + '">' + escapeHtml(value || '—') + '</span>' +
+                            '</div>';
+                    }
+
                     function customizationSummaryMetric(label, value) {
                         return '<div class="customization-summary-metric min-w-0 px-3 py-2.5 sm:px-3.5 sm:py-3">' +
                             '<span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">' + escapeHtml(label) + '</span>' +
@@ -1872,7 +1892,7 @@
                             '<span class="shrink-0 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-800">' + escapeHtml(print) + '</span>' +
                             '</header>' +
                             '<div class="grid grid-cols-2 divide-x divide-y divide-slate-100 ' + gridCols + ' sm:divide-y-0">' +
-                            customizationSummaryMetric(dimLbl, dim) +
+                            customizationSummaryMetricDim(dimLbl, dim) +
                             customizationSummaryMetric(areaLbl, area) +
                             customizationSummaryMetric(ebatLbl, ebat) +
                             customizationSummaryMetric(multLbl, mult) +
@@ -3519,6 +3539,10 @@
                         return (btn.getAttribute('data-packaging-requires-material') || '') === '1';
                     }
 
+                    function packagingHasStickerDesignSection(wrap) {
+                        return !!(wrap && wrap.querySelector('.packaging-type-sticker-design-section'));
+                    }
+
                     function resetPackagingTypeSubOptions(block) {
                         if (!block) return;
                         block.setAttribute('data-packaging-options-confirmed', '0');
@@ -3529,27 +3553,8 @@
                             setProductOptionVisual(b, false);
                             b.removeAttribute('data-selected');
                         });
-                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
-                        if (barcodeCheck) barcodeCheck.checked = false;
-                        syncPackagingStickerDesignSection(wrap);
                         var cont = wrap.querySelector('.packaging-type-continue-btn');
                         if (cont) cont.disabled = true;
-                    }
-
-                    function syncPackagingStickerDesignSection(wrap) {
-                        if (!wrap) return;
-                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
-                        var section = wrap.querySelector('.packaging-type-sticker-design-section');
-                        if (!section) return;
-                        if (barcodeCheck && barcodeCheck.checked) {
-                            section.classList.remove('hidden');
-                            return;
-                        }
-                        section.classList.add('hidden');
-                        wrap.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(b) {
-                            setProductOptionVisual(b, false);
-                            b.removeAttribute('data-selected');
-                        });
                     }
 
                     function selectDefaultPackagingCustomization(wrap) {
@@ -3592,9 +3597,10 @@
                             setProductOptionVisual(b, false);
                             b.removeAttribute('data-selected');
                         });
-                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
-                        if (barcodeCheck) barcodeCheck.checked = false;
-                        syncPackagingStickerDesignSection(wrap);
+                        wrap.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(b) {
+                            setProductOptionVisual(b, false);
+                            b.removeAttribute('data-selected');
+                        });
                         updatePackagingTypeContinueButton(block);
                     }
 
@@ -3610,9 +3616,8 @@
                         if (customizationBtns.length > 0 && !wrap.querySelector('.packaging-type-customization-btn[data-selected="1"]')) {
                             return false;
                         }
-                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
-                        if (barcodeCheck && barcodeCheck.checked) {
-                            if (!wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]')) return false;
+                        if (packagingHasStickerDesignSection(wrap) && !wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]')) {
+                            return false;
                         }
                         return true;
                     }
@@ -3648,17 +3653,14 @@
                             payload.customization_label = customizationBtn.getAttribute('data-customization-name') || '';
                             payload.extra_price_try += parseFloat(customizationBtn.getAttribute('data-extra-price') || '0') || 0;
                         }
-                        var barcodeCheck = wrap.querySelector('.packaging-type-barcode-check');
-                        if (barcodeCheck && barcodeCheck.checked) {
+                        var stickerBtn = wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]');
+                        if (stickerBtn) {
                             payload.barcode_area = true;
                             var catalog = window.packagingCatalog || {};
                             var barcodeCfg = catalog.barcode || {};
                             payload.extra_price_try += parseFloat(barcodeCfg.extra_price || 0) || 0;
-                            var stickerBtn = wrap.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]');
-                            if (stickerBtn) {
-                                payload.sticker_design = stickerBtn.getAttribute('data-sticker-design') || '';
-                                payload.sticker_design_label = stickerBtn.getAttribute('data-sticker-label') || '';
-                            }
+                            payload.sticker_design = stickerBtn.getAttribute('data-sticker-design') || '';
+                            payload.sticker_design_label = stickerBtn.getAttribute('data-sticker-label') || '';
                         } else {
                             payload.barcode_area = false;
                         }
@@ -4434,15 +4436,6 @@
                                 else b.removeAttribute('data-selected');
                             });
                             updatePackagingTypeContinueButton(block);
-                        });
-                    });
-
-                    document.querySelectorAll('.packaging-type-barcode-check').forEach(function(checkbox) {
-                        checkbox.addEventListener('change', function() {
-                            var block = checkbox.closest('.product-variation-block');
-                            var wrap = checkbox.closest('.packaging-type-suboptions-wrap');
-                            if (wrap) syncPackagingStickerDesignSection(wrap);
-                            if (block) updatePackagingTypeContinueButton(block);
                         });
                     });
 

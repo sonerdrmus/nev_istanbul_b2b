@@ -251,6 +251,7 @@ class ProductVariationOptionInterfaceSync
     {
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
+            'info_text' => filled($preset->description) ? (string) $preset->description : null,
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
             'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),

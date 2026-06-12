@@ -165,6 +165,10 @@
                                         @elseif($variation->type === 'certificate_type')
                                             @php
                                                 $certificateImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
+                                                if ($optionDetailText === '') {
+                                                    $optionDetailText = trim((string) ($option->interfaceCertificateVariation?->description ?? ''));
+                                                }
+                                                $hasOptionDetail = $optionDetailText !== '';
                                             @endphp
                                             <div class="variation-option-wrap fabric-option-card-wrap relative w-full min-w-0 overflow-visible">
                                             <button type="button"
@@ -466,39 +470,21 @@
                                                             </div>
                                                         </div>
                                                         @if(!empty($packagingBarcode['enabled']))
-                                                            <div class="packaging-type-barcode-section mb-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 sm:p-4">
-                                                                <label class="flex items-start gap-3 cursor-pointer">
-                                                                    <input type="checkbox" class="packaging-type-barcode-check mt-1 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
-                                                                    <span class="min-w-0">
-                                                                        <span class="block text-sm font-semibold text-slate-800">{{ $packagingBarcode['label'] ?? __('store.product.packaging_barcode_label') }}</span>
-                                                                        @if(!empty($packagingBarcode['description']))
-                                                                            <span class="mt-1 block text-xs text-slate-500 leading-relaxed">{{ $packagingBarcode['description'] }}</span>
-                                                                        @endif
-                                                                        @if((float) ($packagingBarcode['extra_price'] ?? 0) > 0)
-                                                                            <span class="mt-1 block text-xs text-slate-600">{{ __('store.product.packaging_extra_price_fmt', ['price' => number_format((float) $packagingBarcode['extra_price'], 2, ',', '.')]) }}</span>
-                                                                        @endif
-                                                                    </span>
-                                                                </label>
-                                                                @if(!empty($packagingBarcode['image_url']))
-                                                                    <img src="{{ $packagingBarcode['image_url'] }}" alt="" class="mt-3 max-h-32 rounded-lg border border-slate-200 object-contain">
-                                                                @endif
-                                                                <div class="packaging-type-sticker-design-section hidden mt-4 border-t border-primary-200/70 pt-4">
-                                                                    <p class="text-sm sm:text-base font-bold text-slate-900">{{ __('store.product.packaging_sticker_design_question') }}</p>
-                                                                    <p class="mt-1 mb-3 text-xs sm:text-sm text-slate-600 leading-relaxed">{{ __('store.product.packaging_sticker_design_hint') }}</p>
-                                                                    <div class="flex flex-col gap-2.5">
-                                                                        <button type="button"
-                                                                            class="packaging-type-sticker-design-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-300 text-sm sm:text-base font-semibold text-slate-700 hover:bg-white min-h-[3rem]"
-                                                                            data-sticker-design="customer_send"
-                                                                            data-sticker-label="{{ __('store.product.packaging_sticker_design_summary_customer') }}">
-                                                                            {{ __('store.product.packaging_sticker_design_customer') }}
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="packaging-type-sticker-design-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-300 text-sm sm:text-base font-semibold text-slate-700 hover:bg-white min-h-[3rem]"
-                                                                            data-sticker-design="company_prepare"
-                                                                            data-sticker-label="{{ __('store.product.packaging_sticker_design_summary_company') }}">
-                                                                            {{ __('store.product.packaging_sticker_design_company') }}
-                                                                        </button>
-                                                                    </div>
+                                                            <div class="packaging-type-sticker-design-section mb-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 sm:p-4">
+                                                                <p class="text-sm sm:text-base font-bold text-slate-900 mb-3">{{ __('store.product.packaging_sticker_design_hint') }}</p>
+                                                                <div class="flex flex-col gap-2.5">
+                                                                    <button type="button"
+                                                                        class="packaging-type-sticker-design-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-300 text-sm sm:text-base font-semibold text-slate-700 hover:bg-white min-h-[3rem]"
+                                                                        data-sticker-design="customer_send"
+                                                                        data-sticker-label="{{ __('store.product.packaging_sticker_design_summary_customer') }}">
+                                                                        {{ __('store.product.packaging_sticker_design_customer') }}
+                                                                    </button>
+                                                                    <button type="button"
+                                                                        class="packaging-type-sticker-design-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-300 text-sm sm:text-base font-semibold text-slate-700 hover:bg-white min-h-[3rem]"
+                                                                        data-sticker-design="company_prepare"
+                                                                        data-sticker-label="{{ __('store.product.packaging_sticker_design_summary_company') }}">
+                                                                        {{ __('store.product.packaging_sticker_design_company') }}
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         @endif

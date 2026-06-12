@@ -736,11 +736,14 @@ class ProductResource extends Resource
                                                                 }
                                                                 $set('option_value', (string) $preset->name);
                                                                 $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                                                                if (filled($preset->description)) {
+                                                                    $set('info_text', (string) $preset->description);
+                                                                }
                                                                 if (is_string($preset->image_path) && $preset->image_path !== '') {
                                                                     $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
-                                                            ->helperText('Varyasyon yönetimi → Sertifika Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                                                            ->helperText('Varyasyon yönetimi → Sertifika Yönetimi kayıtlarından seçilir; açıklama, görsel, ad ve fiyat çarpanı otomatik doldurulur.')
                                                             ->columnSpanFull(),
                                                         Forms\Components\Select::make('interface_mold_model_variation_id')
                                                             ->label('Kayıtlı kalıp modeli')
@@ -1186,6 +1189,7 @@ class ProductResource extends Resource
             ->map(function (InterfaceCertificateVariation $preset, int $index): array {
                 return [
                     'option_value' => (string) $preset->name,
+                    'info_text' => filled($preset->description) ? (string) $preset->description : null,
                     'interface_certificate_variation_id' => $preset->getKey(),
                     'interface_delivery_method_variation_id' => null,
                     'interface_mold_model_variation_id' => null,
@@ -1669,6 +1673,9 @@ class ProductResource extends Resource
                         } else {
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $opt['option_value'] = (string) $preset->name;
+                            }
+                            if (filled($preset->description)) {
+                                $opt['info_text'] = (string) $preset->description;
                             }
                             $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier);
                             if ($pPath !== '') {

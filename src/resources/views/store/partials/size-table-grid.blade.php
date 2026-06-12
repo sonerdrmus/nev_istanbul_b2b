@@ -37,11 +37,6 @@
             <span class="font-bold text-slate-800">{{ __('store.product.stock_units_fmt', ['count' => number_format($minOrder)]) }}</span>
         </span>
         <span class="text-slate-300">·</span>
-        <span class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200/80">
-            <span class="text-slate-500 font-medium">{{ __('store.product.size_max_chip') }}</span>
-            <span class="font-bold text-slate-800">{{ $availableStock >= 999999 ? __('store.product.unlimited_qty') : __('store.product.stock_units_fmt', ['count' => number_format($availableStock)]) }}</span>
-        </span>
-        <span class="text-slate-300">·</span>
         <span class="inline-flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-1.5 shadow-sm ring-1 ring-primary-200/80">
             <span class="text-slate-600 font-medium">{{ __('store.product.size_entered_total') }}</span>
             <span id="{{ $sizeTable->slug }}-size-total" class="font-bold text-primary-700">0</span>
