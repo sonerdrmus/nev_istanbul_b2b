@@ -14,6 +14,7 @@ use App\Models\ProductVariationOption;
 use App\Models\SizeTable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class ProductVariationOptionInterfaceSync
 {
@@ -209,6 +210,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromColorPreset(InterfaceColorVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_color_variation_id')) {
+            return 0;
+        }
+
         return $preset->productVariationOptions()->update([
             'option_value' => static::displayName($preset->name, 'Renk #'.$preset->getKey()),
             'sort_order' => (int) ($preset->sort_order ?? 0),
@@ -219,6 +224,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromFabricPreset(InterfaceFabricTypeVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_fabric_type_variation_id')) {
+            return 0;
+        }
+
         return static::syncLinkedOptions(
             $preset->productVariationOptions(),
             static::displayName($preset->name, 'Kumaş #'.$preset->getKey()),
@@ -229,6 +238,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromLabelPreset(InterfaceLabelTypeVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_label_type_variation_id')) {
+            return 0;
+        }
+
         return static::syncLinkedOptions(
             $preset->productVariationOptions(),
             (string) $preset->name,
@@ -239,6 +252,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromPackagingPreset(InterfacePackagingPreferenceVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_packaging_preference_variation_id')) {
+            return 0;
+        }
+
         return static::syncLinkedOptions(
             $preset->productVariationOptions(),
             (string) $preset->name,
@@ -249,6 +266,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromCertificatePreset(InterfaceCertificateVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_certificate_variation_id')) {
+            return 0;
+        }
+
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
             'info_text' => filled($preset->description) ? (string) $preset->description : null,
@@ -260,6 +281,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromMoldModelPreset(InterfaceMoldModelVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_mold_model_variation_id')) {
+            return 0;
+        }
+
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
             'sort_order' => (int) ($preset->sort_order ?? 0),
@@ -270,6 +295,10 @@ class ProductVariationOptionInterfaceSync
 
     public static function fromDeliveryMethodPreset(InterfaceDeliveryMethodVariation $preset): int
     {
+        if (! static::hasProductVariationOptionColumn('interface_delivery_method_variation_id')) {
+            return 0;
+        }
+
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
             'info_text' => filled($preset->description) ? (string) $preset->description : null,
@@ -315,5 +344,11 @@ class ProductVariationOptionInterfaceSync
         $label = trim((string) ($name ?? ''));
 
         return $label !== '' ? $label : $fallback;
+    }
+
+    private static function hasProductVariationOptionColumn(string $column): bool
+    {
+        return Schema::hasTable('product_variation_options')
+            && Schema::hasColumn('product_variation_options', $column);
     }
 }

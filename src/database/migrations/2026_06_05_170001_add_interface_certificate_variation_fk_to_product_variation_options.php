@@ -13,7 +13,12 @@ return new class extends Migration
             return;
         }
 
-        $foreignKeys = collect(Schema::getConnection()->select(
+        $connection = Schema::getConnection();
+        if (! in_array($connection->getDriverName(), ['mysql', 'mariadb'], true)) {
+            return;
+        }
+
+        $foreignKeys = collect($connection->select(
             'SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
              WHERE TABLE_SCHEMA = DATABASE()
                AND TABLE_NAME = ?

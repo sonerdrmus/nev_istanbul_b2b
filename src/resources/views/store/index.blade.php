@@ -44,9 +44,9 @@
             <div class="max-w-7xl mx-auto w-full py-4 sm:py-6 {{ $slide->text_align === 'center' ? 'text-center' : '' }} {{ $slide->text_align === 'right' ? 'text-right' : '' }}">
                 @if($slide->title)<p class="text-primary-100 text-xs sm:text-sm font-semibold uppercase tracking-widest mb-1 sm:mb-2">{{ $slide->title }}</p>@endif
                 @if(filled($slide->headline))
-                <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight max-w-2xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->headline }}</h2>
+                <h2 class="text-xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight max-w-4xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->headline }}</h2>
                 @endif
-                @if($slide->description)<p class="mt-2 sm:mt-3 text-sm sm:text-base text-white/90 max-w-xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->description }}</p>@endif
+                @if($slide->description)<p class="mt-2 sm:mt-3 text-md sm:text-xl text-white/90 max-w-4xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->description }}</p>@endif
                 @if($slide->button_text && $slide->button_url)
                 <a href="{{ $slide->button_url }}" class="inline-flex items-center gap-2 mt-3 sm:mt-4 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-white text-primary-700 text-sm sm:text-base font-semibold shadow-lg hover:bg-primary-50 transition-all duration-200">
                     {{ $slide->button_text }}

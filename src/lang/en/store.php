@@ -4,7 +4,7 @@ return [
     'meta_suffix' => 'Store',
 
     'topbar' => [
-        'free_shipping' => 'FREE SHIPPING — on qualifying orders above the minimum',
+        'free_shipping' => 'En uygun teslimat şeklini kontrol ediniz​...',
     ],
 
     'header' => [
@@ -229,6 +229,15 @@ return [
         'min_order_line' => 'Minimum order: :count units.',
         'variations_heading' => 'Configure options',
         'variations_subtitle' => 'Choose each step in order.',
+        'order_mode_tabs' => 'Order mode',
+        'order_mode_detailed' => 'Detailed order',
+        'order_mode_quick' => 'Quick order',
+        'quick_order_intro' => 'You can send your order with a short description and an image without choosing variations.',
+        'quick_order_notes_label' => 'Order description',
+        'quick_order_notes_placeholder' => 'Describe your order in at least 250 characters…',
+        'quick_order_image_label' => 'Upload an image',
+        'quick_order_image_help' => 'You can upload a PNG, JPG, or JPEG file.',
+        'quick_order_summary' => 'Quick order details',
         'customization_step_intro' => 'Select at least one print position, or choose the option below if you do not want customization — then tap Continue.',
         'size_step_simple_qty_hint' => 'Enter the quantity using the quantity field on this page, then tap Continue to complete this step.',
         'size_table_pick_table_hint' => 'Choose a size table first, then enter quantities.',
@@ -421,6 +430,8 @@ return [
         'max_stock' => 'Not enough stock. You can add up to :max units.',
         'select_all_options' => 'Please select all options (color, size, etc.) before adding to cart.',
         'select_option_named' => 'Please select the “:name” option.',
+        'quick_order_required' => 'Add a quick order note or image.',
+        'quick_order_min_chars' => 'The quick order description must be at least 250 characters long.',
         'cart_added' => 'Product added to cart.',
         'cart_updated' => 'Cart updated.',
         'cart_removed' => 'Item removed from cart.',

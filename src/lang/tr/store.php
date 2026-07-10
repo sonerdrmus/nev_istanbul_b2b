@@ -4,7 +4,7 @@ return [
     'meta_suffix' => 'E-Ticaret',
 
     'topbar' => [
-        'free_shipping' => 'ÜCRETSİZ KARGO — Belirli tutar üzeri siparişlerde',
+        'free_shipping' => 'En uygun teslimat şeklini kontrol ediniz​...',
     ],
 
     'header' => [
@@ -229,6 +229,15 @@ return [
         'min_order_line' => 'Minimum sipariş: :count adet',
         'variations_heading' => 'Seçenekleri belirleyin',
         'variations_subtitle' => 'Adım adım seçenekleri belirleyin.',
+        'order_mode_tabs' => 'Sipariş modu',
+        'order_mode_detailed' => 'Detaylı Sipariş',
+        'order_mode_quick' => 'Hızlı Sipariş',
+        'quick_order_intro' => 'Varyasyon seçmeden siparişinizi kısa bir açıklama ve görsel ile iletebilirsiniz.',
+        'quick_order_notes_label' => 'Sipariş açıklaması',
+        'quick_order_notes_placeholder' => 'Siparişinizin detaylarını en az 250 karakter olacak şekilde açıklayın…',
+        'quick_order_image_label' => 'Görsel ekleyin',
+        'quick_order_image_help' => 'PNG, JPG veya JPEG dosyası yükleyebilirsiniz.',
+        'quick_order_summary' => 'Hızlı sipariş ekranı',
         'customization_step_intro' => 'Baskı konumu seçin veya özelleştirme istemediğinizi belirtin; ardından Devam et ile ilerleyin.',
         'size_step_simple_qty_hint' => 'Adeti sayfadaki miktar alanından girin; ardından Devam et ile bu adımı tamamlayın.',
         'size_table_pick_table_hint' => 'Önce beden tablosunu seçin, ardından adetleri girin.',
@@ -421,6 +430,8 @@ return [
         'max_stock' => 'Yeterli stok yok. Maksimum :max adet ekleyebilirsiniz.',
         'select_all_options' => 'Bu ürünü sepete eklemek için lütfen tüm seçenekleri belirleyin (renk, beden vb.).',
         'select_option_named' => 'Lütfen ":name" seçeneğini belirleyin.',
+        'quick_order_required' => 'Hızlı sipariş için sipariş metni veya görsel ekleyin.',
+        'quick_order_min_chars' => 'Hızlı sipariş açıklaması en az 250 karakter olmalıdır.',
         'cart_added' => 'Ürün sepete eklendi.',
         'cart_updated' => 'Sepet güncellendi.',
         'cart_removed' => 'Ürün sepetten çıkarıldı.',

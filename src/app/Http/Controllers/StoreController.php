@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class StoreController extends Controller
@@ -139,6 +140,7 @@ class StoreController extends Controller
                 'unit_price_try' => $unitTry,
                 'variation_data' => $item['variation_data'] ?? null,
                 'size_quantities' => $item['size_quantities'] ?? null,
+                'quick_order' => $item['quick_order'] ?? null,
             ]);
         }
 
@@ -373,6 +375,8 @@ class StoreController extends Controller
             'quantity' => 'nullable|integer|min:1',
             'variation_data' => 'nullable|string',
             'size_quantities' => 'nullable|string',
+            'quick_order_notes' => 'nullable|string',
+            'quick_order_image' => 'nullable|image|max:4096',
         ]);
         $product = Product::findOrFail($request->product_id);
         if (! $product->isOnSale()) {
@@ -412,32 +416,56 @@ class StoreController extends Controller
             }
         }
 
-        // Varyasyonu olan ürünlerde tüm (kök) varyasyonların seçilmesi zorunlu
-        $product->load('variations');
-        $rootVariations = $product->variations->filter(fn ($v) => empty($v->depends_on))->pluck('name')->unique()->values();
-        if ($rootVariations->isNotEmpty()) {
-            if (empty($variationData) || ! is_array($variationData)) {
-                return redirect()->back()->with('error', __('store.flash.select_all_options'));
+        $quickOrder = null;
+        $quickNotes = trim((string) $request->input('quick_order_notes', ''));
+        $hasQuickImage = $request->hasFile('quick_order_image');
+        $isQuickOrder = $request->input('order_mode') === 'quick' || $quickNotes !== '' || $hasQuickImage;
+        if ($isQuickOrder) {
+            $imagePath = null;
+            if ($request->hasFile('quick_order_image')) {
+                $image = $request->file('quick_order_image');
+                if ($image && $image->isValid()) {
+                    $imagePath = $image->store('quick-orders', 'public');
+                }
             }
-            foreach ($rootVariations as $variationName) {
-                if (! isset($variationData[$variationName])) {
-                    return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
-                }
-                $val = $variationData[$variationName];
-                if (is_array($val) && array_key_exists('option', $val)) {
-                    if (trim((string) ($val['option'] ?? '')) === '') {
-                        return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
-                    }
+            if ($quickNotes === '' && $imagePath === null) {
+                return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_required'));
+            }
+            $quickOrder = [
+                'notes' => $quickNotes,
+                'image_path' => $imagePath,
+                'image_url' => $imagePath ? Storage::disk('public')->url($imagePath) : null,
+            ];
+        }
 
-                    continue;
+        if (! $isQuickOrder) {
+            // Varyasyonu olan ürünlerde tüm (kök) varyasyonların seçilmesi zorunlu
+            $product->load('variations');
+            $rootVariations = $product->variations->filter(fn ($v) => empty($v->depends_on))->pluck('name')->unique()->values();
+            if ($rootVariations->isNotEmpty()) {
+                if (empty($variationData) || ! is_array($variationData)) {
+                    return redirect()->back()->with('error', __('store.flash.select_all_options'));
                 }
-                if (is_array($val)) {
-                    $nonEmpty = array_values(array_filter($val, fn ($x) => $x !== null && trim((string) $x) !== ''));
-                    if ($nonEmpty === []) {
+                foreach ($rootVariations as $variationName) {
+                    if (! isset($variationData[$variationName])) {
                         return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                     }
-                } elseif ((string) $val === '') {
-                    return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                    $val = $variationData[$variationName];
+                    if (is_array($val) && array_key_exists('option', $val)) {
+                        if (trim((string) ($val['option'] ?? '')) === '') {
+                            return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                        }
+
+                        continue;
+                    }
+                    if (is_array($val)) {
+                        $nonEmpty = array_values(array_filter($val, fn ($x) => $x !== null && trim((string) $x) !== ''));
+                        if ($nonEmpty === []) {
+                            return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                        }
+                    } elseif ((string) $val === '') {
+                        return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
+                    }
                 }
             }
         }
@@ -457,6 +485,12 @@ class StoreController extends Controller
         }
         if ($sizeQuantities !== null) {
             $cart[$key]['size_quantities'] = $sizeQuantities;
+        }
+        if ($quickOrder !== null) {
+            $cart[$key]['quick_order'] = $quickOrder;
+            if (is_array($cart[$key]['variation_data'] ?? null)) {
+                $cart[$key]['variation_data']['quick_order'] = $quickOrder;
+            }
         }
         session(['cart' => $cart]);
 
@@ -596,6 +630,9 @@ class StoreController extends Controller
                 $variationData = $item->variation_data ?? [];
                 if (! empty($item->size_quantities)) {
                     $variationData['size_quantities'] = $item->size_quantities;
+                }
+                if (! empty($item->quick_order)) {
+                    $variationData['quick_order'] = $item->quick_order;
                 }
                 OrderItem::create([
                     'order_id' => $order->id,

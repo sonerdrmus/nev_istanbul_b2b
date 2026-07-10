@@ -354,6 +354,7 @@
             <form action="{{ route('store.cart.add') }}" method="POST" class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-2 sm:p-5 lg:p-2 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <input type="hidden" name="order_mode" id="order-mode-input" value="detailed">
                 @if($hasVariations)
                     <input type="hidden" name="variation_data" id="variation-data-input" value="">
                 @endif
@@ -554,14 +555,23 @@
                     <section class="mt-3 lg:mt-4 w-full" aria-labelledby="variations-heading">
                         <div class="rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 shadow-sm overflow-hidden ring-1 ring-slate-200/30">
                             <div class="px-4 sm:px-5 lg:px-6 py-3.5 lg:py-4 border-b border-slate-200/70 bg-white/95">
+                                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                    <div>
                                 <h2 id="variations-heading" class="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-800 tracking-tight flex items-center gap-2.5">
                                     <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                                     </span>
                                     {{ __('store.product.variations_heading') }}
                                 </h2>
-                                <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">{{ __('store.product.variations_subtitle') }}</p>
+                                        <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">{{ __('store.product.variations_subtitle') }}</p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5" role="tablist" aria-label="{{ __('store.product.order_mode_tabs') }}">
+                                        <button type="button" class="order-mode-tab rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors bg-primary-600 text-white" data-order-mode="detailed" role="tab" aria-selected="true">{{ __('store.product.order_mode_detailed') }}</button>
+                                        <button type="button" class="order-mode-tab rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white" data-order-mode="quick" role="tab" aria-selected="false">{{ __('store.product.order_mode_quick') }}</button>
+                                    </div>
+                                </div>
                             </div>
+                            <div id="order-mode-detailed-panel" class="order-mode-panel">
                             <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5" data-customization-step-index="{{ $customizationPanelStepIndex }}" data-size-step-index="{{ $sizePanelStepIndex }}" data-customization-enabled="{{ $showProductCustomization ? '1' : '0' }}" data-customization-depends-key="{{ \App\Support\ProductVariationFlowSteps::CUSTOMIZATION_DEPENDS_ON }}">
                                 @foreach($flowSteps as $stepIndex => $step)
                                 @if($step['type'] === 'variation')
@@ -591,7 +601,12 @@
                                         </div>
                                         <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
                                             <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $panelStepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $panelStepIndex }}" aria-label="{{ __('store.product.variation_pick_aria', ['name' => $variation->name]) }}">
-                                                <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ $variation->name }}</span>
+                                                <span class="variation-step-name flex flex-wrap items-center gap-2 text-sm sm:text-base font-semibold text-slate-800">
+                                                    <span>{{ $variation->name }}</span>
+                                                    @if($variation->type === 'color' && $variation->options->count() > 0)
+                                                        <span class="variation-step-option-count inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">0 renk</span>
+                                                    @endif
+                                                </span>
                                                 <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                             </button>
                                             <div class="variation-step-summary hidden flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
@@ -772,6 +787,20 @@
                                 </div>
                                 @endif
                                 @endforeach
+                            </div>
+                            </div>
+                            </div>
+                            <div id="order-mode-quick-panel" class="order-mode-panel hidden px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
+                                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <p class="text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_summary') }}</p>
+                                    <p class="mt-2 text-sm text-slate-600">{{ __('store.product.quick_order_intro') }}</p>
+                                    <label for="quick-order-notes" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_notes_label') }}</label>
+                                    <textarea id="quick-order-notes" name="quick_order_notes" rows="6" maxlength="4000" class="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-500/20" placeholder="{{ __('store.product.quick_order_notes_placeholder') }}"></textarea>
+                                    <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_notes_placeholder') }}</p>
+                                    <label for="quick-order-image" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_image_label') }}</label>
+                                    <input id="quick-order-image" name="quick_order_image" type="file" accept="image/png,image/jpeg,image/jpg" class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+                                    <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_image_help') }}</p>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -1034,7 +1063,65 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     var PU = window.storeProductUi || {};
                     var variationInput = document.getElementById('variation-data-input');
+                    var orderModeInput = document.getElementById('order-mode-input');
+                    var orderModeTabs = document.querySelectorAll('.order-mode-tab');
+                    var orderModePanels = document.querySelectorAll('.order-mode-panel');
+                    var quickOrderNotesInput = document.getElementById('quick-order-notes');
+                    var quickOrderImageInput = document.getElementById('quick-order-image');
                     if (!variationInput) return;
+
+                    function getQuickOrderInputState() {
+                        var notes = quickOrderNotesInput ? (quickOrderNotesInput.value || '').trim() : '';
+                        var hasImage = !!(quickOrderImageInput && quickOrderImageInput.files && quickOrderImageInput.files.length);
+                        var hasText = notes.length > 0;
+                        return {
+                            hasContent: hasText || hasImage,
+                            hasText: hasText,
+                            hasImage: hasImage,
+                        };
+                    }
+
+                    function activateOrderMode(mode) {
+                        if (!orderModeInput) return;
+                        var normalizedMode = mode === 'quick' ? 'quick' : 'detailed';
+                        orderModeInput.value = normalizedMode;
+                        orderModeTabs.forEach(function(tab) {
+                            var isActive = (tab.getAttribute('data-order-mode') || '') === normalizedMode;
+                            tab.classList.toggle('bg-primary-600', isActive);
+                            tab.classList.toggle('text-white', isActive);
+                            tab.classList.toggle('hover:bg-white', !isActive);
+                            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                        });
+                        orderModePanels.forEach(function(panel) {
+                            var panelMode = panel.id === 'order-mode-quick-panel' ? 'quick' : 'detailed';
+                            panel.classList.toggle('hidden', panelMode !== normalizedMode);
+                        });
+                        if (typeof updateVariationSummaryAndButton === 'function') {
+                            updateVariationSummaryAndButton();
+                        }
+                    }
+
+                    if (quickOrderNotesInput) {
+                        quickOrderNotesInput.addEventListener('input', function() {
+                            if (typeof updateVariationSummaryAndButton === 'function') {
+                                updateVariationSummaryAndButton();
+                            }
+                        });
+                    }
+                    if (quickOrderImageInput) {
+                        quickOrderImageInput.addEventListener('change', function() {
+                            if (typeof updateVariationSummaryAndButton === 'function') {
+                                updateVariationSummaryAndButton();
+                            }
+                        });
+                    }
+
+                    orderModeTabs.forEach(function(tab) {
+                        tab.addEventListener('click', function() {
+                            activateOrderMode(tab.getAttribute('data-order-mode') || 'detailed');
+                        });
+                    });
+                    activateOrderMode(orderModeInput.value || 'detailed');
 
                     function getVariationStepsMeta() {
                         var wrap = document.getElementById('product-variations');
@@ -2598,6 +2685,18 @@
                      * Tip Renk: Admin gruplaması (interface_color_variations.interface_fabric_type_variation_id).
                      * Kumaş adımı varken: seçim yoksa yalnızca grupsuz renkler; kumaş seçilince yalnızca o gruba bağlı renkler (grupsuz gizlenir).
                      */
+                    function updateColorVariationStepCounts() {
+                        document.querySelectorAll('.variation-step-panel[data-variation-type="color"]').forEach(function(colorBlock) {
+                            var badge = colorBlock.querySelector('.variation-step-option-count');
+                            if (!badge) return;
+                            var visibleCount = 0;
+                            colorBlock.querySelectorAll('.product-option').forEach(function(opt) {
+                                if (opt.style.display !== 'none') visibleCount++;
+                            });
+                            badge.textContent = visibleCount + ' renk';
+                        });
+                    }
+
                     function filterColorOptionsByFabric() {
                         if (!document.querySelector('.product-variation-block[data-variation-type="color"]')) return;
                         var fabricStepExists = !!document.querySelector('.product-variation-block[data-variation-type="fabric"]');
@@ -2636,6 +2735,8 @@
                                 }
                             }
                         });
+
+                        updateColorVariationStepCounts();
                     }
 
                     function allProductVariationBlocksComplete() {
@@ -2883,6 +2984,22 @@
                         }
                         if (confirmCheckbox && ordered.length === 0) {
                             confirmCheckbox.checked = false;
+                        }
+                        var orderMode = (orderModeInput && orderModeInput.value) || 'detailed';
+                        if (orderMode === 'quick') {
+                            var quickState = getQuickOrderInputState();
+                            var canSubmit = quickState.hasContent;
+                            var btnLabel = document.getElementById('add-to-cart-btn-label');
+                            if (warningEl) {
+                                warningEl.classList.add('hidden');
+                            }
+                            if (btn) {
+                                btn.disabled = !canSubmit;
+                                if (btnLabel) {
+                                    btnLabel.textContent = canSubmit ? PU.add_to_cart : PU.add_to_cart_hint;
+                                }
+                            }
+                            return;
                         }
                         var allSelected = allVisibleVariationsSelected();
                         if (!isFinalVariationFlowTriggered() && shouldResetCustomizationUi()) {

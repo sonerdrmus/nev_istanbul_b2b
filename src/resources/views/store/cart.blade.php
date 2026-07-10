@@ -3,7 +3,7 @@
 @section('title', __('store.cart.title'))
 
 @section('content')
-    @php 
+    @php
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
         $totalSymbol = $selectedCurrency?->symbol ?? '₺';
     @endphp
@@ -98,6 +98,13 @@
                                             @if(count($sizeParts) > 0)
                                                 <p class="mt-1 text-xs text-slate-500">{{ __('store.cart.size_breakdown') }} @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</p>
                                             @endif
+                                        @endif
+                                        @if(!empty($item->quick_order['notes'] ?? null))
+                                            <p class="mt-2 text-sm text-slate-600">{{ __('store.product.quick_order_summary') }}:</p>
+                                            <p class="mt-1 text-sm text-slate-700 whitespace-pre-wrap">{{ $item->quick_order['notes'] }}</p>
+                                        @endif
+                                        @if(!empty($item->quick_order['image_url'] ?? null))
+                                            <a href="{{ $item->quick_order['image_url'] }}" target="_blank" rel="noopener" class="mt-2 inline-flex text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.quick_order_image_label') }}</a>
                                         @endif
                                         @php
     $unitTry = (float) ($item->unit_price_try ?? $item->subtotal / max(1, (int) $item->quantity));

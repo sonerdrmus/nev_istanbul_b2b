@@ -3,7 +3,7 @@
 @section('title', __('store.order_confirmation.title'))
 
 @section('content')
-    @php 
+    @php
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
         $totalSymbol = $selectedCurrency?->symbol ?? '₺';
     @endphp
@@ -86,6 +86,12 @@
                                             @endif
                                         @endforeach
                                     </ul>
+                                @endif
+                                @if(!empty($item->variation_data['quick_order']['notes'] ?? null))
+                                    <p class="mt-1.5 text-xs text-slate-600">{{ __('store.product.quick_order_summary') }}: {{ $item->variation_data['quick_order']['notes'] }}</p>
+                                @endif
+                                @if(!empty($item->variation_data['quick_order']['image_url'] ?? null))
+                                    <a href="{{ $item->variation_data['quick_order']['image_url'] }}" target="_blank" rel="noopener" class="mt-1 inline-flex text-xs font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.quick_order_image_label') }}</a>
                                 @endif
                             </li>
                         @endforeach
