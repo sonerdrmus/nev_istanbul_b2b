@@ -2682,8 +2682,8 @@
                     }
 
                     /**
-                     * Tip Renk: Admin gruplaması (Renk Varyasyonları ↔ Kumaş Türü pivot + eski FK).
-                     * Kumaş adımı varken: seçim yoksa yalnızca grupsuz renkler; kumaş seçilince yalnızca o gruba bağlı renkler (grupsuz gizlenir).
+                     * Tip Renk: yalnızca Kumaş Türü Varyasyonları’nda atanan renkler (pivot).
+                     * Kumaş adımı varken: kumaş seçilmeden renk yok; seçilince yalnız o kumaşa bağlı renkler.
                      */
                     function colorOptionFabricGroupIds(opt) {
                         var raw = opt.getAttribute('data-color-fabric-group-ids') || '[]';
@@ -2693,8 +2693,7 @@
                                 return parsed.map(function(id) { return String(id); }).filter(function(id) { return id !== ''; });
                             }
                         } catch (e) {}
-                        var legacy = (opt.getAttribute('data-color-fabric-group-id') || '').trim();
-                        return legacy ? [legacy] : [];
+                        return [];
                     }
 
                     function updateColorVariationStepCounts() {
@@ -2724,15 +2723,10 @@
                                     return;
                                 }
                                 if (preset === null) {
-                                    setProductOptionVisibility(opt, groupIds.length === 0);
+                                    setProductOptionVisibility(opt, false);
                                     return;
                                 }
-                                setProductOptionVisibility(opt, groupIds.length > 0 && groupIds.indexOf(String(preset)) !== -1);
-                            });
-
-                            var visible = [];
-                            colorBlock.querySelectorAll('.product-option').forEach(function(opt) {
-                                if (opt.style.display !== 'none') visible.push(opt);
+                                setProductOptionVisibility(opt, groupIds.indexOf(String(preset)) !== -1);
                             });
 
                             var currentSelected = colorBlock.querySelector('.product-option.option-selected');

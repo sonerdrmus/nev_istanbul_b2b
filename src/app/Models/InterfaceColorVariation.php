@@ -56,26 +56,19 @@ class InterfaceColorVariation extends Model
         )->withTimestamps();
     }
 
-    /** Mağazada kumaş filtresi için tüm grup kimlikleri (pivot + eski tek FK). */
+    /** Mağazada kumaş filtresi: yalnızca Kumaş Türü Varyasyonları → Renkler pivot atamaları. */
     public function resolveFabricTypeVariationIdsForStore(): array
     {
         if (! $this->relationLoaded('fabricTypeVariations')) {
             $this->load('fabricTypeVariations');
         }
 
-        $ids = $this->fabricTypeVariations
+        return $this->fabricTypeVariations
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
             ->all();
-
-        if ($this->interface_fabric_type_variation_id !== null) {
-            $legacyId = (int) $this->interface_fabric_type_variation_id;
-            if (! in_array($legacyId, $ids, true)) {
-                $ids[] = $legacyId;
-            }
-        }
-
-        return array_values(array_unique($ids));
     }
 
     /** Mağaza / arayüzde gösterim sırasıyla aktif kayıtlar. */

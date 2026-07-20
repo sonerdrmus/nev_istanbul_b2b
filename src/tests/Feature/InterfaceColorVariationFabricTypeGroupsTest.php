@@ -74,7 +74,7 @@ class InterfaceColorVariationFabricTypeGroupsTest extends TestCase
         $this->assertTrue($linked->contains('Blue'));
     }
 
-    public function test_color_resolves_fabric_group_ids_from_pivot_and_legacy_fk(): void
+    public function test_color_resolves_fabric_group_ids_from_pivot_only(): void
     {
         $fabricA = InterfaceFabricTypeVariation::withoutEvents(fn () => InterfaceFabricTypeVariation::create(['name' => 'A']));
         $fabricB = InterfaceFabricTypeVariation::withoutEvents(fn () => InterfaceFabricTypeVariation::create(['name' => 'B']));
@@ -88,6 +88,7 @@ class InterfaceColorVariationFabricTypeGroupsTest extends TestCase
 
         $ids = $color->fresh(['fabricTypeVariations'])->resolveFabricTypeVariationIdsForStore();
 
-        $this->assertEqualsCanonicalizing([$fabricA->id, $fabricB->id], $ids);
+        $this->assertEqualsCanonicalizing([$fabricB->id], $ids);
+        $this->assertNotContains($fabricA->id, $ids);
     }
 }

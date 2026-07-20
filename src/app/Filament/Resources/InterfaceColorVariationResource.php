@@ -9,7 +9,6 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -39,18 +38,8 @@ class InterfaceColorVariationResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Renk varyasyonu')
+                    ->description('Kumaş bağlantısı Kumaş Türü Varyasyonları sayfasından yapılır.')
                     ->schema([
-                        Forms\Components\Select::make('interface_fabric_type_variation_id')
-                            ->label('Kumaş türü grubu')
-                            ->relationship(
-                                name: 'fabricTypeVariation',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('sort_order')->orderBy('id'),
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->nullable()
-                            ->helperText('Grup adı Kumaş Türü Varyasyonları listesinden seçilir; renk bu kumaş türüne bağlanır. Liste grupları bu ada göre oluşturulur; boş bırakılırsa “Grup atanmamış” altında görünür.'),
                         Forms\Components\TextInput::make('name')
                             ->label('Renk adı (opsiyonel)')
                             ->maxLength(255),
@@ -87,18 +76,13 @@ class InterfaceColorVariationResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('fabricTypeVariation');
+        return parent::getEloquentQuery()->with('fabricTypeVariations');
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('fabricTypeVariation.name')
-                    ->label('Kumaş türü grubu')
-                    ->placeholder('—')
-                    ->sortable()
-                    ->toggleable(),
                 Tables\Columns\ImageColumn::make('image_path')
                     ->label('Görsel')
                     ->disk('public')
@@ -110,6 +94,11 @@ class InterfaceColorVariationResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Ad'),
+                Tables\Columns\TextColumn::make('fabricTypeVariations.name')
+                    ->label('Bağlı kumaşlar')
+                    ->badge()
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')
                     ->sortable(),
@@ -124,27 +113,13 @@ class InterfaceColorVariationResource extends Resource
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
-            ->groups([
-                Group::make('interface_fabric_type_variation_id')
-                    ->label('Kumaş türü grubu')
-                    ->getTitleFromRecordUsing(function (InterfaceColorVariation $record): string {
-                        $ft = $record->fabricTypeVariation;
-                        if ($ft === null) {
-                            return 'Grup atanmamış';
-                        }
-                        $name = trim((string) ($ft->name ?? ''));
-
-                        return $name !== '' ? $name : ('#'.$ft->getKey());
-                    })
-                    ->collapsible(),
-            ])
-            ->defaultGroup('interface_fabric_type_variation_id')
             ->filters([
-                Tables\Filters\SelectFilter::make('interface_fabric_type_variation_id')
-                    ->label('Kumaş türü grubu')
-                    ->relationship('fabricTypeVariation', 'name')
+                Tables\Filters\SelectFilter::make('fabricTypeVariations')
+                    ->label('Bağlı kumaş')
+                    ->relationship('fabricTypeVariations', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->multiple(),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Yayında'),
             ])

@@ -19,14 +19,6 @@ class EditInterfaceColorVariation extends EditRecord
         return InterfaceColorVariationResource::finalizeFormData($data);
     }
 
-    protected function afterSave(): void
-    {
-        $fabricId = $this->record->interface_fabric_type_variation_id;
-        if ($fabricId !== null) {
-            $this->record->fabricTypeVariations()->syncWithoutDetaching([(int) $fabricId]);
-        }
-    }
-
     protected function getHeaderActions(): array
     {
         return [
