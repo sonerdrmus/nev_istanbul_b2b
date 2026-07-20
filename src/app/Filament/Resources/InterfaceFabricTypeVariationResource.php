@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InterfaceFabricTypeVariationResource\Pages;
+use App\Models\InterfaceColorVariation;
 use App\Models\InterfaceFabricTypeVariation;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Ana menü bağlantısı {@see \App\Providers\Filament\AdminPanelProvider} içinde özelleştirilir.
@@ -57,6 +59,30 @@ class InterfaceFabricTypeVariationResource extends Resource
                                     ->helperText('Opsiyonel. Mağazada kumaş adının yanında info ikonu ve «detaylı bilgi» ile modalda açılır.'),
                             ])
                             ->columns(1),
+                        Forms\Components\TextInput::make('price_multiplier')
+                            ->label('Fiyat çarpanı (×)')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->required()
+                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde mağazada birim fiyat × 1,50 olur.'),
+                        Forms\Components\Select::make('colorVariations')
+                            ->label('Renkler')
+                            ->relationship(
+                                name: 'colorVariations',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn (Builder $query) => $query->orderBy('sort_order')->orderBy('id'),
+                            )
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->getOptionLabelFromRecordUsing(function (InterfaceColorVariation $record): string {
+                                $name = trim((string) ($record->name ?? ''));
+
+                                return $name !== '' ? $name : ('Renk #'.$record->getKey());
+                            })
+                            ->helperText('Renk Varyasyonları sayfasındaki kayıtlardan seçin. Mağazada bu kumaş seçildiğinde yalnızca seçili renkler listelenir.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -70,6 +96,11 @@ class InterfaceFabricTypeVariationResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount('colorVariations');
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -81,6 +112,14 @@ class InterfaceFabricTypeVariationResource extends Resource
                     ->height(50),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Ad'),
+                Tables\Columns\TextColumn::make('colorVariations_count')
+                    ->label('Renk')
+                    ->counts('colorVariations')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('price_multiplier')
+                    ->label('Fiyat çarpanı')
+                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('detail_text')
                     ->label('Detay')
                     ->boolean()

@@ -2682,9 +2682,21 @@
                     }
 
                     /**
-                     * Tip Renk: Admin gruplaması (interface_color_variations.interface_fabric_type_variation_id).
+                     * Tip Renk: Admin gruplaması (Renk Varyasyonları ↔ Kumaş Türü pivot + eski FK).
                      * Kumaş adımı varken: seçim yoksa yalnızca grupsuz renkler; kumaş seçilince yalnızca o gruba bağlı renkler (grupsuz gizlenir).
                      */
+                    function colorOptionFabricGroupIds(opt) {
+                        var raw = opt.getAttribute('data-color-fabric-group-ids') || '[]';
+                        try {
+                            var parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed)) {
+                                return parsed.map(function(id) { return String(id); }).filter(function(id) { return id !== ''; });
+                            }
+                        } catch (e) {}
+                        var legacy = (opt.getAttribute('data-color-fabric-group-id') || '').trim();
+                        return legacy ? [legacy] : [];
+                    }
+
                     function updateColorVariationStepCounts() {
                         document.querySelectorAll('.variation-step-panel[data-variation-type="color"]').forEach(function(colorBlock) {
                             var badge = colorBlock.querySelector('.variation-step-option-count');
@@ -2706,16 +2718,16 @@
                             if (colorBlock.style.display === 'none') return;
                             var options = colorBlock.querySelectorAll('.product-option');
                             options.forEach(function(opt) {
-                                var gid = (opt.getAttribute('data-color-fabric-group-id') || '').trim();
+                                var groupIds = colorOptionFabricGroupIds(opt);
                                 if (!fabricStepExists) {
                                     setProductOptionVisibility(opt, true);
                                     return;
                                 }
                                 if (preset === null) {
-                                    setProductOptionVisibility(opt, gid === '');
+                                    setProductOptionVisibility(opt, groupIds.length === 0);
                                     return;
                                 }
-                                setProductOptionVisibility(opt, gid !== '' && gid === String(preset));
+                                setProductOptionVisibility(opt, groupIds.length > 0 && groupIds.indexOf(String(preset)) !== -1);
                             });
 
                             var visible = [];

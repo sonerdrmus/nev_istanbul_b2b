@@ -291,6 +291,7 @@ class StoreController extends Controller
             'productImages',
             'variations.options' => fn ($q) => $q->with([
                 'interfaceColorVariation.fabricTypeVariation',
+                'interfaceColorVariation.fabricTypeVariations',
                 'interfaceFabricTypeVariation',
                 'interfaceLabelTypeVariation',
                 'interfacePackagingPreferenceVariation',

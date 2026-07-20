@@ -494,7 +494,7 @@ class ProductResource extends Resource
                                                         }
                                                     })
                                                     ->helperText(fn (Get $get): ?string => match ($get('type')) {
-                                                        'fabric' => 'Seçenekler, Kumaş türü varyasyonları kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
+                                                        'fabric' => 'Seçenekler, Kumaş türü varyasyonları kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                                                         'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
                                                         'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                                                         'mold_model_type' => 'Seçenekler, Kalıp Modeli Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
@@ -689,11 +689,12 @@ class ProductResource extends Resource
                                                                 }
                                                                 $label = trim((string) ($preset->name ?? ''));
                                                                 $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
+                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
                                                                 if (is_string($preset->image_path) && $preset->image_path !== '') {
                                                                     $set('option_image', [$preset->image_path]);
                                                                 }
                                                             })
-                                                            ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; özel yüklemede preset sıfırlanır.')
+                                                            ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; ad, fiyat çarpanı ve görsel otomatik doldurulur.')
                                                             ->columnSpanFull(),
                                                         Forms\Components\Select::make('interface_label_type_variation_id')
                                                             ->label('Kayıtlı etiket türü')
@@ -1339,7 +1340,7 @@ class ProductResource extends Resource
                     'interface_color_variation_id' => null,
                     'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
                     'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
-                    'price_delta' => 0,
+                    'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
                     'stock_quantity' => null,
                     'parent_option_id' => null,
                     'parent_option_ids' => null,
@@ -1644,6 +1645,7 @@ class ProductResource extends Resource
                                 $n = trim((string) ($preset->name ?? ''));
                                 $opt['option_value'] = $n !== '' ? $n : ('#'.$preset->id);
                             }
+                            $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier);
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
                             }
@@ -2093,8 +2095,7 @@ class ProductResource extends Resource
             ->limit(50)
             ->get()
             ->mapWithKeys(function (InterfaceFabricTypeVariation $preset): array {
-                $suffix = '#'.$preset->id;
-                $label = $preset->name ? $preset->name.' · '.$suffix : $suffix;
+                $label = static::formatInterfaceFabricLabel($preset);
                 static::$interfaceFabricLabelCache[(int) $preset->getKey()] = $label;
 
                 return [$preset->getKey() => $label];
@@ -2113,7 +2114,16 @@ class ProductResource extends Resource
         }
         $preset = InterfaceFabricTypeVariation::query()->find($id);
 
-        return $preset ? ($preset->name ? $preset->name.' · #'.$preset->id : '#'.$preset->id) : null;
+        return $preset ? static::formatInterfaceFabricLabel($preset) : null;
+    }
+
+    protected static function formatInterfaceFabricLabel(InterfaceFabricTypeVariation $preset): string
+    {
+        $name = trim((string) ($preset->name ?? ''));
+
+        return ($name !== '' ? $name : 'Kumaş #'.$preset->id)
+            .' · ×'.number_format((float) ($preset->price_multiplier ?? 1), 2, ',', '.')
+            .' · #'.$preset->id;
     }
 
     /** @return array<int, string> */

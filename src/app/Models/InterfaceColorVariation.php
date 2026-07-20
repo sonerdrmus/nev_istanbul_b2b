@@ -45,6 +45,39 @@ class InterfaceColorVariation extends Model
         return $this->belongsTo(InterfaceFabricTypeVariation::class, 'interface_fabric_type_variation_id');
     }
 
+    /** Kumaş türü grupları (çoklu; pivot). */
+    public function fabricTypeVariations()
+    {
+        return $this->belongsToMany(
+            InterfaceFabricTypeVariation::class,
+            'interface_color_variation_interface_fabric_type_variation',
+            'interface_color_variation_id',
+            'interface_fabric_type_variation_id',
+        )->withTimestamps();
+    }
+
+    /** Mağazada kumaş filtresi için tüm grup kimlikleri (pivot + eski tek FK). */
+    public function resolveFabricTypeVariationIdsForStore(): array
+    {
+        if (! $this->relationLoaded('fabricTypeVariations')) {
+            $this->load('fabricTypeVariations');
+        }
+
+        $ids = $this->fabricTypeVariations
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($this->interface_fabric_type_variation_id !== null) {
+            $legacyId = (int) $this->interface_fabric_type_variation_id;
+            if (! in_array($legacyId, $ids, true)) {
+                $ids[] = $legacyId;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
     /** Mağaza / arayüzde gösterim sırasıyla aktif kayıtlar. */
     public static function forDisplay(): Collection
     {

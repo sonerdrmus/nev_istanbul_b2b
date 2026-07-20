@@ -22,6 +22,11 @@ class CreateInterfaceColorVariation extends CreateRecord
 
     protected function afterCreate(): void
     {
+        $fabricId = $this->record->interface_fabric_type_variation_id;
+        if ($fabricId !== null) {
+            $this->record->fabricTypeVariations()->syncWithoutDetaching([(int) $fabricId]);
+        }
+
         $variationCount = ProductResource::appendColorVariationOptionFromInterfacePreset($this->record);
 
         if ($variationCount === 0) {

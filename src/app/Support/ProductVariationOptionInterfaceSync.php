@@ -228,12 +228,12 @@ class ProductVariationOptionInterfaceSync
             return 0;
         }
 
-        return static::syncLinkedOptions(
-            $preset->productVariationOptions(),
-            static::displayName($preset->name, 'Kumaş #'.$preset->getKey()),
-            $preset->image_path,
-            (int) ($preset->sort_order ?? 0),
-        );
+        return $preset->productVariationOptions()->update([
+            'option_value' => static::displayName($preset->name, 'Kumaş #'.$preset->getKey()),
+            'sort_order' => (int) ($preset->sort_order ?? 0),
+            'option_image' => filled($preset->image_path) ? $preset->image_path : null,
+            'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+        ]);
     }
 
     public static function fromLabelPreset(InterfaceLabelTypeVariation $preset): int
