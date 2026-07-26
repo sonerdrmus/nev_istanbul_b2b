@@ -18,6 +18,7 @@ use App\Support\DeliveryMethodCatalog;
 use App\Support\DimensionMultiplierCatalog;
 use App\Support\PackagingPreferenceCatalog;
 use App\Support\ProductCustomizationCatalog;
+use App\Support\ProductCustomizationPrintTotal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -129,12 +130,17 @@ class StoreController extends Controller
                 $pricingWeight = (float) array_sum(array_map('intval', $sizeQuantities));
             }
 
+            $printTry = is_array($variationData)
+                ? ProductCustomizationPrintTotal::tryFromVariationData($variationData)
+                : 0.0;
+
             $items->push((object) [
                 'product' => $product,
                 'quantity' => $qty,
-                'subtotal' => $unitTry * $pricingWeight,
+                'subtotal' => ($unitTry * $pricingWeight) + $printTry,
                 'cart_key' => $key,
                 'unit_price_try' => $unitTry,
+                'print_total_try' => $printTry,
                 'variation_data' => $item['variation_data'] ?? null,
                 'size_quantities' => $item['size_quantities'] ?? null,
                 'quick_order' => $item['quick_order'] ?? null,

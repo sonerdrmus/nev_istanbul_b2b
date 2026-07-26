@@ -996,6 +996,7 @@
                 'summary_qty_for_tier' => __('store.product.summary_qty_for_tier'),
                 'summary_variation_mult_total' => __('store.product.summary_variation_mult_total'),
                 'summary_packaging_extra' => __('store.product.summary_packaging_extra'),
+                'summary_print_total' => __('store.product.summary_print_total'),
                 'summary_price_calc' => __('store.product.summary_price_calc'),
                 'summary_price_formula' => __('store.product.summary_price_formula'),
                 'summary_price_formula_with_pack' => __('store.product.summary_price_formula_with_pack'),
@@ -2188,10 +2189,44 @@
                             if (payload) rows.push(payload);
                         });
                         var enrichedRows = enrichCustomizationRowsWithTotals(rows);
+                        var printTotalTry = 0;
+                        var hasPrintTotal = false;
+                        enrichedRows.forEach(function(r) {
+                            if (r.total_price_try != null && isFinite(r.total_price_try)) {
+                                printTotalTry += r.total_price_try;
+                                hasPrintTotal = true;
+                            }
+                        });
                         return enrichedRows.length ? {
                             rows: enrichedRows,
-                            order_quantity: getOrderQuantityForMultipliers()
+                            order_quantity: getOrderQuantityForMultipliers(),
+                            print_total_try: hasPrintTotal ? printTotalTry : null
                         } : null;
+                    }
+
+                    function getCustomizationPrintTotalTry() {
+                        if (typeof isCustomizationSkipSelected === 'function' && isCustomizationSkipSelected()) {
+                            return 0;
+                        }
+                        if (!document.querySelector('[data-customization-panel="1"]')) {
+                            return 0;
+                        }
+                        var p = getCustomizationTablePayload();
+                        if (!p || !p.rows || !p.rows.length) {
+                            return 0;
+                        }
+                        if (p.print_total_try != null && isFinite(p.print_total_try)) {
+                            return Math.max(0, p.print_total_try);
+                        }
+                        var sum = 0;
+                        var hasAny = false;
+                        p.rows.forEach(function(r) {
+                            if (r.total_price_try != null && isFinite(r.total_price_try)) {
+                                sum += r.total_price_try;
+                                hasAny = true;
+                            }
+                        });
+                        return hasAny ? Math.max(0, sum) : 0;
                     }
 
                     function isCustomizationSkipSelected() {
@@ -2427,11 +2462,14 @@
                         var unitBase = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
                         var varMult = getCombinedVariationMultiplier();
                         var packExtra = typeof getPackagingAdditiveExtraTry === 'function' ? getPackagingAdditiveExtraTry() : 0;
+                        var printTry = typeof getCustomizationPrintTotalTry === 'function' ? getCustomizationPrintTotalTry() : 0;
                         var unitWithVar = unitBase * varMult + packExtra;
-                        var lineTry = unitWithVar * pricingWeight;
+                        var garmentLineTry = unitWithVar * pricingWeight;
+                        var lineTry = garmentLineTry + printTry;
                         var baseDisp = code === 'TRY' ? fallbackBaseTry : fallbackBaseTry * rate;
                         var unitDisp = code === 'TRY' ? unitBase : unitBase * rate;
                         var lineDisp = code === 'TRY' ? lineTry : lineTry * rate;
+                        var garmentDisp = code === 'TRY' ? garmentLineTry : garmentLineTry * rate;
 
                         rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_product_base_price || 'Ürün fiyatı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(baseDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
                         rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_qty_multiplier || 'Sipariş miktarı çarpanı') + '</td><td class="' + summaryValueCell + '">' + escapeHtml(formatVariationMultiplier(qtyMult)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(qty > 0 ? ((PU.summary_qty_for_tier || 'Adet') + ': ' + qty) : '—') + '</td></tr>');
@@ -2448,7 +2486,7 @@
                             .replace(':qtymult', formatPlainNumber(qtyMult, 4))
                             .replace(':varmult', formatPlainNumber(varMult, 4))
                             .replace(':weight', formatPlainNumber(pricingWeight, 4))
-                            .replace(':total', formatPrice(lineDisp));
+                            .replace(':total', formatPrice(garmentDisp));
                         if (packExtra > 0) {
                             formulaTpl = PU.summary_price_formula_with_pack || '(:base × :qtymult × :varmult + :pack) × :weight = :total';
                             var packDisp2 = code === 'TRY' ? packExtra : packExtra * rate;
@@ -2459,9 +2497,13 @@
                                 .replace(':varmult', formatPlainNumber(varMult, 4))
                                 .replace(':pack', formatPrice(packDisp2))
                                 .replace(':weight', formatPlainNumber(pricingWeight, 4))
-                                .replace(':total', formatPrice(lineDisp));
+                                .replace(':total', formatPrice(garmentDisp));
                         }
                         rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_price_calc || 'Fiyat hesabı') + '</td><td colspan="2" class="' + summaryValueCell + ' text-xs sm:text-sm text-slate-600 tabular-nums">' + escapeHtml(formula) + '</td></tr>');
+                        if (printTry > 0) {
+                            var printDisp = code === 'TRY' ? printTry : printTry * rate;
+                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        }
                         rows.push('<tr class="bg-emerald-50/80"><td class="px-3 py-3 text-sm font-bold text-emerald-900 sm:px-4">' + escapeHtml(PU.summary_line_total || 'Satır toplamı') + '</td><td class="px-3 py-3 text-sm font-bold text-emerald-900 tabular-nums sm:px-4">' + escapeHtml(formatPrice(lineDisp)) + '</td><td class="px-3 py-3 text-sm text-emerald-700/70 text-right sm:px-4">—</td></tr>');
                     }
 
@@ -2624,7 +2666,8 @@
                         var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
                             ? Math.max(0, sizeInfo.pricingWeight)
                             : qty;
-                        var lineTry = unitTry * pricingWeight;
+                        var printTry = typeof getCustomizationPrintTotalTry === 'function' ? getCustomizationPrintTotalTry() : 0;
+                        var lineTry = (unitTry * pricingWeight) + printTry;
                         var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
                         var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
                         priceEl.textContent = formatPrice(lineConverted);
@@ -2637,7 +2680,7 @@
                             var normalAttr = priceEl.getAttribute('data-normal-try');
                             var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
                             if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
-                                var oldLineTry = normalTry * mult * pricingWeight;
+                                var oldLineTry = (normalTry * mult * pricingWeight) + printTry;
                                 var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
                                 strikeEl.textContent = formatPrice(oldConverted);
                                 strikeEl.classList.remove('hidden');

@@ -423,6 +423,7 @@ return [
         'summary_qty_for_tier' => 'Adet',
         'summary_variation_mult_total' => 'Varyasyon çarpanları',
         'summary_packaging_extra' => 'Ambalaj ek ücreti',
+        'summary_print_total' => 'Baskı toplamı',
         'summary_price_calc' => 'Fiyat hesabı',
         'summary_price_formula' => ':base × :qtymult × :varmult × :weight = :total',
         'summary_price_formula_with_pack' => '(:base × :qtymult × :varmult + :pack) × :weight = :total',

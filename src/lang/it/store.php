@@ -412,6 +412,7 @@ return [
         'summary_qty_for_tier' => 'Qtà',
         'summary_variation_mult_total' => 'Moltiplicatori variante',
         'summary_packaging_extra' => 'Extra imballaggio',
+        'summary_print_total' => 'Totale stampa',
         'summary_price_calc' => 'Calcolo prezzo',
         'summary_price_formula' => ':base × :qtymult × :varmult × :weight = :total',
         'summary_price_formula_with_pack' => '(:base × :qtymult × :varmult + :pack) × :weight = :total',

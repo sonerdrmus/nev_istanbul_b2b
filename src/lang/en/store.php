@@ -423,6 +423,7 @@ return [
         'summary_qty_for_tier' => 'Qty',
         'summary_variation_mult_total' => 'Variation multipliers',
         'summary_packaging_extra' => 'Packaging surcharge',
+        'summary_print_total' => 'Print total',
         'summary_price_calc' => 'Price calculation',
         'summary_price_formula' => ':base × :qtymult × :varmult × :weight = :total',
         'summary_price_formula_with_pack' => '(:base × :qtymult × :varmult + :pack) × :weight = :total',
