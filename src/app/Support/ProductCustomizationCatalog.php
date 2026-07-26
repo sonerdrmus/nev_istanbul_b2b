@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Product;
 use App\Models\ProductCustomizationPrintTechnique;
 use App\Models\ProductCustomizationRow;
 use App\Models\ProductCustomizationSetting;
@@ -18,10 +19,10 @@ final class ProductCustomizationCatalog
      *     max_color_count: int,
      *     default_print_slug: string,
      *     print_techniques: array<string, string>,
-     *     rows: Collection<int, ProductCustomizationRow>
+     *     rows: Collection<int, ProductCustomizationRow|object>
      * }
      */
-    public static function forStore(): array
+    public static function forStore(?Product $product = null): array
     {
         if (! Schema::hasTable('product_customization_settings')) {
             return self::fallbackFromTranslations();
@@ -29,9 +30,30 @@ final class ProductCustomizationCatalog
 
         $settings = ProductCustomizationSetting::instance();
         $techniques = ProductCustomizationPrintTechnique::activeOrdered();
-        $rows = ProductCustomizationRow::activeOrdered();
+        $productId = $product?->getKey() !== null ? (int) $product->getKey() : null;
+
+        // Ürün formu / pivot ataması tek kaynak: yalnızca bu ürüne bağlı aktif konumlar.
+        if ($productId !== null && ProductCustomizationRow::productPivotTableExists()) {
+            $rows = $product->relationLoaded('customizationRows')
+                ? $product->customizationRows
+                    ->where('is_active', true)
+                    ->sortBy([['sort_order', 'asc'], ['id', 'asc']])
+                    ->values()
+                : $product->customizationRows()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('id')
+                    ->get();
+        } else {
+            $rows = ProductCustomizationRow::activeOrdered($productId);
+        }
 
         if ($techniques->isEmpty() || $rows->isEmpty()) {
+            // Ürüne özel satır yoksa boş tablo; teknikler varsa yine de boş rows dön (fallback çeviri satırları gösterme).
+            if ($productId !== null && ProductCustomizationRow::productPivotTableExists()) {
+                return self::emptyCatalog($settings, $techniques);
+            }
+
             return self::fallbackFromTranslations();
         }
 
@@ -52,6 +74,37 @@ final class ProductCustomizationCatalog
             'default_print_slug' => $defaultSlug,
             'print_techniques' => $printMap,
             'rows' => $rows,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, ProductCustomizationPrintTechnique>  $techniques
+     * @return array{
+     *     max_color_count: int,
+     *     default_print_slug: string,
+     *     print_techniques: array<string, string>,
+     *     rows: Collection<int, ProductCustomizationRow>
+     * }
+     */
+    private static function emptyCatalog(ProductCustomizationSetting $settings, Collection $techniques): array
+    {
+        $printMap = [];
+        foreach ($techniques as $technique) {
+            $printMap[$technique->slug] = $technique->name;
+        }
+
+        $defaultSlug = (string) ($settings->default_print_technique_slug ?? '');
+        if (($defaultSlug === '' || ! isset($printMap[$defaultSlug])) && $techniques->isNotEmpty()) {
+            $defaultSlug = (string) $techniques->first()->slug;
+        }
+
+        return [
+            'max_color_count' => max(1, min(20, (int) ($settings->max_color_count ?? 7))),
+            'default_print_slug' => $defaultSlug !== '' ? $defaultSlug : 'emprime',
+            'print_techniques' => $printMap !== [] ? $printMap : [
+                'emprime' => __('store.product.customization_print_emprime'),
+            ],
+            'rows' => collect(),
         ];
     }
 

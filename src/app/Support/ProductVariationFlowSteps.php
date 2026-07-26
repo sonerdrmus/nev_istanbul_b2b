@@ -92,6 +92,7 @@ final class ProductVariationFlowSteps
 
     /**
      * @param  Collection<int, \App\Models\ProductVariation>  $orderedVariations  Bağımlılık sırasına göre dizilmiş varyasyonlar
+     * @param  bool  $hasCustomizationContent  Bu ürüne atanmış konum satırı var mı?
      * @return array{
      *     steps: list<array{type: string, variation?: \App\Models\ProductVariation}>,
      *     customization_step_index: int,
@@ -99,7 +100,7 @@ final class ProductVariationFlowSteps
      *     show_customization: bool,
      * }
      */
-    public static function build(Product $product, Collection $orderedVariations): array
+    public static function build(Product $product, Collection $orderedVariations, bool $hasCustomizationContent = true): array
     {
         $afterCustomizationNames = [];
         foreach ($orderedVariations as $variation) {
@@ -140,7 +141,7 @@ final class ProductVariationFlowSteps
             ->values()
             ->all();
 
-        $showCustomization = (bool) ($product->customization_enabled ?? true);
+        $showCustomization = (bool) ($product->customization_enabled ?? true) && $hasCustomizationContent;
         $customizationStepIndex = -1;
 
         if ($showCustomization) {

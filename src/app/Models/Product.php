@@ -159,6 +159,110 @@ class Product extends Model
         return $this->hasMany(ProductDiscount::class)->orderBy('priority')->orderBy('quantity');
     }
 
+    public function priceTiers()
+    {
+        return $this->hasMany(ProductPriceTier::class)->orderBy('sort_order')->orderBy('min_quantity');
+    }
+
+    /** Bu ürüne atanmış kumaş türü varyasyonları (çoklu; pivot). */
+    public function fabricTypeVariations()
+    {
+        return $this->belongsToMany(
+            InterfaceFabricTypeVariation::class,
+            'interface_fabric_type_variation_product',
+            'product_id',
+            'interface_fabric_type_variation_id',
+        )->withTimestamps();
+    }
+
+    /** Bu ürüne atanmış ürün özelleştirme konum satırları. */
+    public function customizationRows()
+    {
+        return $this->belongsToMany(
+            ProductCustomizationRow::class,
+            'product_customization_row_product',
+            'product_id',
+            'product_customization_row_id',
+        )->withTimestamps();
+    }
+
+    public function sizeDimensionMultipliers()
+    {
+        return $this->hasMany(SizeDimensionMultiplier::class);
+    }
+
+    public function colorDimensionMultipliers()
+    {
+        return $this->hasMany(ColorDimensionMultiplier::class);
+    }
+
+    public function quantityDimensionMultipliers()
+    {
+        return $this->hasMany(QuantityDimensionMultiplier::class);
+    }
+
+    /**
+     * Bu üründe GİZLENECEK kumaş preset id'leri: bir ürüne atanmış (pivotu olan) ama bu ürüne
+     * atanmamış kumaşlar. Hiç ürüne atanmamış kumaşlar "global" sayılır ve gizlenmez.
+     *
+     * @return array<int, int>
+     */
+    public function hiddenFabricTypeVariationIds(): array
+    {
+        return InterfaceFabricTypeVariation::hiddenIdsForProduct((int) $this->getKey());
+    }
+
+    /**
+     * Sipariş miktarına göre fiyat çarpanı (eşleşme yoksa 1).
+     */
+    public function resolveQuantityPriceMultiplier(int $quantity): float
+    {
+        $quantity = max(0, $quantity);
+        $this->loadMissing('priceTiers');
+
+        foreach ($this->priceTiers as $tier) {
+            if ($tier->matchesQuantity($quantity)) {
+                return $tier->normalizedMultiplier();
+            }
+        }
+
+        return 1.0;
+    }
+
+    /**
+     * Liste birim fiyatı (TL) = ürün fiyatı × miktar çarpanı.
+     */
+    public function resolveListUnitPriceInTRY(int $quantity): float
+    {
+        $productCurrency = $this->currency ?? Currency::getDefault();
+        $baseTry = $productCurrency && $productCurrency->code !== 'TRY'
+            ? $productCurrency->convertToTRY((float) $this->price)
+            : (float) $this->price;
+
+        return $baseTry * $this->resolveQuantityPriceMultiplier($quantity);
+    }
+
+    /**
+     * Mağaza JS için miktar çarpanı kademeleri.
+     *
+     * @return list<array{min: int, max: int|null, multiplier: float}>
+     */
+    public function priceTiersForStore(?float $discountPercent = null): array
+    {
+        $this->loadMissing('priceTiers');
+
+        return $this->priceTiers
+            ->map(function (ProductPriceTier $tier): array {
+                return [
+                    'min' => (int) $tier->min_quantity,
+                    'max' => $tier->max_quantity !== null ? (int) $tier->max_quantity : null,
+                    'multiplier' => $tier->normalizedMultiplier(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     /**
      * Miktar ve müşteri grubuna göre geçerli indirimli birim fiyatı TL cinsinden döndürür.
      * Tarih aralığına uyan, quantity >= rule.quantity olan kurallar içinden önceliğe ve miktara göre en uygun kural seçilir.

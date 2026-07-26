@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Support\ProductDimensionMultiplierSync;
+use App\Support\ProductVariationOptionInterfaceSync;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -21,14 +23,23 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $this->record->loadMissing([
+        // Kumaş seçenekleri her açılışta güncel: yeni kumaşlar eklenir, başka ürüne özel olanlar düşer.
+        ProductVariationOptionInterfaceSync::reconcileFabricProductOptions((int) $this->record->getKey());
+
+        // Mutabakat sonrası taze veri gerektiği için loadMissing değil load kullanılır.
+        $this->record->load([
             'variations' => fn ($query) => $query->orderBy('sort_order'),
             'variations.options' => fn ($query) => $query->orderBy('sort_order'),
+            'customizationRows',
         ]);
 
         $data['_product_id'] = $this->record->getKey();
+        $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadGroupedForForm(
+            (int) $this->record->getKey(),
+            fallbackToTemplate: true,
+        );
 
-        $data = ProductResource::ensureInterfacePresetOptionsInProductFormData($data);
+        $data = ProductResource::ensureInterfacePresetOptionsInProductFormData($data, (int) $this->record->getKey());
 
         return $data;
     }
@@ -56,13 +67,24 @@ class EditProduct extends EditRecord
         }
         unset($data['home_showcase_image_upload']);
 
-        $data = ProductResource::finalizeVariationOptionsInProductFormData($data);
+        // Ürün tablosunda kolon değil; afterSave'de persist edilir.
+        unset($data['dimension_multipliers']);
+
+        $data = ProductResource::finalizeVariationOptionsInProductFormData($data, (int) $this->record->getKey());
 
         return $data;
     }
 
     protected function afterSave(): void
     {
-        ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
+        $state = $this->form->getState();
+        ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $state);
+
+        if (isset($state['dimension_multipliers']) && is_array($state['dimension_multipliers'])) {
+            ProductDimensionMultiplierSync::persistGrouped(
+                (int) $this->record->getKey(),
+                $state['dimension_multipliers'],
+            );
+        }
     }
 }

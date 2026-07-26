@@ -40,6 +40,7 @@
         $baseTry = null;
         $baseConverted = null;
         $hasProductDiscount = false;
+        $priceTiersForStore = [];
         if ($canSeePrices && $selectedCurrency) {
             $normalPriceTry = $product->getPriceInTRY($customerDiscountPercent ?? null);
             $discountUnitTry = $product->getDiscountUnitPriceInTRY(1, $customerGroupId ?? 1);
@@ -51,6 +52,7 @@
                 $baseTry = $normalPriceTry;
             }
             $baseConverted = $selectedCurrency->convertFromTRY($baseTry);
+            $priceTiersForStore = $product->priceTiersForStore($customerDiscountPercent ?? null);
         }
     @endphp
 
@@ -281,7 +283,7 @@
                         </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
-                            <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                            <span id="product-price" data-base-try="{{ $baseTry }}" data-price-tiers='@json($priceTiersForStore)' @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
                                 {{ $selectedCurrency->format($selectedCurrency->convertFromTRY(0)) }}
                             </span>
                             @if($hasProductDiscount)
@@ -373,11 +375,12 @@
                     {{-- Varyasyon adımları: üstte, "Seçenekleri belirleyin" + timeline; son step = Beden Tablosu --}}
                     @php
                         $variationSteps = \App\Support\ProductVariationFlowSteps::topologicallySorted($product->variations);
-                        $flow = \App\Support\ProductVariationFlowSteps::build($product, $variationSteps);
+                        $hasCustomizationRows = collect($productCustomization['rows'] ?? [])->isNotEmpty();
+                        $flow = \App\Support\ProductVariationFlowSteps::build($product, $variationSteps, $hasCustomizationRows);
                         $flowSteps = $flow['steps'];
                         $customStepIndex = $flow['customization_step_index'];
                         $sizeStepIndex = $flow['size_step_index'];
-                        $showProductCustomization = $flow['show_customization'] && $customStepIndex >= 0;
+                        $showProductCustomization = $flow['show_customization'] && $customStepIndex >= 0 && $hasCustomizationRows;
                         $sizeTables = $sizeTables ?? collect();
                         $sizeTablesById = $sizeTables->keyBy('id');
                         $variationPanelStepIndexByFlowKey = [];
@@ -826,7 +829,7 @@
                                 </div>
                                 <span class="text-sm font-semibold text-slate-600">{{ __('store.product.no_variation_product_total_label') }}</span>
                                 <div class="text-right">
-                                    <span id="product-price" data-base-try="{{ $baseTry }}" @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
+                                    <span id="product-price" data-base-try="{{ $baseTry }}" data-price-tiers='@json($priceTiersForStore)' @if($hasProductDiscount && $normalPriceTry !== null) data-normal-try="{{ $normalPriceTry }}" @endif data-exchange-rate="{{ (float) $selectedCurrency->exchange_rate }}" data-currency-code="{{ $selectedCurrency->code }}" data-currency-symbol="{{ $selectedCurrency->symbol }}" class="text-lg font-bold text-slate-900">
                                         {{ $selectedCurrency->format($selectedCurrency->convertFromTRY($baseTry * $minOrderProduct)) }}
                                     </span>
                                     @if($hasProductDiscount)
@@ -985,6 +988,18 @@
                 'qty_row_label' => __('store.product.qty_row_label'),
                 'size_row_prefix' => __('store.product.size_row_prefix'),
                 'units_suffix' => __('store.product.units_suffix'),
+                'summary_pricing_weight' => __('store.product.summary_pricing_weight'),
+                'summary_size_weight_formula' => __('store.product.summary_size_weight_formula'),
+                'summary_product_base_price' => __('store.product.summary_product_base_price'),
+                'summary_qty_multiplier' => __('store.product.summary_qty_multiplier'),
+                'summary_qty_unit_price' => __('store.product.summary_qty_unit_price'),
+                'summary_qty_for_tier' => __('store.product.summary_qty_for_tier'),
+                'summary_variation_mult_total' => __('store.product.summary_variation_mult_total'),
+                'summary_packaging_extra' => __('store.product.summary_packaging_extra'),
+                'summary_price_calc' => __('store.product.summary_price_calc'),
+                'summary_price_formula' => __('store.product.summary_price_formula'),
+                'summary_price_formula_with_pack' => __('store.product.summary_price_formula_with_pack'),
+                'summary_line_total' => __('store.product.summary_line_total'),
                 'warn_min_title' => __('store.product.warn_min_title'),
                 'warn_min_desc' => __('store.product.warn_min_desc'),
                 'warn_stock_title' => __('store.product.warn_stock_title'),
@@ -2327,10 +2342,43 @@
                     }
 
                     var priceEl = document.getElementById('product-price');
-                    var baseTry = priceEl ? parseFloat(priceEl.getAttribute('data-base-try')) || 0 : 0;
+                    var fallbackBaseTry = priceEl ? parseFloat(priceEl.getAttribute('data-base-try')) || 0 : 0;
+                    var baseTry = fallbackBaseTry;
                     var rate = priceEl ? parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1 : 1;
                     var symbol = priceEl ? priceEl.getAttribute('data-currency-symbol') || '₺' : '₺';
                     var code = priceEl ? priceEl.getAttribute('data-currency-code') || 'TRY' : 'TRY';
+                    var priceTiers = [];
+                    try {
+                        var tiersRaw = priceEl ? (priceEl.getAttribute('data-price-tiers') || '[]') : '[]';
+                        if (tiersRaw.indexOf('&quot;') !== -1 || tiersRaw.indexOf('&#') !== -1) {
+                            var ta = document.createElement('textarea');
+                            ta.innerHTML = tiersRaw;
+                            tiersRaw = ta.value;
+                        }
+                        priceTiers = JSON.parse(tiersRaw);
+                        if (!Array.isArray(priceTiers)) priceTiers = [];
+                    } catch (e) {
+                        priceTiers = [];
+                    }
+
+                    function resolveQuantityPriceMultiplier(qty) {
+                        var q = Math.max(0, parseInt(qty, 10) || 0);
+                        for (var i = 0; i < priceTiers.length; i++) {
+                            var t = priceTiers[i] || {};
+                            var min = parseInt(t.min, 10);
+                            if (!isFinite(min)) min = 1;
+                            var max = t.max === null || t.max === undefined || t.max === '' ? null : parseInt(t.max, 10);
+                            if (q < min) continue;
+                            if (max !== null && (!isFinite(max) || q > max)) continue;
+                            var m = parseFloat(t.multiplier != null ? t.multiplier : t.unit_try);
+                            if (isFinite(m) && m > 0) return m;
+                        }
+                        return 1;
+                    }
+
+                    function resolveUnitBaseTryForQty(qty) {
+                        return fallbackBaseTry * resolveQuantityPriceMultiplier(qty);
+                    }
 
                     function formatPrice(num) {
                         if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
@@ -2344,6 +2392,77 @@
                             ? new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 4 })
                             : new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
                         return '×' + fmt.format(n);
+                    }
+
+                    function formatPlainNumber(num, maxFrac) {
+                        var n = parseFloat(num);
+                        if (!isFinite(n)) n = 0;
+                        var mf = typeof maxFrac === 'number' ? maxFrac : 4;
+                        var fmt = code === 'TRY'
+                            ? new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: mf })
+                            : new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: mf });
+                        return fmt.format(n);
+                    }
+
+                    function appendPricingBreakdownSummaryRows(rows, sizeInfo, summaryRowClass, summaryLabelCell, summaryValueCell, summaryMultiplierCell, summaryEmptyMultiplierCell) {
+                        var qty = Math.max(0, parseInt(sizeInfo.total, 10) || 0);
+                        var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
+                            ? Math.max(0, sizeInfo.pricingWeight)
+                            : qty;
+                        var hasSizeMultDetail = !!(sizeInfo.sizeQuantities && sizeInfo.sizeMultipliers
+                            && Object.keys(sizeInfo.sizeQuantities).some(function(size) {
+                                return (sizeInfo.sizeQuantities[size] || 0) > 0
+                                    && Math.abs((sizeInfo.sizeMultipliers[size] || 1) - 1) > 0.0001;
+                            }));
+
+                        if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
+                            rows.push('<tr class="bg-slate-50/90"><td class="px-3 py-2.5 text-sm font-semibold text-slate-800 sm:px-4">' + escapeHtml(PU.summary_pricing_weight || 'Fiyatlandırma ağırlığı') + '</td><td class="px-3 py-2.5 text-sm font-semibold text-slate-800 tabular-nums sm:px-4">' + escapeHtml(formatPlainNumber(pricingWeight, 4)) + '</td><td class="' + summaryEmptyMultiplierCell + '">' + (hasSizeMultDetail ? escapeHtml('Σ qty×çarpan') : '—') + '</td></tr>');
+                        }
+
+                        if (!priceEl || typeof resolveUnitBaseTryForQty !== 'function') {
+                            return;
+                        }
+
+                        var qtyMult = resolveQuantityPriceMultiplier(qty > 0 ? qty : 1);
+                        var unitBase = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
+                        var varMult = getCombinedVariationMultiplier();
+                        var packExtra = typeof getPackagingAdditiveExtraTry === 'function' ? getPackagingAdditiveExtraTry() : 0;
+                        var unitWithVar = unitBase * varMult + packExtra;
+                        var lineTry = unitWithVar * pricingWeight;
+                        var baseDisp = code === 'TRY' ? fallbackBaseTry : fallbackBaseTry * rate;
+                        var unitDisp = code === 'TRY' ? unitBase : unitBase * rate;
+                        var lineDisp = code === 'TRY' ? lineTry : lineTry * rate;
+
+                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_product_base_price || 'Ürün fiyatı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(baseDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_qty_multiplier || 'Sipariş miktarı çarpanı') + '</td><td class="' + summaryValueCell + '">' + escapeHtml(formatVariationMultiplier(qtyMult)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(qty > 0 ? ((PU.summary_qty_for_tier || 'Adet') + ': ' + qty) : '—') + '</td></tr>');
+                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_qty_unit_price || 'Miktara göre birim fiyat') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(unitDisp)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(formatPrice(baseDisp) + ' × ' + formatPlainNumber(qtyMult, 4)) + '</td></tr>');
+                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_variation_mult_total || 'Varyasyon çarpanları') + '</td><td class="' + summaryValueCell + '">' + escapeHtml(formatVariationMultiplier(varMult)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        if (packExtra > 0) {
+                            var packDisp = code === 'TRY' ? packExtra : packExtra * rate;
+                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_packaging_extra || 'Ambalaj ek ücreti') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(packDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        }
+                        var formulaTpl = PU.summary_price_formula || ':base × :qtymult × :varmult × :weight = :total';
+                        var formula = formulaTpl
+                            .replace(':base', formatPrice(baseDisp))
+                            .replace(':unit', formatPrice(unitDisp))
+                            .replace(':qtymult', formatPlainNumber(qtyMult, 4))
+                            .replace(':varmult', formatPlainNumber(varMult, 4))
+                            .replace(':weight', formatPlainNumber(pricingWeight, 4))
+                            .replace(':total', formatPrice(lineDisp));
+                        if (packExtra > 0) {
+                            formulaTpl = PU.summary_price_formula_with_pack || '(:base × :qtymult × :varmult + :pack) × :weight = :total';
+                            var packDisp2 = code === 'TRY' ? packExtra : packExtra * rate;
+                            formula = formulaTpl
+                                .replace(':base', formatPrice(baseDisp))
+                                .replace(':unit', formatPrice(unitDisp))
+                                .replace(':qtymult', formatPlainNumber(qtyMult, 4))
+                                .replace(':varmult', formatPlainNumber(varMult, 4))
+                                .replace(':pack', formatPrice(packDisp2))
+                                .replace(':weight', formatPlainNumber(pricingWeight, 4))
+                                .replace(':total', formatPrice(lineDisp));
+                        }
+                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_price_calc || 'Fiyat hesabı') + '</td><td colspan="2" class="' + summaryValueCell + ' text-xs sm:text-sm text-slate-600 tabular-nums">' + escapeHtml(formula) + '</td></tr>');
+                        rows.push('<tr class="bg-emerald-50/80"><td class="px-3 py-3 text-sm font-bold text-emerald-900 sm:px-4">' + escapeHtml(PU.summary_line_total || 'Satır toplamı') + '</td><td class="px-3 py-3 text-sm font-bold text-emerald-900 tabular-nums sm:px-4">' + escapeHtml(formatPrice(lineDisp)) + '</td><td class="px-3 py-3 text-sm text-emerald-700/70 text-right sm:px-4">—</td></tr>');
                     }
 
                     /** data-price-delta: DB’deki price_delta = çarpan; ≤0 veya geçersiz = 1 */
@@ -2498,9 +2617,10 @@
                         }
                         if (!priceEl) return;
                         var mult = getCombinedVariationMultiplier();
-                        var unitTry = baseTry * mult + getPackagingAdditiveExtraTry();
                         var sizeInfo = getSizeQuantities();
                         var qty = Math.max(0, parseInt(sizeInfo.total, 10) || 0);
+                        baseTry = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
+                        var unitTry = baseTry * mult + getPackagingAdditiveExtraTry();
                         var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
                             ? Math.max(0, sizeInfo.pricingWeight)
                             : qty;
@@ -2811,6 +2931,7 @@
 
                     function getSizeQuantities() {
                         var sizeQuantities = {};
+                        var sizeMultipliers = {};
                         var total = 0;
                         var pricingWeight = 0;
                         var activeWrap = document.querySelector('.size-table-wrap:not(.hidden)');
@@ -2822,22 +2943,23 @@
                                 if (isNaN(mult) || mult < 0) mult = 1;
                                 if (size) {
                                     sizeQuantities[size] = val;
+                                    sizeMultipliers[size] = mult;
                                     total += val;
                                     pricingWeight += val * mult;
                                 }
                             });
-                            return { sizeQuantities: sizeQuantities, total: total, pricingWeight: pricingWeight };
+                            return { sizeQuantities: sizeQuantities, sizeMultipliers: sizeMultipliers, total: total, pricingWeight: pricingWeight };
                         }
                         var simpleWrap = document.getElementById('quantity-simple-wrap');
                         if (simpleWrap && simpleWrap.classList.contains('hidden')) {
-                            return { sizeQuantities: null, total: 0, pricingWeight: 0, simple: false };
+                            return { sizeQuantities: null, sizeMultipliers: null, total: 0, pricingWeight: 0, simple: false };
                         }
                         var quantityInput = document.getElementById('quantity-input');
                         if (quantityInput) {
                             total = parseInt(quantityInput.value, 10) || 0;
-                            return { sizeQuantities: null, total: total, pricingWeight: total, simple: true };
+                            return { sizeQuantities: null, sizeMultipliers: null, total: total, pricingWeight: total, simple: true };
                         }
-                        return { sizeQuantities: null, total: 0, pricingWeight: 0, simple: true };
+                        return { sizeQuantities: null, sizeMultipliers: null, total: 0, pricingWeight: 0, simple: true };
                     }
 
                     function updateSizeTotalDisplays() {
@@ -2972,13 +3094,28 @@
                                     Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                         var qty = sizeInfo.sizeQuantities[size];
                                         if (qty > 0) {
-                                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="' + summaryValueCell + '">' + qty + ' ' + escapeHtml(PU.units_suffix) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                                            var sizeMult = 1;
+                                            if (sizeInfo.sizeMultipliers && sizeInfo.sizeMultipliers[size] != null) {
+                                                sizeMult = parseFloat(sizeInfo.sizeMultipliers[size]);
+                                                if (!isFinite(sizeMult) || sizeMult < 0) sizeMult = 1;
+                                            }
+                                            var sizeWeight = qty * sizeMult;
+                                            var sizeValue = qty + ' ' + (PU.units_suffix || 'adet');
+                                            if (Math.abs(sizeMult - 1) > 0.0001) {
+                                                var sizeFormulaTpl = PU.summary_size_weight_formula || ':qty × :mult = :weight';
+                                                sizeValue += ' · ' + sizeFormulaTpl
+                                                    .replace(':qty', formatPlainNumber(qty, 0))
+                                                    .replace(':mult', formatPlainNumber(sizeMult, 4))
+                                                    .replace(':weight', formatPlainNumber(sizeWeight, 4));
+                                            }
+                                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="' + summaryValueCell + '">' + escapeHtml(sizeValue) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(formatVariationMultiplier(sizeMult)) + '</td></tr>');
                                         }
                                     });
                                     rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.summary_total_qty) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
                                 } else {
                                     rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.qty_row_label) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
                                 }
+                                appendPricingBreakdownSummaryRows(rows, sizeInfo, summaryRowClass, summaryLabelCell, summaryValueCell, summaryMultiplierCell, summaryEmptyMultiplierCell);
                             }
                             tbody.innerHTML = rows.join('');
                         } else {
@@ -5567,9 +5704,42 @@
                     if (!priceEl || !quantityInput) return;
 
                     var baseTry = parseFloat(priceEl.getAttribute('data-base-try')) || 0;
+                    var fallbackBaseTry = baseTry;
                     var rate = parseFloat(priceEl.getAttribute('data-exchange-rate')) || 1;
                     var symbol = priceEl.getAttribute('data-currency-symbol') || '₺';
                     var code = priceEl.getAttribute('data-currency-code') || 'TRY';
+                    var priceTiers = [];
+                    try {
+                        var tiersRaw = priceEl.getAttribute('data-price-tiers') || '[]';
+                        if (tiersRaw.indexOf('&quot;') !== -1 || tiersRaw.indexOf('&#') !== -1) {
+                            var ta = document.createElement('textarea');
+                            ta.innerHTML = tiersRaw;
+                            tiersRaw = ta.value;
+                        }
+                        priceTiers = JSON.parse(tiersRaw);
+                        if (!Array.isArray(priceTiers)) priceTiers = [];
+                    } catch (e) {
+                        priceTiers = [];
+                    }
+
+                    function resolveQuantityPriceMultiplier(qty) {
+                        var q = Math.max(0, parseInt(qty, 10) || 0);
+                        for (var i = 0; i < priceTiers.length; i++) {
+                            var t = priceTiers[i] || {};
+                            var min = parseInt(t.min, 10);
+                            if (!isFinite(min)) min = 1;
+                            var max = t.max === null || t.max === undefined || t.max === '' ? null : parseInt(t.max, 10);
+                            if (q < min) continue;
+                            if (max !== null && (!isFinite(max) || q > max)) continue;
+                            var m = parseFloat(t.multiplier != null ? t.multiplier : t.unit_try);
+                            if (isFinite(m) && m > 0) return m;
+                        }
+                        return 1;
+                    }
+
+                    function resolveUnitBaseTryForQty(qty) {
+                        return fallbackBaseTry * resolveQuantityPriceMultiplier(qty);
+                    }
 
                     function formatPrice(num) {
                         if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
@@ -5578,9 +5748,15 @@
 
                     function updateSimpleLineTotal() {
                         var qty = Math.max(0, parseInt(quantityInput.value, 10) || 0);
+                        baseTry = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
                         var lineTry = baseTry * qty;
                         var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
                         priceEl.textContent = formatPrice(lineConverted);
+                        var basePriceEl = document.getElementById('product-base-price');
+                        if (basePriceEl) {
+                            var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
+                            basePriceEl.textContent = formatPrice(baseConverted);
+                        }
                         var strikeEl = document.getElementById('product-price-strike');
                         if (strikeEl) {
                             var normalAttr = priceEl.getAttribute('data-normal-try');

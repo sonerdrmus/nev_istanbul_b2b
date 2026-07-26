@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\ProductDimensionMultiplierFormSchema;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Category;
 use App\Models\Currency;
@@ -27,6 +28,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -76,8 +78,8 @@ class ProductResource extends Resource
     /** @var array<int, string> */
     protected static array $interfaceDeliveryMethodLabelCache = [];
 
-    /** @var array<int, string>|null */
-    protected static ?array $customizationRowOptionsCache = null;
+    /** @var array<int, array<int, string>> */
+    protected static array $customizationRowOptionsCache = [];
 
     /**
      * `storage/app/public/<directory>` altında bulunan görselleri listeler.
@@ -276,7 +278,76 @@ class ProductResource extends Resource
                                             ->numeric()
                                             ->minValue(0)
                                             ->suffix(fn ($get) => Currency::find($get('currency_id'))?->symbol ?? '₺')
+                                            ->helperText('Temel ürün fiyatı. Sipariş miktarı çarpanı ve diğer varyasyon çarpanları bu fiyat üzerinden uygulanır.')
                                             ->columnSpan(1),
+                                        Forms\Components\Repeater::make('priceTiers')
+                                            ->relationship()
+                                            ->label('Sipariş miktarına göre çarpan')
+                                            ->helperText('Örn. 1–100 adet → ×1; 101–200 adet → ×2. Max boş bırakılırsa üst sınır yoktur. Girilen değer ürün fiyatıyla çarpılır (diğer varyasyon çarpanları gibi).')
+                                            ->reorderable()
+                                            ->reorderableWithButtons()
+                                            ->orderColumn('sort_order')
+                                            ->defaultItems(0)
+                                            ->addActionLabel('Çarpan aralığı ekle')
+                                            ->collapsible()
+                                            ->itemLabel(function (array $state): ?string {
+                                                $min = $state['min_quantity'] ?? null;
+                                                $max = $state['max_quantity'] ?? null;
+                                                $mult = $state['price_multiplier'] ?? null;
+                                                if ($min === null && $mult === null) {
+                                                    return null;
+                                                }
+                                                $range = ($min ?? '?').'–'.($max !== null && $max !== '' ? $max : '∞');
+
+                                                return $range.' adet → ×'.($mult ?? '—');
+                                            })
+                                            ->schema([
+                                                Forms\Components\TextInput::make('min_quantity')
+                                                    ->label('Min adet')
+                                                    ->required()
+                                                    ->numeric()
+                                                    ->integer()
+                                                    ->minValue(1)
+                                                    ->default(1)
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('max_quantity')
+                                                    ->label('Max adet')
+                                                    ->numeric()
+                                                    ->integer()
+                                                    ->minValue(1)
+                                                    ->nullable()
+                                                    ->helperText('Boş = sınırsız')
+                                                    ->columnSpan(1)
+                                                    ->rules([
+                                                        fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                                            if ($value === null || $value === '') {
+                                                                return;
+                                                            }
+                                                            $min = $get('min_quantity');
+                                                            if ($min !== null && $min !== '' && (int) $value < (int) $min) {
+                                                                $fail('Max adet, min adetten küçük olamaz.');
+                                                            }
+                                                        },
+                                                    ]),
+                                                Forms\Components\TextInput::make('price_multiplier')
+                                                    ->label('Fiyat çarpanı (×)')
+                                                    ->required()
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->step(0.01)
+                                                    ->default(1)
+                                                    ->helperText('1 = ürün fiyatı aynı; 2 girilirse birim fiyat = ürün fiyatı × 2')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('sort_order')
+                                                    ->label('Sıra')
+                                                    ->numeric()
+                                                    ->integer()
+                                                    ->default(0)
+                                                    ->minValue(0)
+                                                    ->columnSpan(1),
+                                            ])
+                                            ->columns(2)
+                                            ->columnSpanFull(),
                                         Forms\Components\TextInput::make('stock_quantity')
                                             ->label('Stok miktarı')
                                             ->helperText('Boş = stok takibi yok (sınırsız). 0 = stokta yok.')
@@ -463,8 +534,11 @@ class ProductResource extends Resource
                                                     ->default('select')
                                                     ->required()
                                                     ->live(debounce: 400)
-                                                    ->afterStateUpdated(function ($state, Set $set): void {
-                                                        $rows = static::interfacePresetOptionRowsForType((string) $state);
+                                                    ->afterStateUpdated(function ($state, Set $set, $livewire): void {
+                                                        $rows = static::interfacePresetOptionRowsForType(
+                                                            (string) $state,
+                                                            static::currentProductIdFromLivewire($livewire),
+                                                        );
                                                         if ($rows !== null) {
                                                             $set('options', $rows);
                                                             if (static::variationTypeRequiresSingleSelectOnly((string) $state)) {
@@ -472,7 +546,7 @@ class ProductResource extends Resource
                                                             }
                                                             if ($rows === []) {
                                                                 $titles = [
-                                                                    'fabric' => ['Kumaş türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Kumaş Türü Varyasyonları bölümünden kayıt ekleyin.'],
+                                                                    'fabric' => ['Bu ürüne ait kumaş bulunamadı', 'Varyasyon yönetimi → Kumaş Türü Varyasyonları bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
                                                                     'color' => ['Renk kaydı bulunamadı', 'Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.'],
                                                                     'label_type' => ['Etiket türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Etiket Türü Yönetimi bölümünden kayıt ekleyin.'],
                                                                     'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
@@ -494,7 +568,7 @@ class ProductResource extends Resource
                                                         }
                                                     })
                                                     ->helperText(fn (Get $get): ?string => match ($get('type')) {
-                                                        'fabric' => 'Seçenekler, Kumaş türü varyasyonları kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
+                                                        'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                                                         'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
                                                         'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                                                         'mold_model_type' => 'Seçenekler, Kalıp Modeli Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
@@ -896,12 +970,13 @@ class ProductResource extends Resource
                                             ->columns(2)
                                             ->columnSpanFull(),
                                         Forms\Components\Section::make('Mağaza: Ürün özelleştirme')
-                                            ->description('Bu üründe müşteriye Ürün Özelleştirme adımının gösterilip gösterilmeyeceğini ve hangi varyasyon seçiminden sonra açılacağını belirler.')
+                                            ->description('Bu üründe özelleştirme adımı, atanmış baskı konumları ve ürüne özel çarpanlar.')
                                             ->schema([
                                                 Forms\Components\Toggle::make('customization_enabled')
                                                     ->label('Ürün özelleştirme adımını göster')
                                                     ->default(true)
                                                     ->inline(false)
+                                                    ->live()
                                                     ->helperText('Kapalıysa mağazada özelleştirme tablosu hiç görünmez.'),
                                                 Forms\Components\Select::make('customization_trigger_variation')
                                                     ->label('Özelleştirme adımı hangi varyasyondan sonra')
@@ -933,6 +1008,26 @@ class ProductResource extends Resource
                                                     ->nullable()
                                                     ->visible(fn (Get $get): bool => (bool) $get('customization_enabled'))
                                                     ->helperText('Boş: müşteri tüm varyasyonları seçtikten sonra, beden tablosundan önce özelleştirme adımı gelir. Bir varyasyon seçerseniz: o varyasyonda seçim yapıldıktan sonra özelleştirme adımı açılır; sonraki varyasyonlar özelleştirmeden sonra devam eder. Varyasyon adı üstteki kayıtlarla birebir aynı olmalıdır.'),
+                                                Forms\Components\Select::make('customizationRows')
+                                                    ->label('Baskı konumları')
+                                                    ->relationship(
+                                                        name: 'customizationRows',
+                                                        titleAttribute: 'position_name',
+                                                        modifyQueryUsing: fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('id'),
+                                                    )
+                                                    ->multiple()
+                                                    ->searchable()
+                                                    ->native(false)
+                                                    ->preload(false)
+                                                    ->optionsLimit(40)
+                                                    ->placeholder('Konum adı yazarak ara…')
+                                                    ->visible(fn (Get $get): bool => (bool) $get('customization_enabled'))
+                                                    ->helperText('Varyasyon yönetimi → Ürün Özelleştirme kütüphanesindeki konumlardan seçin. Yazarak arayın; mağazada yalnızca seçili konumlar görünür.'),
+                                                Forms\Components\Group::make()
+                                                    ->schema([
+                                                        ProductDimensionMultiplierFormSchema::section(),
+                                                    ])
+                                                    ->visible(fn (Get $get): bool => (bool) $get('customization_enabled')),
                                             ])
                                             ->columns(1)
                                             ->columnSpanFull(),
@@ -1094,10 +1189,57 @@ class ProductResource extends Resource
     /**
      * @return array<int, array<string, mixed>>|null
      */
-    public static function interfacePresetOptionRowsForType(string $type): ?array
+    /**
+     * Kayıt öncesi: başka ürünlere özel atanmış kumaş seçenek satırlarını bu üründen düşürür.
+     */
+    public static function dropForeignFabricOptionsFromProductFormData(array $data, ?int $productId): array
+    {
+        if (empty($data['variations']) || ! is_array($data['variations'])) {
+            return $data;
+        }
+
+        $hiddenFabricIds = InterfaceFabricTypeVariation::hiddenIdsForProduct($productId);
+        if ($hiddenFabricIds === []) {
+            return $data;
+        }
+
+        foreach ($data['variations'] as &$variation) {
+            if ((string) ($variation['type'] ?? '') !== 'fabric' || ! is_array($variation['options'] ?? null)) {
+                continue;
+            }
+
+            $variation['options'] = array_values(array_filter(
+                $variation['options'],
+                function ($option) use ($hiddenFabricIds): bool {
+                    $presetId = is_array($option) ? ($option['interface_fabric_type_variation_id'] ?? null) : null;
+
+                    return $presetId === null || ! in_array((int) $presetId, $hiddenFabricIds, true);
+                },
+            ));
+        }
+        unset($variation);
+
+        return $data;
+    }
+
+    /**
+     * Form içinde düzenlenen ürünün id'si (oluşturma ekranında henüz kayıt olmadığı için null).
+     */
+    public static function currentProductIdFromLivewire(?object $livewire): ?int
+    {
+        if ($livewire === null || ! method_exists($livewire, 'getRecord')) {
+            return null;
+        }
+
+        $record = $livewire->getRecord();
+
+        return $record instanceof Product && $record->exists ? (int) $record->getKey() : null;
+    }
+
+    public static function interfacePresetOptionRowsForType(string $type, ?int $productId = null): ?array
     {
         return match ($type) {
-            'fabric' => static::fabricVariationOptionsFromInterfacePresets(),
+            'fabric' => static::fabricVariationOptionsFromInterfacePresets($productId),
             'color' => static::colorVariationOptionsFromInterfacePresets(),
             'label_type' => static::labelVariationOptionsFromInterfacePresets(),
             'certificate_type' => static::certificateVariationOptionsFromInterfacePresets(),
@@ -1113,11 +1255,13 @@ class ProductResource extends Resource
     /**
      * Kayıt öncesi: preset tiplerinde seçenek satırı yoksa Ambalaj / Etiket vb. kayıtlarından doldurur.
      */
-    public static function ensureInterfacePresetOptionsInProductFormData(array $data): array
+    public static function ensureInterfacePresetOptionsInProductFormData(array $data, ?int $productId = null): array
     {
         if (empty($data['variations']) || ! is_array($data['variations'])) {
             return $data;
         }
+
+        $productId ??= isset($data['_product_id']) ? (int) $data['_product_id'] : null;
 
         foreach ($data['variations'] as &$variation) {
             $type = (string) ($variation['type'] ?? '');
@@ -1130,7 +1274,7 @@ class ProductResource extends Resource
                 continue;
             }
 
-            $rows = static::interfacePresetOptionRowsForType($type);
+            $rows = static::interfacePresetOptionRowsForType($type, $productId);
             if ($rows !== null && $rows !== []) {
                 $variation['options'] = $rows;
             }
@@ -1317,9 +1461,16 @@ class ProductResource extends Resource
             ->all();
     }
 
-    public static function fabricVariationOptionsFromInterfacePresets(): array
+    /**
+     * Kumaş seçenek satırları. $productId verildiğinde yalnızca o ürüne açıkça atanmış kumaşlar döner.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function fabricVariationOptionsFromInterfacePresets(?int $productId = null): array
     {
         return InterfaceFabricTypeVariation::query()
+            ->where('is_active', true)
+            ->visibleForProduct($productId)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -1409,10 +1560,70 @@ class ProductResource extends Resource
     }
 
     /**
+     * Ürünlerin "Kumaş türü" varyasyon seçeneklerini kumaş–ürün atamalarıyla eşitler:
+     * yalnızca o ürüne atanmış kumaşlar eklenir, atanmamış olanlar kaldırılır.
+     *
+     * @param  int|null  $productId  Yalnızca bu ürün için çalıştır (null: tüm ürünler).
+     * @param  int|null  $presetId  Yalnızca bu kumaş için çalıştır (null: tüm kumaşlar).
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileFabricOptionsForProducts(?int $productId = null, ?int $presetId = null): array
+    {
+        $fkField = 'interface_fabric_type_variation_id';
+        $added = 0;
+        $removed = 0;
+
+        $visibleRowsByProduct = [];
+
+        ProductVariation::query()
+            ->where('type', 'fabric')
+            ->when($productId !== null, fn (Builder $q) => $q->where('product_id', $productId))
+            ->each(function (ProductVariation $variation) use (&$added, &$removed, &$visibleRowsByProduct, $fkField, $presetId): void {
+                $variationProductId = $variation->product_id !== null ? (int) $variation->product_id : null;
+                $cacheKey = $variationProductId ?? 0;
+
+                $visibleRows = $visibleRowsByProduct[$cacheKey]
+                    ??= static::fabricVariationOptionsFromInterfacePresets($variationProductId);
+
+                $visibleIds = array_map(fn (array $row): int => (int) $row[$fkField], $visibleRows);
+
+                $removeQuery = $variation->options()->whereNotNull($fkField);
+                if ($visibleIds !== []) {
+                    $removeQuery->whereNotIn($fkField, $visibleIds);
+                }
+                if ($presetId !== null) {
+                    $removeQuery->where($fkField, $presetId);
+                }
+                $removed += $removeQuery->delete();
+
+                foreach ($visibleRows as $row) {
+                    $rowPresetId = (int) $row[$fkField];
+                    if ($presetId !== null && $rowPresetId !== $presetId) {
+                        continue;
+                    }
+
+                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                        continue;
+                    }
+
+                    static::createVariationOptionFromPresetRow($variation, $row, 'fabric');
+                    $added++;
+                }
+            });
+
+        return ['added' => $added, 'removed' => $removed];
+    }
+
+    /**
      * Varyasyon yönetimi preset'lerinden eksik ürün seçeneklerini ekler (mevcut satırları silmez).
      */
     public static function appendMissingInterfacePresetOptions(string $variationType, ?int $onlyPresetId = null): int
     {
+        // Kumaş seçenekleri ürün bazlıdır; ekleme/kaldırma işini ürüne duyarlı mutabakat yapar.
+        if ($variationType === 'fabric') {
+            return static::reconcileFabricOptionsForProducts(presetId: $onlyPresetId)['added'];
+        }
+
         $rows = static::interfacePresetOptionRowsForType($variationType);
         if ($rows === null || $rows === []) {
             return 0;
@@ -1555,9 +1766,12 @@ class ProductResource extends Resource
     /**
      * Varyasyon seçeneklerinde yüklenen görsel ve Arayüz renk / kumaş preset’lerini kayıt öncesi normalize eder.
      */
-    public static function finalizeVariationOptionsInProductFormData(array $data): array
+    public static function finalizeVariationOptionsInProductFormData(array $data, ?int $productId = null): array
     {
-        $data = static::ensureInterfacePresetOptionsInProductFormData($data);
+        $productId ??= isset($data['_product_id']) ? (int) $data['_product_id'] : null;
+
+        $data = static::ensureInterfacePresetOptionsInProductFormData($data, $productId);
+        $data = static::dropForeignFabricOptionsFromProductFormData($data, $productId);
 
         if (empty($data['variations']) || ! is_array($data['variations'])) {
             return $data;
@@ -1750,7 +1964,7 @@ class ProductResource extends Resource
      */
     public static function syncVariationOptionImagesAfterFilamentSave(Product $product, array $formData): void
     {
-        $formData = self::finalizeVariationOptionsInProductFormData($formData);
+        $formData = self::finalizeVariationOptionsInProductFormData($formData, (int) $product->getKey());
 
         foreach ($formData['variations'] ?? [] as $variationRow) {
             $variationId = isset($variationRow['id']) ? (int) $variationRow['id'] : null;
@@ -1897,7 +2111,7 @@ class ProductResource extends Resource
         }
 
         if (ProductVariationFlowSteps::isCustomizationDependency($dependsOnName)) {
-            return static::cachedCustomizationRowOptions();
+            return static::cachedCustomizationRowOptions(static::resolveProductIdFromGet($get, $pathPrefix));
         }
 
         $productId = static::resolveProductIdFromGet($get, $pathPrefix);
@@ -2332,23 +2546,30 @@ class ProductResource extends Resource
     }
 
     /** @return array<int, string> */
-    protected static function cachedCustomizationRowOptions(): array
+    protected static function cachedCustomizationRowOptions(?int $productId = null): array
     {
-        if (static::$customizationRowOptionsCache !== null) {
-            return static::$customizationRowOptionsCache;
+        $cacheKey = $productId ?? 0;
+        if (isset(static::$customizationRowOptionsCache[$cacheKey])) {
+            return static::$customizationRowOptionsCache[$cacheKey];
         }
 
-        static::$customizationRowOptionsCache = ProductCustomizationRow::query()
+        $query = ProductCustomizationRow::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->orderBy('id')
+            ->orderBy('id');
+
+        if ($productId !== null && ProductCustomizationRow::productPivotTableExists()) {
+            $query->visibleForProduct($productId);
+        }
+
+        static::$customizationRowOptionsCache[$cacheKey] = $query
             ->get()
             ->mapWithKeys(fn (ProductCustomizationRow $row): array => [
                 $row->getKey() => (string) $row->position_name,
             ])
             ->all();
 
-        return static::$customizationRowOptionsCache;
+        return static::$customizationRowOptionsCache[$cacheKey];
     }
 
     /** Ambalaj ve beden tablosu varyasyonlarında mağazada yalnızca tek seçim desteklenir. */

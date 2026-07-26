@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Product;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -12,16 +13,17 @@ final class DimensionMultiplierCatalog
     /**
      * @return array<string, array{size: list<array<string, mixed>>, quantity: list<array<string, mixed>>, color: list<array<string, mixed>>}>
      */
-    public static function groupedForStore(): array
+    public static function groupedForStore(?Product $product = null): array
     {
+        $productId = $product?->getKey() !== null ? (int) $product->getKey() : null;
         $grouped = [];
 
         foreach (PrintTechniqueMultiplierTabs::slugs() as $slug) {
             $grouped[$slug] = [
-                'size' => SizeDimensionMultiplierCatalog::rowsForStoreMatcher($slug),
-                'quantity' => QuantityDimensionMultiplierCatalog::rowsForStoreMatcher($slug),
+                'size' => SizeDimensionMultiplierCatalog::rowsForStoreMatcher($slug, $productId),
+                'quantity' => QuantityDimensionMultiplierCatalog::rowsForStoreMatcher($slug, $productId),
                 'color' => PrintTechniqueDimensionMultiplierTypes::supportsColorMultiplier($slug)
-                    ? ColorDimensionMultiplierCatalog::rowsForStoreMatcher($slug)
+                    ? ColorDimensionMultiplierCatalog::rowsForStoreMatcher($slug, $productId)
                     : [],
             ];
         }

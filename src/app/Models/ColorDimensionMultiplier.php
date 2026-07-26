@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 class ColorDimensionMultiplier extends Model
 {
     protected $fillable = [
+        'product_id',
         'print_technique_slug',
         'color_count',
         'multiplier_price',
@@ -18,6 +19,7 @@ class ColorDimensionMultiplier extends Model
     protected function casts(): array
     {
         return [
+            'product_id' => 'integer',
             'color_count' => 'integer',
             'multiplier_price' => 'decimal:4',
             'sort_order' => 'integer',
@@ -25,18 +27,28 @@ class ColorDimensionMultiplier extends Model
         ];
     }
 
-    /** @return Collection<int, static> */
-    public static function activeOrdered(?string $printTechniqueSlug = null): Collection
+    public function product()
     {
-        return static::query()
+        return $this->belongsTo(Product::class);
+    }
+
+    /** @return Collection<int, static> */
+    public static function activeOrdered(?string $printTechniqueSlug = null, ?int $productId = null): Collection
+    {
+        $query = static::query()
             ->when(
                 $printTechniqueSlug !== null && $printTechniqueSlug !== '',
-                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+                fn ($q) => $q->where('print_technique_slug', $printTechniqueSlug),
             )
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('color_count')
-            ->get();
+            ->where('is_active', true);
+
+        $query = \App\Support\ProductDimensionMultiplierSync::applyProductScope(
+            $query,
+            'color_dimension_multipliers',
+            $productId,
+        );
+
+        return $query->orderBy('sort_order')->orderBy('color_count')->get();
     }
 
     /** @return array<string, mixed> */

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
 use App\Models\ProductImage;
+use App\Support\ProductDimensionMultiplierSync;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProduct extends CreateRecord
@@ -16,6 +17,13 @@ class CreateProduct extends CreateRecord
     }
 
     protected ?string $maxContentWidth = 'full';
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
+
+        return $data;
+    }
 
     protected function afterCreate(): void
     {
@@ -32,6 +40,20 @@ class CreateProduct extends CreateRecord
         }
 
         ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
+
+        $multipliers = $state['dimension_multipliers'] ?? null;
+        if (! is_array($multipliers) || $multipliers === []) {
+            $multipliers = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
+        }
+
+        ProductDimensionMultiplierSync::persistGrouped((int) $this->record->getKey(), $multipliers);
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        unset($data['dimension_multipliers']);
+
+        return $data;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -54,6 +76,7 @@ class CreateProduct extends CreateRecord
             }
         }
         unset($data['home_showcase_image_upload']);
+        unset($data['dimension_multipliers']);
 
         $data = ProductResource::finalizeVariationOptionsInProductFormData($data);
 

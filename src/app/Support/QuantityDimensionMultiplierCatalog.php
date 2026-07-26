@@ -13,7 +13,7 @@ final class QuantityDimensionMultiplierCatalog
     /**
      * @return list<array{quantity_from: int, quantity_to: int, multiplier_price: float}>
      */
-    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null): array
+    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
         if (! Schema::hasTable('quantity_dimension_multipliers')) {
             return [];
@@ -21,7 +21,7 @@ final class QuantityDimensionMultiplierCatalog
 
         $slug = self::resolvePrintTechniqueSlug($printTechniqueSlug);
 
-        return QuantityDimensionMultiplier::activeOrdered($slug)
+        return QuantityDimensionMultiplier::activeOrdered($slug, $productId)
             ->map(fn (QuantityDimensionMultiplier $row): array => [
                 'quantity_from' => (int) $row->quantity_from,
                 'quantity_to' => (int) $row->quantity_to,
@@ -34,13 +34,13 @@ final class QuantityDimensionMultiplierCatalog
     /**
      * @return array{quantity_from: int, quantity_to: int, multiplier_price: float}|null
      */
-    public static function matchRowForQuantity(?int $quantity, ?string $printTechniqueSlug = null): ?array
+    public static function matchRowForQuantity(?int $quantity, ?string $printTechniqueSlug = null, ?int $productId = null): ?array
     {
         if ($quantity === null || $quantity <= 0) {
             return null;
         }
 
-        $rows = self::rowsForStoreMatcher($printTechniqueSlug);
+        $rows = self::rowsForStoreMatcher($printTechniqueSlug, $productId);
         if ($rows === []) {
             return null;
         }

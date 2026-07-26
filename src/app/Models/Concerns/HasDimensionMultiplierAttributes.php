@@ -8,17 +8,22 @@ use Illuminate\Support\Collection;
 trait HasDimensionMultiplierAttributes
 {
     /** @return Collection<int, static> */
-    public static function activeOrdered(?string $printTechniqueSlug = null): Collection
+    public static function activeOrdered(?string $printTechniqueSlug = null, ?int $productId = null): Collection
     {
-        return static::query()
+        $query = static::query()
             ->when(
                 $printTechniqueSlug !== null && $printTechniqueSlug !== '',
-                fn ($query) => $query->where('print_technique_slug', $printTechniqueSlug),
+                fn ($q) => $q->where('print_technique_slug', $printTechniqueSlug),
             )
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+            ->where('is_active', true);
+
+        $query = \App\Support\ProductDimensionMultiplierSync::applyProductScope(
+            $query,
+            (new static)->getTable(),
+            $productId,
+        );
+
+        return $query->orderBy('sort_order')->orderBy('id')->get();
     }
 
     /** @return array<string, mixed> */

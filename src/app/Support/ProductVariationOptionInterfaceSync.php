@@ -36,6 +36,16 @@ class ProductVariationOptionInterfaceSync
     }
 
     /**
+     * Kumaş–ürün atamalarını ürünlerin "Kumaş türü" varyasyon seçenekleriyle eşitler.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileFabricProductOptions(?int $productId = null, ?int $presetId = null): array
+    {
+        return ProductResource::reconcileFabricOptionsForProducts($productId, $presetId);
+    }
+
+    /**
      * Tek preset kaydını bağlı ürün seçeneklerine yansıtır; pasifse bağlı seçenekleri kaldırır.
      */
     public static function syncPreset(object $preset, ?string $type = null): int
@@ -80,9 +90,16 @@ class ProductVariationOptionInterfaceSync
             }
         }
 
-        $added = static::appendMissingProductOptions($variationType);
         $removed = static::removeOrphanedProductOptions($variationType)
             + static::removeInactivePresetProductOptions($variationType);
+
+        if ($variationType === 'fabric') {
+            $reconciled = static::reconcileFabricProductOptions();
+            $added = $reconciled['added'];
+            $removed += $reconciled['removed'];
+        } else {
+            $added = static::appendMissingProductOptions($variationType);
+        }
 
         return [
             'updated' => $updated,

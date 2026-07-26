@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Filament\Resources\InterfaceFabricTypeVariationResource\Pages;
 use App\Models\InterfaceColorVariation;
 use App\Models\InterfaceFabricTypeVariation;
@@ -83,6 +84,8 @@ class InterfaceFabricTypeVariationResource extends Resource
                                 return $name !== '' ? $name : ('Renk #'.$record->getKey());
                             })
                             ->helperText('Renk Varyasyonları sayfasındaki kayıtlardan seçin. Mağazada bu kumaş seçildiğinde yalnızca seçili renkler listelenir.'),
+                        ProductMultiSelect::relationship('products')
+                            ->helperText('Bu kumaş yalnızca seçili ürünlerin Kumaş Türü varyasyonunda seçenek olarak görünür. En az bir ürün seçilmelidir; boş bırakılırsa hiçbir üründe görünmez.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -98,7 +101,7 @@ class InterfaceFabricTypeVariationResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withCount('colorVariations');
+        return parent::getEloquentQuery()->withCount(['colorVariations', 'products']);
     }
 
     public static function table(Table $table): Table
@@ -115,6 +118,13 @@ class InterfaceFabricTypeVariationResource extends Resource
                 Tables\Columns\TextColumn::make('colorVariations_count')
                     ->label('Renk')
                     ->counts('colorVariations')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->label('Ürün')
+                    ->counts('products')
+                    ->formatStateUsing(fn ($state): string => (int) $state === 0 ? 'Atanmamış' : (string) $state)
+                    ->badge()
+                    ->color(fn ($state): string => (int) $state === 0 ? 'warning' : 'success')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')

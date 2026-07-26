@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        Baskı teknikleri ve konum satırlarını tablo üzerinden düzenleyin. Sırayı sol tutamaçtan sürükleyerek değiştirebilirsiniz.
+        Baskı tekniklerini tablo üzerinden, konum satırlarını kart olarak düzenleyin. Her konumda ürünleri yazarak arayıp seçin; sırayı sürükleyerek değiştirebilirsiniz.
     </p>
     <form wire:submit="save">
         {{ $this->form }}

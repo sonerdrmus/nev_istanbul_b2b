@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Models\ProductCustomizationPrintTechnique;
 use App\Models\ProductCustomizationRow;
 use App\Models\ProductCustomizationSetting;
@@ -45,7 +46,7 @@ class ManageProductCustomization extends Page implements HasForms
     {
         return [
             Action::make('sizeMultipliers')
-                ->label('Çarpan Yönetimi')
+                ->label('Çarpan Yönetimi (varsayılan şablon)')
                 ->icon('heroicon-o-calculator')
                 ->url(fn (): string => ManageSizeDimensionMultipliers::getUrl())
                 ->color('gray'),
@@ -73,6 +74,7 @@ class ManageProductCustomization extends Page implements HasForms
                 ->values()
                 ->all(),
             'rows' => ProductCustomizationRow::query()
+                ->with('products')
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()
@@ -84,6 +86,7 @@ class ManageProductCustomization extends Page implements HasForms
                     'default_height' => $r->default_height,
                     'default_color_count' => $r->default_color_count,
                     'default_print_technique_slug' => $r->default_print_technique_slug,
+                    'product_ids' => $r->products->pluck('id')->map(fn ($id): int => (int) $id)->all(),
                     'sort_order' => $r->sort_order,
                     'is_active' => $r->is_active,
                 ])
@@ -162,80 +165,87 @@ class ManageProductCustomization extends Page implements HasForms
                             ->cloneable(false),
                     ]),
                 Forms\Components\Section::make('Tablo satırları')
-                    ->description('Ürün sayfasında müşterinin seçeceği baskı konumları ve varsayılan değerler. Her satıra opsiyonel konum görseli ekleyebilirsiniz; görseli olan satırlarda mağazada konum adının yanında “Resmi görüntüle” linki gösterilir ve tıklanınca modal açılır.')
+                    ->description('Baskı konumları ve hangi ürünlerde görünecekleri. Ürün seçimi satırın içinde aramalıdır; tabloyu şişirmez.')
                     ->schema([
                         Forms\Components\Repeater::make('rows')
                             ->label('')
-                            ->view('filament.forms.components.form-table-repeater')
-                            ->viewData([
-                                'tableHeaders' => [
-                                    'Konum',
-                                    'Görsel',
-                                    'En (cm)',
-                                    'Boy (cm)',
-                                    'Renk sayısı',
-                                    'Baskı tekniği',
-                                    ['label' => 'Aktif', 'align' => 'center'],
-                                ],
-                                'emptyMessage' => 'Henüz konum satırı yok. Aşağıdan satır ekleyin.',
-                                'tableMinWidth' => '62rem',
-                            ])
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
-                                Forms\Components\TextInput::make('position_name')
-                                    ->label('Konum')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->hiddenLabel(),
-                                Forms\Components\FileUpload::make('position_image')
-                                    ->label('Görsel')
-                                    ->directory('product_customization_positions')
-                                    ->disk('public')
-                                    ->visibility('public')
-                                    ->image()
-                                    ->imageEditor()
-                                    ->imagePreviewHeight('4rem')
-                                    ->maxSize(2048)
-                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                                    ->nullable()
-                                    ->helperText('PNG/JPG/WEBP, en fazla 2 MB.')
-                                    ->hiddenLabel(),
-                                Forms\Components\TextInput::make('default_width')
-                                    ->label('En (cm)')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step(0.01)
-                                    ->hiddenLabel(),
-                                Forms\Components\TextInput::make('default_height')
-                                    ->label('Boy (cm)')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step(0.01)
-                                    ->hiddenLabel(),
-                                Forms\Components\TextInput::make('default_color_count')
-                                    ->label('Renk sayısı')
-                                    ->numeric()
-                                    ->minValue(1)
-                                    ->maxValue(20)
-                                    ->default(3)
-                                    ->hiddenLabel(),
-                                Forms\Components\Select::make('default_print_technique_slug')
-                                    ->label('Baskı tekniği')
-                                    ->options(fn (): array => self::printTechniqueOptions())
-                                    ->searchable()
-                                    ->nullable()
-                                    ->hiddenLabel(),
-                                Forms\Components\Toggle::make('is_active')
-                                    ->label('Aktif')
-                                    ->default(true)
-                                    ->inline(false)
-                                    ->hiddenLabel(),
+                                Forms\Components\Grid::make(12)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('position_name')
+                                            ->label('Konum')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->columnSpan(4),
+                                        Forms\Components\TextInput::make('default_width')
+                                            ->label('En (cm)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->columnSpan(2),
+                                        Forms\Components\TextInput::make('default_height')
+                                            ->label('Boy (cm)')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->step(0.01)
+                                            ->columnSpan(2),
+                                        Forms\Components\TextInput::make('default_color_count')
+                                            ->label('Renk sayısı')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(20)
+                                            ->default(3)
+                                            ->columnSpan(2),
+                                        Forms\Components\Select::make('default_print_technique_slug')
+                                            ->label('Baskı tekniği')
+                                            ->options(fn (): array => self::printTechniqueOptions())
+                                            ->searchable()
+                                            ->nullable()
+                                            ->columnSpan(2),
+                                        Forms\Components\FileUpload::make('position_image')
+                                            ->label('Konum görseli')
+                                            ->directory('product_customization_positions')
+                                            ->disk('public')
+                                            ->visibility('public')
+                                            ->image()
+                                            ->imageEditor()
+                                            ->imagePreviewHeight('6rem')
+                                            ->maxSize(2048)
+                                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                            ->nullable()
+                                            ->helperText('PNG/JPG/WEBP, en fazla 2 MB.')
+                                            ->columnSpan(6),
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->label('Aktif')
+                                            ->default(true)
+                                            ->inline(false)
+                                            ->columnSpan(6),
+                                        ProductMultiSelect::make('product_ids')
+                                            ->label('Bu konumun görüneceği ürünler')
+                                            ->helperText('Ürün adı yazarak arayın. Yalnızca seçili ürünlerin sayfasında bu konum listelenir.')
+                                            ->columnSpanFull(),
+                                    ]),
                             ])
-                            ->defaultItems(0)
-                            ->addActionLabel('Satır ekle')
+                            ->itemLabel(function (?array $state): string {
+                                $name = trim((string) ($state['position_name'] ?? ''));
+                                $label = $name !== '' ? $name : 'Yeni konum';
+                                $count = is_array($state['product_ids'] ?? null) ? count($state['product_ids']) : 0;
+                                if ($count > 0) {
+                                    $label .= ' · '.$count.' ürün';
+                                } else {
+                                    $label .= ' · ürün atanmamış';
+                                }
+
+                                return $label;
+                            })
+                            ->collapsed()
+                            ->collapsible()
+                            ->cloneable(false)
                             ->reorderableWithDragAndDrop()
-                            ->collapsible(false)
-                            ->cloneable(false),
+                            ->defaultItems(0)
+                            ->addActionLabel('Konum satırı ekle')
+                            ->extraAttributes(['class' => 'ni-customization-rows-repeater']),
                     ]),
             ])
             ->statePath('data');
@@ -344,6 +354,11 @@ class ManageProductCustomization extends Page implements HasForms
                 if ($model) {
                     $model->update($attrs);
                     $keptRowIds[] = $model->id;
+                    if (ProductCustomizationRow::productPivotTableExists()) {
+                        $model->products()->sync(
+                            collect($row['product_ids'] ?? [])->map(fn ($id): int => (int) $id)->filter()->all()
+                        );
+                    }
                     $sort++;
 
                     continue;
@@ -351,6 +366,11 @@ class ManageProductCustomization extends Page implements HasForms
             }
             $model = ProductCustomizationRow::query()->create($attrs);
             $keptRowIds[] = $model->id;
+            if (ProductCustomizationRow::productPivotTableExists()) {
+                $model->products()->sync(
+                    collect($row['product_ids'] ?? [])->map(fn ($id): int => (int) $id)->filter()->all()
+                );
+            }
             $sort++;
         }
         ProductCustomizationRow::query()

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class ProductCustomizationRow extends Model
 {
@@ -29,13 +31,46 @@ class ProductCustomizationRow extends Model
         ];
     }
 
-    /** @return Collection<int, static> */
-    public static function activeOrdered(): Collection
+    public function products()
     {
-        return static::query()
+        return $this->belongsToMany(
+            Product::class,
+            'product_customization_row_product',
+            'product_customization_row_id',
+            'product_id',
+        )->withTimestamps();
+    }
+
+    public static function productPivotTableExists(): bool
+    {
+        return Schema::hasTable('product_customization_row_product');
+    }
+
+    /** Yalnızca verilen ürüne açıkça atanmış satırlar. */
+    public function scopeVisibleForProduct(Builder $query, ?int $productId): Builder
+    {
+        if (! static::productPivotTableExists() || $productId === null) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->whereHas('products', fn (Builder $p) => $p->whereKey($productId));
+    }
+
+    /** @return Collection<int, static> */
+    public static function activeOrdered(?int $productId = null): Collection
+    {
+        $query = static::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+            ->orderBy('id');
+
+        if ($productId !== null && static::productPivotTableExists()) {
+            $query->visibleForProduct($productId);
+        } elseif (static::productPivotTableExists()) {
+            // Pivot varken ürün belirtilmeden mağaza satırı istenmez.
+            $query->whereRaw('0 = 1');
+        }
+
+        return $query->get();
     }
 }

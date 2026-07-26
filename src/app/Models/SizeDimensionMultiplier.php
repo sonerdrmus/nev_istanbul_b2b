@@ -10,6 +10,7 @@ class SizeDimensionMultiplier extends Model
     use HasDimensionMultiplierAttributes;
 
     protected $fillable = [
+        'product_id',
         'print_technique_slug',
         'size_label',
         'width',
@@ -24,6 +25,7 @@ class SizeDimensionMultiplier extends Model
     protected function casts(): array
     {
         return [
+            'product_id' => 'integer',
             'width' => 'decimal:2',
             'height' => 'decimal:2',
             'auto_multiplier' => 'decimal:2',
@@ -31,5 +33,10 @@ class SizeDimensionMultiplier extends Model
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 }

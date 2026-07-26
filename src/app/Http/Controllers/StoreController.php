@@ -91,7 +91,7 @@ class StoreController extends Controller
             return collect();
         }
         $productIds = array_unique(array_column($cart, 'product_id'));
-        $products = Product::with(['company', 'currency'])->whereIn('id', $productIds)->get()->keyBy('id');
+        $products = Product::with(['company', 'currency', 'priceTiers'])->whereIn('id', $productIds)->get()->keyBy('id');
         $items = collect();
         $sizeMultiplierMap = $this->buildSizeValueMultiplierMap();
         foreach ($cart as $key => $item) {
@@ -100,7 +100,6 @@ class StoreController extends Controller
                 continue;
             }
             $qty = (int) $item['quantity'];
-            $productCurrency = $product->currency ?? Currency::getDefault();
             $customerGroupId = auth()->check() && auth()->user()->company?->customer_group_id
                 ? (int) auth()->user()->company->customer_group_id
                 : 1;
@@ -108,9 +107,7 @@ class StoreController extends Controller
             $discountUnitTry = $product->getDiscountUnitPriceInTRY($qty, $customerGroupId);
             $unitTry = $discountUnitTry !== null
                 ? $discountUnitTry
-                : ($productCurrency && $productCurrency->code !== 'TRY'
-                    ? $productCurrency->convertToTRY((float) $product->price)
-                    : (float) $product->price);
+                : $product->resolveListUnitPriceInTRY($qty);
 
             $discountPercent = $this->getCustomerDiscountPercent();
             if ($discountPercent !== null && $discountPercent > 0) {
@@ -288,7 +285,9 @@ class StoreController extends Controller
             'company',
             'category.parent',
             'currency',
+            'priceTiers',
             'productImages',
+            'customizationRows' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')->orderBy('id'),
             'variations.options' => fn ($q) => $q->with([
                 'interfaceColorVariation.fabricTypeVariation',
                 'interfaceColorVariation.fabricTypeVariations',
@@ -301,6 +300,7 @@ class StoreController extends Controller
                 'sizeTable.columns',
             ]),
         ]);
+        $this->filterFabricVariationOptionsForProduct($product);
         $product->setRelation('variations', ProductVariationFlowSteps::topologicallySorted($product->variations));
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
@@ -316,13 +316,38 @@ class StoreController extends Controller
 
         $sizeTables = SizeTable::with('columns')->orderBy('sort_order')->get();
         $productCustomization = ($product->customization_enabled ?? true)
-            ? ProductCustomizationCatalog::forStore()
-            : ['rows' => [], 'print_techniques' => [], 'default_print_slug' => 'emprime', 'max_color_count' => 7];
-        $dimensionMultipliersByPrint = DimensionMultiplierCatalog::groupedForStore();
+            ? ProductCustomizationCatalog::forStore($product)
+            : ['rows' => collect(), 'print_techniques' => [], 'default_print_slug' => 'emprime', 'max_color_count' => 7];
+        $dimensionMultipliersByPrint = DimensionMultiplierCatalog::groupedForStore($product);
         $packagingCatalog = PackagingPreferenceCatalog::forStore();
         $deliveryCatalog = DeliveryMethodCatalog::forStore();
 
         return view('store.product', compact('product', 'canSeePrices', 'selectedCurrency', 'currencies', 'customerDiscountPercent', 'customerGroupId', 'sizeTables', 'productCustomization', 'dimensionMultipliersByPrint', 'packagingCatalog', 'deliveryCatalog'));
+    }
+
+    /**
+     * "Kumaş türü" varyasyonu seçeneklerini yalnızca Varyasyon yönetiminde bu ürüne
+     * atanmış kumaşları gösterecek şekilde filtreler.
+     */
+    private function filterFabricVariationOptionsForProduct(Product $product): void
+    {
+        $hiddenFabricIds = $product->hiddenFabricTypeVariationIds();
+        if ($hiddenFabricIds === []) {
+            return;
+        }
+
+        foreach ($product->variations as $variation) {
+            if ((string) $variation->type !== 'fabric') {
+                continue;
+            }
+
+            $filtered = $variation->options->reject(
+                fn ($option): bool => $option->interface_fabric_type_variation_id !== null
+                    && in_array((int) $option->interface_fabric_type_variation_id, $hiddenFabricIds, true)
+            )->values();
+
+            $variation->setRelation('options', $filtered);
+        }
     }
 
     /** Header arama için: 3+ karakterde ürün listesi (görsel + isim) JSON döner. */

@@ -14,7 +14,7 @@ final class ColorDimensionMultiplierCatalog
     /**
      * @return list<array{color_count: int, multiplier_price: float}>
      */
-    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null): array
+    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
         if (! Schema::hasTable('color_dimension_multipliers')) {
             return [];
@@ -25,7 +25,7 @@ final class ColorDimensionMultiplierCatalog
             return [];
         }
 
-        return ColorDimensionMultiplier::activeOrdered($slug)
+        return ColorDimensionMultiplier::activeOrdered($slug, $productId)
             ->map(fn (ColorDimensionMultiplier $row): array => [
                 'color_count' => (int) $row->color_count,
                 'multiplier_price' => round((float) $row->multiplier_price, 4),
@@ -37,13 +37,13 @@ final class ColorDimensionMultiplierCatalog
     /**
      * @return array{color_count: int, multiplier_price: float}|null
      */
-    public static function matchRowForColorCount(?int $colorCount, ?string $printTechniqueSlug = null): ?array
+    public static function matchRowForColorCount(?int $colorCount, ?string $printTechniqueSlug = null, ?int $productId = null): ?array
     {
         if ($colorCount === null || $colorCount <= 0) {
             return null;
         }
 
-        foreach (self::rowsForStoreMatcher($printTechniqueSlug) as $row) {
+        foreach (self::rowsForStoreMatcher($printTechniqueSlug, $productId) as $row) {
             if ($row['color_count'] === $colorCount) {
                 return $row;
             }

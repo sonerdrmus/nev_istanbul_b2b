@@ -15,7 +15,7 @@ final class SizeDimensionMultiplierCatalog
      *
      * @return list<array{size_label: string, ebat_cm2: float, fixed_multiplier: string|null, extra_multiplier: float}>
      */
-    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null): array
+    public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
         if (! Schema::hasTable('size_dimension_multipliers')) {
             return [];
@@ -23,7 +23,7 @@ final class SizeDimensionMultiplierCatalog
 
         $slug = self::resolvePrintTechniqueSlug($printTechniqueSlug);
 
-        return SizeDimensionMultiplier::activeOrdered($slug)
+        return SizeDimensionMultiplier::activeOrdered($slug, $productId)
             ->map(fn (SizeDimensionMultiplier $row): array => [
                 'size_label' => (string) $row->size_label,
                 'ebat_cm2' => round((float) $row->auto_multiplier, 2),
@@ -39,13 +39,13 @@ final class SizeDimensionMultiplierCatalog
     /**
      * @return array{size_label: string, ebat_cm2: float, fixed_multiplier: string|null, extra_multiplier: float}|null
      */
-    public static function matchRowForAreaCm2(?float $areaCm2, ?string $printTechniqueSlug = null): ?array
+    public static function matchRowForAreaCm2(?float $areaCm2, ?string $printTechniqueSlug = null, ?int $productId = null): ?array
     {
         if ($areaCm2 === null || $areaCm2 <= 0) {
             return null;
         }
 
-        $rows = self::rowsForStoreMatcher($printTechniqueSlug);
+        $rows = self::rowsForStoreMatcher($printTechniqueSlug, $productId);
         if ($rows === []) {
             return null;
         }
@@ -65,13 +65,13 @@ final class SizeDimensionMultiplierCatalog
      * Hesaplanan cm² için: Ebat cm² değeri alanı karşılayan en küçük (≥ alan) EBAT.
      * Örn. 50,4 cm² → A8 (31) yetmez, A7 (63) yeter → A7.
      */
-    public static function matchEbatLabelForAreaCm2(?float $areaCm2, ?string $printTechniqueSlug = null): ?string
+    public static function matchEbatLabelForAreaCm2(?float $areaCm2, ?string $printTechniqueSlug = null, ?int $productId = null): ?string
     {
         if ($areaCm2 === null || $areaCm2 <= 0) {
             return null;
         }
 
-        $matched = self::matchRowForAreaCm2($areaCm2, $printTechniqueSlug);
+        $matched = self::matchRowForAreaCm2($areaCm2, $printTechniqueSlug, $productId);
 
         return $matched['size_label'] ?? null;
     }
