@@ -130,17 +130,21 @@ class StoreController extends Controller
                 $pricingWeight = (float) array_sum(array_map('intval', $sizeQuantities));
             }
 
-            $printTry = is_array($variationData)
+            $printUnitTry = is_array($variationData)
                 ? ProductCustomizationPrintTotal::tryFromVariationData($variationData)
+                : 0.0;
+            $printLineTry = is_array($variationData)
+                ? ProductCustomizationPrintTotal::lineTotalTryFromVariationData($variationData, $qty)
                 : 0.0;
 
             $items->push((object) [
                 'product' => $product,
                 'quantity' => $qty,
-                'subtotal' => ($unitTry * $pricingWeight) + $printTry,
+                'subtotal' => ($unitTry * $pricingWeight) + $printLineTry,
                 'cart_key' => $key,
                 'unit_price_try' => $unitTry,
-                'print_total_try' => $printTry,
+                'print_total_try' => $printUnitTry,
+                'print_line_total_try' => $printLineTry,
                 'variation_data' => $item['variation_data'] ?? null,
                 'size_quantities' => $item['size_quantities'] ?? null,
                 'quick_order' => $item['quick_order'] ?? null,

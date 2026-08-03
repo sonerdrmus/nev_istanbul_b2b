@@ -4,11 +4,14 @@ namespace App\Support;
 
 /**
  * Sepet / sipariş satırına eklenecek baskı (ürün özelleştirme) toplamı (TRY).
+ *
+ * tryFromVariationData: birim (adet başına) baskı toplamı.
+ * lineTotalTryFromVariationData: birim × sipariş adedi.
  */
 final class ProductCustomizationPrintTotal
 {
     /**
-     * variation_data içindeki product_customization_table satırlarından baskı toplamını okur.
+     * variation_data içindeki product_customization_table satırlarından birim baskı toplamını okur.
      */
     public static function tryFromVariationData(mixed $variationData): float
     {
@@ -43,5 +46,18 @@ final class ProductCustomizationPrintTotal
         }
 
         return $hasAny ? max(0.0, round($sum, 4)) : 0.0;
+    }
+
+    /**
+     * Birim baskı toplamı × sipariş adedi (sipariş/satır tutarına eklenecek tutar).
+     */
+    public static function lineTotalTryFromVariationData(mixed $variationData, int $orderQuantity): float
+    {
+        $unit = self::tryFromVariationData($variationData);
+        if ($unit <= 0.0 || $orderQuantity < 1) {
+            return 0.0;
+        }
+
+        return max(0.0, round($unit * $orderQuantity, 4));
     }
 }

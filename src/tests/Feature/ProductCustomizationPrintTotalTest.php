@@ -48,4 +48,18 @@ class ProductCustomizationPrintTotalTest extends TestCase
 
         $this->assertSame(0.0, $total);
     }
+
+    public function test_line_total_multiplies_by_order_quantity(): void
+    {
+        $variation = [
+            'product_customization' => 'completed',
+            'product_customization_table' => [
+                'print_total_try' => 72.60,
+            ],
+        ];
+
+        $this->assertEqualsWithDelta(72.60, ProductCustomizationPrintTotal::tryFromVariationData($variation), 0.001);
+        $this->assertEqualsWithDelta(726.0, ProductCustomizationPrintTotal::lineTotalTryFromVariationData($variation, 10), 0.001);
+        $this->assertSame(0.0, ProductCustomizationPrintTotal::lineTotalTryFromVariationData($variation, 0));
+    }
 }

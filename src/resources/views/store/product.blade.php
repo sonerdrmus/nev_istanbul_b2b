@@ -997,6 +997,8 @@
                 'summary_variation_mult_total' => __('store.product.summary_variation_mult_total'),
                 'summary_packaging_extra' => __('store.product.summary_packaging_extra'),
                 'summary_print_total' => __('store.product.summary_print_total'),
+                'summary_print_order_total' => __('store.product.summary_print_order_total'),
+                'summary_print_times_qty' => __('store.product.summary_print_times_qty'),
                 'summary_price_calc' => __('store.product.summary_price_calc'),
                 'summary_price_formula' => __('store.product.summary_price_formula'),
                 'summary_price_formula_with_pack' => __('store.product.summary_price_formula_with_pack'),
@@ -1031,6 +1033,8 @@
                 'customization_total_price_formula' => __('store.product.customization_total_price_formula'),
                 'customization_total_price_formula_no_color' => __('store.product.customization_total_price_formula_no_color'),
                 'customization_section_grand_total' => __('store.product.customization_section_grand_total'),
+                'customization_print_order_formula' => __('store.product.customization_print_order_formula'),
+                'customization_print_order_hint' => __('store.product.customization_print_order_hint'),
                 'customization_notes_label' => __('store.product.customization_panel_title'),
                 'skip_customization' => __('store.product.skip_customization'),
                 'warn_customization_dims_title' => __('store.product.warn_customization_dims_title'),
@@ -1910,6 +1914,17 @@
                                 html += '<p class="mt-1.5 text-xs font-medium text-primary-800">' +
                                     escapeHtml(grandLbl) + ': ' + escapeHtml(grandDisp) +
                                     '</p>';
+                                var orderQty = Math.max(0, parseInt(getOrderQuantityForMultipliers(), 10) || 0);
+                                if (orderQty > 0) {
+                                    var lineDisp = formatStoreCurrencyAmount(grandTry * orderQty) || '—';
+                                    var formulaTpl = PU.customization_print_order_formula || ':print × :qty adet = :total';
+                                    var formula = formulaTpl
+                                        .replace(':print', grandDisp)
+                                        .replace(':qty', String(orderQty))
+                                        .replace(':total', lineDisp);
+                                    html += '<p class="mt-0.5 text-[11px] font-medium text-emerald-800 tabular-nums">' +
+                                        escapeHtml(formula) + '</p>';
+                                }
                             }
                         }
                         if (txt) {
@@ -2149,10 +2164,28 @@
                         }
                         var label = PU.customization_section_grand_total || 'Baskı toplamı';
                         var display = formatStoreCurrencyAmount(sumTry) || '—';
+                        var orderQty = Math.max(0, parseInt(getOrderQuantityForMultipliers(), 10) || 0);
+                        var lineTry = sumTry * orderQty;
+                        var lineDisplay = formatStoreCurrencyAmount(lineTry) || '—';
+                        var formulaHtml = '';
+                        if (orderQty > 0) {
+                            var formulaTpl = PU.customization_print_order_formula || ':print × :qty adet = :total';
+                            var formula = formulaTpl
+                                .replace(':print', display)
+                                .replace(':qty', String(orderQty))
+                                .replace(':total', lineDisplay);
+                            var hint = PU.customization_print_order_hint || '';
+                            formulaHtml =
+                                '<p class="mt-2 text-xs font-medium text-emerald-900 tabular-nums">' + escapeHtml(formula) + '</p>' +
+                                (hint ? '<p class="mt-0.5 text-[11px] text-slate-500">' + escapeHtml(hint) + '</p>' : '');
+                        }
                         return '<div class="border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
-                            '<div class="flex items-center justify-between gap-3 rounded-xl border border-primary-200/80 bg-gradient-to-r from-primary-50 to-emerald-50/70 px-4 py-3.5 shadow-sm">' +
+                            '<div class="rounded-xl border border-primary-200/80 bg-gradient-to-r from-primary-50 to-emerald-50/70 px-4 py-3.5 shadow-sm">' +
+                            '<div class="flex items-center justify-between gap-3">' +
                             '<span class="text-sm font-semibold text-slate-800">' + escapeHtml(label) + '</span>' +
                             '<span class="text-xl font-bold text-primary-900">' + escapeHtml(display) + '</span>' +
+                            '</div>' +
+                            formulaHtml +
                             '</div></div>';
                     }
 
@@ -2197,10 +2230,12 @@
                                 hasPrintTotal = true;
                             }
                         });
+                        var orderQty = getOrderQuantityForMultipliers();
                         return enrichedRows.length ? {
                             rows: enrichedRows,
-                            order_quantity: getOrderQuantityForMultipliers(),
-                            print_total_try: hasPrintTotal ? printTotalTry : null
+                            order_quantity: orderQty,
+                            print_total_try: hasPrintTotal ? printTotalTry : null,
+                            print_line_total_try: hasPrintTotal && orderQty > 0 ? (printTotalTry * orderQty) : null
                         } : null;
                     }
 
@@ -2227,6 +2262,16 @@
                             }
                         });
                         return hasAny ? Math.max(0, sum) : 0;
+                    }
+
+                    /** Birim baskı toplamı × sipariş adedi (sipariş tutarına eklenen tutar). */
+                    function getCustomizationPrintLineTotalTry(orderQty) {
+                        var unitTry = getCustomizationPrintTotalTry();
+                        var qty = Math.max(0, parseInt(orderQty, 10) || 0);
+                        if (unitTry <= 0 || qty < 1) {
+                            return 0;
+                        }
+                        return unitTry * qty;
                     }
 
                     function isCustomizationSkipSelected() {
@@ -2462,10 +2507,13 @@
                         var unitBase = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
                         var varMult = getCombinedVariationMultiplier();
                         var packExtra = typeof getPackagingAdditiveExtraTry === 'function' ? getPackagingAdditiveExtraTry() : 0;
-                        var printTry = typeof getCustomizationPrintTotalTry === 'function' ? getCustomizationPrintTotalTry() : 0;
+                        var printUnitTry = typeof getCustomizationPrintTotalTry === 'function' ? getCustomizationPrintTotalTry() : 0;
+                        var printLineTry = typeof getCustomizationPrintLineTotalTry === 'function'
+                            ? getCustomizationPrintLineTotalTry(qty)
+                            : (printUnitTry * qty);
                         var unitWithVar = unitBase * varMult + packExtra;
                         var garmentLineTry = unitWithVar * pricingWeight;
-                        var lineTry = garmentLineTry + printTry;
+                        var lineTry = garmentLineTry + printLineTry;
                         var baseDisp = code === 'TRY' ? fallbackBaseTry : fallbackBaseTry * rate;
                         var unitDisp = code === 'TRY' ? unitBase : unitBase * rate;
                         var lineDisp = code === 'TRY' ? lineTry : lineTry * rate;
@@ -2500,9 +2548,17 @@
                                 .replace(':total', formatPrice(garmentDisp));
                         }
                         rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_price_calc || 'Fiyat hesabı') + '</td><td colspan="2" class="' + summaryValueCell + ' text-xs sm:text-sm text-slate-600 tabular-nums">' + escapeHtml(formula) + '</td></tr>');
-                        if (printTry > 0) {
-                            var printDisp = code === 'TRY' ? printTry : printTry * rate;
-                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        if (printUnitTry > 0) {
+                            var printUnitDisp = code === 'TRY' ? printUnitTry : printUnitTry * rate;
+                            var printLineDisp = code === 'TRY' ? printLineTry : printLineTry * rate;
+                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printUnitDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                            if (qty > 0) {
+                                var timesTpl = PU.summary_print_times_qty || ':print × :qty adet';
+                                var timesTxt = timesTpl
+                                    .replace(':print', formatPrice(printUnitDisp))
+                                    .replace(':qty', String(qty));
+                                rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_order_total || 'Baskı sipariş tutarı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printLineDisp)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(timesTxt) + '</td></tr>');
+                            }
                         }
                         rows.push('<tr class="bg-emerald-50/80"><td class="px-3 py-3 text-sm font-bold text-emerald-900 sm:px-4">' + escapeHtml(PU.summary_line_total || 'Satır toplamı') + '</td><td class="px-3 py-3 text-sm font-bold text-emerald-900 tabular-nums sm:px-4">' + escapeHtml(formatPrice(lineDisp)) + '</td><td class="px-3 py-3 text-sm text-emerald-700/70 text-right sm:px-4">—</td></tr>');
                     }
@@ -2666,8 +2722,10 @@
                         var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
                             ? Math.max(0, sizeInfo.pricingWeight)
                             : qty;
-                        var printTry = typeof getCustomizationPrintTotalTry === 'function' ? getCustomizationPrintTotalTry() : 0;
-                        var lineTry = (unitTry * pricingWeight) + printTry;
+                        var printLineTry = typeof getCustomizationPrintLineTotalTry === 'function'
+                            ? getCustomizationPrintLineTotalTry(qty)
+                            : 0;
+                        var lineTry = (unitTry * pricingWeight) + printLineTry;
                         var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
                         var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
                         priceEl.textContent = formatPrice(lineConverted);
@@ -2680,7 +2738,7 @@
                             var normalAttr = priceEl.getAttribute('data-normal-try');
                             var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
                             if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
-                                var oldLineTry = (normalTry * mult * pricingWeight) + printTry;
+                                var oldLineTry = (normalTry * mult * pricingWeight) + printLineTry;
                                 var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
                                 strikeEl.textContent = formatPrice(oldConverted);
                                 strikeEl.classList.remove('hidden');
