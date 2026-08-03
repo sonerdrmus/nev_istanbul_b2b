@@ -24,6 +24,8 @@
         }
     </script>
     <style>
+        /* Genel yazı boyutu: tarayıcı varsayılanı 16px + 2px */
+        html { font-size: 18px; }
         body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
