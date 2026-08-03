@@ -214,29 +214,15 @@
                     </span>
                     {{ __('store.product.variation_selected_heading') }}
                 </p>
-                <div class="overflow-hidden rounded-xl border border-slate-200/90 bg-slate-50/40">
-                    <style>
-                        #variation-summary-tbody tr.summary-customization-row td { padding: 0; border: 0; vertical-align: top; }
-                        #variation-summary-tbody .customization-summary-metric:nth-child(odd) { background: rgba(248, 250, 252, 0.65); }
-                        @media (min-width: 640px) {
-                            #variation-summary-tbody .customization-summary-metric { background: transparent; }
-                        }
-                    </style>
-                    <table class="w-full border-collapse text-sm" aria-label="{{ __('store.product.variation_summary_aria') }}">
-                        <thead>
-                            <tr class="border-b border-slate-200 bg-slate-100/80">
-                                <th scope="col" class="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-4">{{ __('store.product.option_column') }}</th>
-                                <th scope="col" class="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-4">{{ __('store.product.value_column') }}</th>
-                                <th scope="col" class="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:px-4 w-24 sm:w-28">{{ __('store.product.multiplier_column') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody id="variation-summary-tbody" class="divide-y divide-slate-100 bg-white">
-                            <tr>
-                                <td colspan="2" class="px-3 py-8 text-center text-sm text-slate-400 sm:px-4">{{ __('store.product.summary_select_prompt') }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div id="variation-summary-body" class="space-y-4" aria-label="{{ __('store.product.variation_summary_aria') }}" role="region">
+                    <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-400">{{ __('store.product.summary_select_prompt') }}</p>
                 </div>
+                <style>
+                    #variation-summary-body .customization-summary-metric:nth-child(odd) { background: rgba(248, 250, 252, 0.65); }
+                    @media (min-width: 640px) {
+                        #variation-summary-body .customization-summary-metric { background: transparent; }
+                    }
+                </style>
                 <div id="variation-label-artwork-notice" class="mt-3 hidden rounded-xl border-2 border-amber-400/90 bg-gradient-to-br from-amber-50 to-amber-100/80 px-4 py-3.5 shadow-sm ring-1 ring-amber-300/50" role="status" aria-live="polite">
                     <div class="flex gap-3">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm" aria-hidden="true">
@@ -999,6 +985,9 @@
                 'summary_print_total' => __('store.product.summary_print_total'),
                 'summary_print_order_total' => __('store.product.summary_print_order_total'),
                 'summary_print_times_qty' => __('store.product.summary_print_times_qty'),
+                'summary_section_choices' => __('store.product.summary_section_choices'),
+                'summary_section_quantities' => __('store.product.summary_section_quantities'),
+                'summary_section_pricing' => __('store.product.summary_section_pricing'),
                 'summary_price_calc' => __('store.product.summary_price_calc'),
                 'summary_price_formula' => __('store.product.summary_price_formula'),
                 'summary_price_formula_with_pack' => __('store.product.summary_price_formula_with_pack'),
@@ -2197,16 +2186,16 @@
                         var qtySummary = renderQuantityMultiplierSummaryHtml(enrichedRows);
                         var grandTotal = renderCustomizationGrandTotalHtml(enrichedRows);
 
-                        return '<div class="customization-summary-section border-t border-slate-200/90 bg-slate-50/30">' +
-                            (sec ? '<div class="flex items-center gap-2.5 border-b border-slate-200/80 bg-white/90 px-3.5 py-3 sm:px-4">' +
-                            '<span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white shadow-sm">' +
-                            '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>' +
+                        return '<section class="customization-summary-section overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                            (sec ? '<header class="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
+                            '<span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600 text-white shadow-sm">' +
+                            '<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>' +
                             '</span>' +
-                            '<p class="text-sm font-semibold text-slate-900">' + escapeHtml(sec) + '</p></div>' : '') +
+                            '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' + escapeHtml(sec) + '</h3></header>' : '') +
                             qtySummary +
-                            '<div class="space-y-2.5 p-3 sm:p-4">' + cards + '</div>' +
+                            '<div class="space-y-2.5 bg-slate-50/40 p-3 sm:p-4">' + cards + '</div>' +
                             grandTotal +
-                            '</div>';
+                            '</section>';
                     }
 
                     function getCustomizationTablePayload() {
@@ -2484,7 +2473,32 @@
                         return fmt.format(n);
                     }
 
-                    function appendPricingBreakdownSummaryRows(rows, sizeInfo, summaryRowClass, summaryLabelCell, summaryValueCell, summaryMultiplierCell, summaryEmptyMultiplierCell) {
+                    function summaryKvRowHtml(label, value, note, opts) {
+                        opts = opts || {};
+                        var isTotal = !!opts.isTotal;
+                        var isMuted = !!opts.isMuted;
+                        var rowClass = isTotal
+                            ? 'flex items-start justify-between gap-3 border-t border-emerald-200/70 bg-emerald-50/80 px-3.5 py-3.5 sm:px-4'
+                            : 'flex items-start justify-between gap-3 border-b border-slate-100/90 px-3.5 py-2.5 last:border-b-0 sm:px-4';
+                        var labelClass = isTotal
+                            ? 'text-sm font-bold text-emerald-900'
+                            : (isMuted ? 'text-xs font-medium text-slate-500' : 'text-sm font-medium text-slate-600');
+                        var valueClass = isTotal
+                            ? 'text-right text-base font-bold tabular-nums text-emerald-900'
+                            : 'text-right text-sm font-semibold tabular-nums text-slate-900';
+                        var noteHtml = note
+                            ? '<p class="mt-0.5 text-[11px] font-normal leading-snug text-slate-500 tabular-nums">' + escapeHtml(note) + '</p>'
+                            : '';
+                        return '<div class="' + rowClass + '">' +
+                            '<div class="min-w-0 flex-1 pr-2"><p class="' + labelClass + '">' + escapeHtml(label) + '</p>' + noteHtml + '</div>' +
+                            '<div class="shrink-0 ' + valueClass + '">' + escapeHtml(value) + '</div>' +
+                            '</div>';
+                    }
+
+                    function buildPricingBreakdownSectionHtml(sizeInfo) {
+                        if (!priceEl || typeof resolveUnitBaseTryForQty !== 'function') {
+                            return '';
+                        }
                         var qty = Math.max(0, parseInt(sizeInfo.total, 10) || 0);
                         var pricingWeight = typeof sizeInfo.pricingWeight === 'number' && !isNaN(sizeInfo.pricingWeight)
                             ? Math.max(0, sizeInfo.pricingWeight)
@@ -2494,14 +2508,6 @@
                                 return (sizeInfo.sizeQuantities[size] || 0) > 0
                                     && Math.abs((sizeInfo.sizeMultipliers[size] || 1) - 1) > 0.0001;
                             }));
-
-                        if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
-                            rows.push('<tr class="bg-slate-50/90"><td class="px-3 py-2.5 text-sm font-semibold text-slate-800 sm:px-4">' + escapeHtml(PU.summary_pricing_weight || 'Fiyatlandırma ağırlığı') + '</td><td class="px-3 py-2.5 text-sm font-semibold text-slate-800 tabular-nums sm:px-4">' + escapeHtml(formatPlainNumber(pricingWeight, 4)) + '</td><td class="' + summaryEmptyMultiplierCell + '">' + (hasSizeMultDetail ? escapeHtml('Σ qty×çarpan') : '—') + '</td></tr>');
-                        }
-
-                        if (!priceEl || typeof resolveUnitBaseTryForQty !== 'function') {
-                            return;
-                        }
 
                         var qtyMult = resolveQuantityPriceMultiplier(qty > 0 ? qty : 1);
                         var unitBase = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
@@ -2519,13 +2525,34 @@
                         var lineDisp = code === 'TRY' ? lineTry : lineTry * rate;
                         var garmentDisp = code === 'TRY' ? garmentLineTry : garmentLineTry * rate;
 
-                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_product_base_price || 'Ürün fiyatı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(baseDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
-                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_qty_multiplier || 'Sipariş miktarı çarpanı') + '</td><td class="' + summaryValueCell + '">' + escapeHtml(formatVariationMultiplier(qtyMult)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(qty > 0 ? ((PU.summary_qty_for_tier || 'Adet') + ': ' + qty) : '—') + '</td></tr>');
-                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_qty_unit_price || 'Miktara göre birim fiyat') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(unitDisp)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(formatPrice(baseDisp) + ' × ' + formatPlainNumber(qtyMult, 4)) + '</td></tr>');
-                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_variation_mult_total || 'Varyasyon çarpanları') + '</td><td class="' + summaryValueCell + '">' + escapeHtml(formatVariationMultiplier(varMult)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                        var items = [];
+                        if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
+                            items.push(summaryKvRowHtml(
+                                PU.summary_pricing_weight || 'Fiyatlandırma ağırlığı',
+                                formatPlainNumber(pricingWeight, 4),
+                                hasSizeMultDetail ? 'Σ qty×çarpan' : null
+                            ));
+                        }
+                        items.push(summaryKvRowHtml(PU.summary_product_base_price || 'Ürün fiyatı', formatPrice(baseDisp)));
+                        items.push(summaryKvRowHtml(
+                            PU.summary_qty_multiplier || 'Sipariş miktarı çarpanı',
+                            formatVariationMultiplier(qtyMult),
+                            qty > 0 ? ((PU.summary_qty_for_tier || 'Adet') + ': ' + qty) : null
+                        ));
+                        items.push(summaryKvRowHtml(
+                            PU.summary_qty_unit_price || 'Miktara göre birim fiyat',
+                            formatPrice(unitDisp),
+                            formatPrice(baseDisp) + ' × ' + formatPlainNumber(qtyMult, 4)
+                        ));
+                        if (Math.abs(varMult - 1) > 0.0001) {
+                            items.push(summaryKvRowHtml(
+                                PU.summary_variation_mult_total || 'Varyasyon çarpanları',
+                                formatVariationMultiplier(varMult)
+                            ));
+                        }
                         if (packExtra > 0) {
                             var packDisp = code === 'TRY' ? packExtra : packExtra * rate;
-                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_packaging_extra || 'Ambalaj ek ücreti') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(packDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                            items.push(summaryKvRowHtml(PU.summary_packaging_extra || 'Ambalaj ek ücreti', formatPrice(packDisp)));
                         }
                         var formulaTpl = PU.summary_price_formula || ':base × :qtymult × :varmult × :weight = :total';
                         var formula = formulaTpl
@@ -2547,20 +2574,35 @@
                                 .replace(':weight', formatPlainNumber(pricingWeight, 4))
                                 .replace(':total', formatPrice(garmentDisp));
                         }
-                        rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_price_calc || 'Fiyat hesabı') + '</td><td colspan="2" class="' + summaryValueCell + ' text-xs sm:text-sm text-slate-600 tabular-nums">' + escapeHtml(formula) + '</td></tr>');
+                        items.push(summaryKvRowHtml(PU.summary_price_calc || 'Fiyat hesabı', formatPrice(garmentDisp), formula, { isMuted: true }));
                         if (printUnitTry > 0) {
                             var printUnitDisp = code === 'TRY' ? printUnitTry : printUnitTry * rate;
                             var printLineDisp = code === 'TRY' ? printLineTry : printLineTry * rate;
-                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printUnitDisp)) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                            items.push(summaryKvRowHtml(
+                                PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı',
+                                formatPrice(printUnitDisp)
+                            ));
                             if (qty > 0) {
                                 var timesTpl = PU.summary_print_times_qty || ':print × :qty adet';
                                 var timesTxt = timesTpl
                                     .replace(':print', formatPrice(printUnitDisp))
                                     .replace(':qty', String(qty));
-                                rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.summary_print_order_total || 'Baskı sipariş tutarı') + '</td><td class="' + summaryValueCell + ' tabular-nums">' + escapeHtml(formatPrice(printLineDisp)) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(timesTxt) + '</td></tr>');
+                                items.push(summaryKvRowHtml(
+                                    PU.summary_print_order_total || 'Baskı sipariş tutarı',
+                                    formatPrice(printLineDisp),
+                                    timesTxt
+                                ));
                             }
                         }
-                        rows.push('<tr class="bg-emerald-50/80"><td class="px-3 py-3 text-sm font-bold text-emerald-900 sm:px-4">' + escapeHtml(PU.summary_line_total || 'Satır toplamı') + '</td><td class="px-3 py-3 text-sm font-bold text-emerald-900 tabular-nums sm:px-4">' + escapeHtml(formatPrice(lineDisp)) + '</td><td class="px-3 py-3 text-sm text-emerald-700/70 text-right sm:px-4">—</td></tr>');
+                        items.push(summaryKvRowHtml(PU.summary_line_total || 'Satır toplamı', formatPrice(lineDisp), null, { isTotal: true }));
+
+                        var title = PU.summary_section_pricing || 'Fiyat özeti';
+                        return '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                            '<header class="border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
+                            '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' + escapeHtml(title) + '</h3>' +
+                            '</header>' +
+                            '<div>' + items.join('') + '</div>' +
+                            '</section>';
                     }
 
                     /** data-price-delta: DB’deki price_delta = çarpan; ≤0 veya geçersiz = 1 */
@@ -3163,34 +3205,58 @@
                         updateSizeTotalDisplays();
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
                         updatePriceAndInput();
-                        var tbody = document.getElementById('variation-summary-tbody');
+                        var summaryBody = document.getElementById('variation-summary-body');
                         var warningEl = document.getElementById('variation-summary-warning');
                         var btn = document.getElementById('add-to-cart-btn');
                         var confirmCheckbox = document.getElementById('variation-confirm-checkbox');
                         var ordered = getSelectedOptionsInStepOrder();
                         var sizeInfo = getSizeQuantities();
-                        if (!tbody) {
+                        if (!summaryBody) {
                             syncMainGalleryFromVariations();
                             return;
                         }
-                        var summaryRowClass = 'transition-colors hover:bg-slate-50/60';
-                        var summaryLabelCell = 'align-top px-3 py-3 text-sm font-medium text-slate-700 sm:px-4';
-                        var summaryValueCell = 'px-3 py-3 text-sm text-slate-800 sm:px-4';
-                        var summaryMultiplierCell = 'px-3 py-3 text-sm text-slate-600 text-right tabular-nums sm:px-4';
-                        var summaryEmptyMultiplierCell = summaryMultiplierCell + ' text-slate-300';
-                        var rows = [];
-                        ordered.forEach(function(item) {
-                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(item.name) + '</td><td class="' + summaryValueCell + '">' + escapeHtml(item.value) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(formatVariationMultiplier(item.priceDelta)) + '</td></tr>');
-                        });
+
                         var custPayload = getCustomizationTablePayload();
                         var hasCustRows = !!(custPayload && custPayload.rows && custPayload.rows.length);
-                        if (hasCustRows) {
-                            rows.push('<tr class="summary-customization-row"><td colspan="3" class="p-0 border-0">' +
-                                renderCustomizationSummarySectionHtml(custPayload.rows) +
-                                '</td></tr>');
-                        }
-                        if (ordered.length > 0 || hasCustRows) {
+                        var emptyPrompt = '<p class="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-400">' +
+                            escapeHtml(PU.summary_select_prompt) + '</p>';
+
+                        if (ordered.length === 0 && !hasCustRows) {
+                            summaryBody.innerHTML = emptyPrompt;
+                        } else {
+                            var parts = [];
+
                             if (ordered.length > 0) {
+                                var choiceItems = ordered.map(function(item) {
+                                    var mult = parseFloat(item.priceDelta);
+                                    if (!isFinite(mult) || mult <= 0) mult = 1;
+                                    var showMult = Math.abs(mult - 1) > 0.0001;
+                                    var multBadge = showMult
+                                        ? '<span class="mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
+                                            escapeHtml(formatVariationMultiplier(mult)) + '</span>'
+                                        : '';
+                                    return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
+                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(item.name) + '</span>' +
+                                        '<div class="max-w-[62%] shrink-0 text-right sm:max-w-[70%]">' +
+                                        '<p class="text-sm font-semibold leading-snug text-slate-900 break-words">' + escapeHtml(item.value) + '</p>' +
+                                        multBadge +
+                                        '</div></li>';
+                                }).join('');
+                                parts.push(
+                                    '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                                    '<header class="border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
+                                    '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' +
+                                    escapeHtml(PU.summary_section_choices || 'Seçimler') + '</h3></header>' +
+                                    '<ul class="divide-y divide-slate-100">' + choiceItems + '</ul></section>'
+                                );
+                            }
+
+                            if (hasCustRows) {
+                                parts.push(renderCustomizationSummarySectionHtml(custPayload.rows));
+                            }
+
+                            if (ordered.length > 0) {
+                                var qtyRows = [];
                                 if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
                                     Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
                                         var qty = sizeInfo.sizeQuantities[size];
@@ -3201,27 +3267,51 @@
                                                 if (!isFinite(sizeMult) || sizeMult < 0) sizeMult = 1;
                                             }
                                             var sizeWeight = qty * sizeMult;
-                                            var sizeValue = qty + ' ' + (PU.units_suffix || 'adet');
+                                            var note = null;
                                             if (Math.abs(sizeMult - 1) > 0.0001) {
                                                 var sizeFormulaTpl = PU.summary_size_weight_formula || ':qty × :mult = :weight';
-                                                sizeValue += ' · ' + sizeFormulaTpl
+                                                note = sizeFormulaTpl
                                                     .replace(':qty', formatPlainNumber(qty, 0))
                                                     .replace(':mult', formatPlainNumber(sizeMult, 4))
                                                     .replace(':weight', formatPlainNumber(sizeWeight, 4));
                                             }
-                                            rows.push('<tr class="' + summaryRowClass + '"><td class="' + summaryLabelCell + '">' + escapeHtml(PU.size_row_prefix) + ' ' + escapeHtml(size) + '</td><td class="' + summaryValueCell + '">' + escapeHtml(sizeValue) + '</td><td class="' + summaryMultiplierCell + '">' + escapeHtml(formatVariationMultiplier(sizeMult)) + '</td></tr>');
+                                            qtyRows.push(summaryKvRowHtml(
+                                                (PU.size_row_prefix || 'Beden') + ' ' + size,
+                                                qty + ' ' + (PU.units_suffix || 'adet'),
+                                                note
+                                            ));
                                         }
                                     });
-                                    rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.summary_total_qty) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                                    qtyRows.push(summaryKvRowHtml(
+                                        PU.summary_total_qty || 'Toplam adet',
+                                        sizeInfo.total + ' ' + (PU.units_suffix || 'adet'),
+                                        null,
+                                        { isTotal: true }
+                                    ));
                                 } else {
-                                    rows.push('<tr class="bg-slate-100/70"><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + escapeHtml(PU.qty_row_label) + '</td><td class="px-3 py-3 text-sm font-semibold text-slate-900 sm:px-4">' + sizeInfo.total + ' ' + escapeHtml(PU.units_suffix) + '</td><td class="' + summaryEmptyMultiplierCell + '">—</td></tr>');
+                                    qtyRows.push(summaryKvRowHtml(
+                                        PU.qty_row_label || 'Adet',
+                                        sizeInfo.total + ' ' + (PU.units_suffix || 'adet'),
+                                        null,
+                                        { isTotal: true }
+                                    ));
                                 }
-                                appendPricingBreakdownSummaryRows(rows, sizeInfo, summaryRowClass, summaryLabelCell, summaryValueCell, summaryMultiplierCell, summaryEmptyMultiplierCell);
+                                parts.push(
+                                    '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                                    '<header class="border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
+                                    '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' +
+                                    escapeHtml(PU.summary_section_quantities || 'Adet dağılımı') + '</h3></header>' +
+                                    '<div>' + qtyRows.join('') + '</div></section>'
+                                );
+                                var pricingHtml = buildPricingBreakdownSectionHtml(sizeInfo);
+                                if (pricingHtml) {
+                                    parts.push(pricingHtml);
+                                }
                             }
-                            tbody.innerHTML = rows.join('');
-                        } else {
-                            tbody.innerHTML = '<tr><td colspan="3" class="px-3 py-8 text-center text-sm text-slate-400 sm:px-4">' + escapeHtml(PU.summary_select_prompt) + '</td></tr>';
+
+                            summaryBody.innerHTML = parts.join('');
                         }
+
                         var confirmWrap = document.getElementById('variation-confirm-wrap');
                         if (confirmWrap) {
                             confirmWrap.classList.toggle('hidden', ordered.length === 0);
