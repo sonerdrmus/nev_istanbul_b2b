@@ -260,12 +260,17 @@
                 @endif
                 @if($canSeePrices && $baseTry !== null && $selectedCurrency)
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
-                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5">
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-base-price" class="text-sm font-semibold text-slate-700">
                                 {{ $selectedCurrency->format($baseConverted) }}
                             </span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-600">{{ __('store.product.per_piece_price_label') }}</span>
+                        <div class="text-right">
+                            <span id="product-per-piece-price" class="text-sm font-semibold text-primary-800">—</span>
+                            <p id="product-per-piece-price-note" class="mt-0.5 hidden text-[11px] font-normal text-slate-500 tabular-nums"></p>
                         </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
@@ -988,6 +993,8 @@
                 'summary_section_choices' => __('store.product.summary_section_choices'),
                 'summary_section_quantities' => __('store.product.summary_section_quantities'),
                 'summary_section_pricing' => __('store.product.summary_section_pricing'),
+                'summary_unit_from_total' => __('store.product.summary_unit_from_total'),
+                'summary_unit_from_total_note' => __('store.product.summary_unit_from_total_note'),
                 'summary_price_calc' => __('store.product.summary_price_calc'),
                 'summary_price_formula' => __('store.product.summary_price_formula'),
                 'summary_price_formula_with_pack' => __('store.product.summary_price_formula_with_pack'),
@@ -2594,6 +2601,19 @@
                                 ));
                             }
                         }
+                        if (qty > 0) {
+                            var perPieceTry = lineTry / qty;
+                            var perPieceDisp = code === 'TRY' ? perPieceTry : perPieceTry * rate;
+                            var perPieceNoteTpl = PU.summary_unit_from_total_note || ':total ÷ :qty adet';
+                            var perPieceNote = perPieceNoteTpl
+                                .replace(':total', formatPrice(lineDisp))
+                                .replace(':qty', String(qty));
+                            items.push(summaryKvRowHtml(
+                                PU.summary_unit_from_total || PU.summary_product_base_price || 'Ürün fiyatı',
+                                formatPrice(perPieceDisp),
+                                perPieceNote
+                            ));
+                        }
                         items.push(summaryKvRowHtml(PU.summary_line_total || 'Satır toplamı', formatPrice(lineDisp), null, { isTotal: true }));
 
                         var title = PU.summary_section_pricing || 'Fiyat özeti';
@@ -2774,6 +2794,28 @@
                         var basePriceEl = document.getElementById('product-base-price');
                         if (basePriceEl) {
                             basePriceEl.textContent = formatPrice(baseConverted);
+                        }
+                        var perPieceEl = document.getElementById('product-per-piece-price');
+                        var perPieceNoteEl = document.getElementById('product-per-piece-price-note');
+                        if (perPieceEl) {
+                            if (qty > 0) {
+                                var perPieceTry = lineTry / qty;
+                                var perPieceConverted = code === 'TRY' ? perPieceTry : perPieceTry * rate;
+                                perPieceEl.textContent = formatPrice(perPieceConverted);
+                                if (perPieceNoteEl) {
+                                    var noteTpl = PU.summary_unit_from_total_note || ':total ÷ :qty adet';
+                                    perPieceNoteEl.textContent = noteTpl
+                                        .replace(':total', formatPrice(lineConverted))
+                                        .replace(':qty', String(qty));
+                                    perPieceNoteEl.classList.remove('hidden');
+                                }
+                            } else {
+                                perPieceEl.textContent = '—';
+                                if (perPieceNoteEl) {
+                                    perPieceNoteEl.textContent = '';
+                                    perPieceNoteEl.classList.add('hidden');
+                                }
+                            }
                         }
                         var strikeEl = document.getElementById('product-price-strike');
                         if (strikeEl) {
