@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabelTranslator;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariation extends Model
@@ -26,6 +27,11 @@ class ProductVariation extends Model
             'allows_multiple' => 'boolean',
             'depends_on_option_ids' => 'array',
         ];
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return CatalogLabelTranslator::label($this->name);
     }
 
     /** Bağlı varyasyondaki hangi seçeneklerde bu adım görünsün (boş = üst varyasyonda herhangi bir seçim). */

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabelTranslator;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariationOption extends Model
@@ -34,6 +35,11 @@ class ProductVariationOption extends Model
             'price_delta' => 'decimal:2',
             'parent_option_ids' => 'array',
         ];
+    }
+
+    public function getDisplayValueAttribute(): string
+    {
+        return CatalogLabelTranslator::label($this->option_value);
     }
 
     protected static function booted(): void

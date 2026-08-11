@@ -380,7 +380,7 @@
                                     <summary class="flex items-center justify-between gap-2 px-4 py-3 cursor-pointer list-none font-medium text-slate-800 hover:bg-slate-50 transition-colors select-none">
                                         <span class="flex items-center gap-2">
                                             @include('store.partials.category-icon', ['category' => $parent])
-                                            {{ $parent->name }}
+                                            {{ $parent->localized_name }}
                                         </span>
                                         <svg class="w-5 h-5 text-slate-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                     </summary>
@@ -388,7 +388,7 @@
                                         @foreach($parent->children as $child)
                                             <a href="{{ route('home', ['category' => $child->slug]) }}" class="flex items-center gap-2 px-4 py-2.5 pl-10 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 transition-colors">
                                                 @include('store.partials.category-icon', ['category' => $child])
-                                                {{ $child->name }}
+                                                {{ $child->localized_name }}
                                             </a>
                                         @endforeach
                                     </div>
@@ -397,7 +397,7 @@
                                 {{-- Alt kategorisi olmayan kök kategori: mobilde tek satır link --}}
                                 <a href="{{ route('home', ['category' => $parent->slug]) }}" class="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors text-slate-800 font-medium">
                                     @include('store.partials.category-icon', ['category' => $parent])
-                                    {{ $parent->name }}
+                                    {{ $parent->localized_name }}
                                 </a>
                             @endif
                         @endforeach
@@ -454,7 +454,7 @@
                             <ul class="space-y-2.5 text-sm">
                                 @isset($menuCategories)
                                 @foreach($menuCategories as $parent)
-                                    <li><a href="{{ route('home', ['category' => $parent->slug]) }}" class="text-slate-400 hover:text-white transition-colors">{{ $parent->name }}</a></li>
+                                    <li><a href="{{ route('home', ['category' => $parent->slug]) }}" class="text-slate-400 hover:text-white transition-colors">{{ $parent->localized_name }}</a></li>
                                 @endforeach
                                 @endisset
                                 <li><a href="{{ route('home') }}" class="text-slate-400 hover:text-primary-300 transition-colors font-medium">{{ __('store.mobile_cats.view_all') }} →</a></li>

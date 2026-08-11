@@ -2,7 +2,7 @@
 
 @section('store_content_full_width', '1')
 
-@section('title', $product->meta_title ?: $product->name)
+@section('title', $product->localized_meta_title ?: $product->localized_name)
 
 @push('meta')
     @if($product->meta_description)
@@ -21,13 +21,13 @@
             @if($product->category->parent)
                 <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">{{ __('store.product.breadcrumb_products') }}</a>
                 <span>/</span>
-                <span class="text-slate-700">{{ $product->category->parent->name }} › {{ $product->category->name }}</span>
+                <span class="text-slate-700">{{ $product->category->parent->localized_name }} › {{ $product->category->localized_name }}</span>
             @else
-                <a href="{{ route('home', ['category' => $product->category->slug]) }}" class="hover:text-primary-600 transition-colors">{{ $product->category->name }}</a>
+                <a href="{{ route('home', ['category' => $product->category->slug]) }}" class="hover:text-primary-600 transition-colors">{{ $product->category->localized_name }}</a>
             @endif
             <span>/</span>
         @endif
-        <span class="text-slate-900 font-medium truncate max-w-[200px] sm:max-w-none">{{ $product->name }}</span>
+        <span class="text-slate-900 font-medium truncate max-w-[200px] sm:max-w-none">{{ $product->localized_name }}</span>
     </nav>
 
     @php
@@ -68,7 +68,7 @@
                 <div id="product-gallery" class="relative w-full h-full flex items-center justify-center cursor-zoom-in" role="region" aria-label="{{ __('store.product.gallery_aria') }}" title="{{ __('store.product.zoom_hint') }}">
                     @foreach($displayImages as $idx => $url)
                         <div class="product-gallery-slide absolute inset-0 flex items-center justify-center transition-opacity duration-300 {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0' }}" data-slide-index="{{ $idx }}" data-image-url="{{ $url }}" aria-hidden="{{ $idx !== 0 }}">
-                            <img src="{{ $url }}" alt="{{ __('store.product.image_alt', ['name' => $product->name, 'num' => $idx + 1]) }}" class="max-w-full max-h-full w-auto h-auto object-contain">
+                            <img src="{{ $url }}" alt="{{ __('store.product.image_alt', ['name' => $product->localized_name, 'num' => $idx + 1]) }}" class="max-w-full max-h-full w-auto h-auto object-contain">
                         </div>
                     @endforeach
                     @if(count($displayImages) > 1)
@@ -98,7 +98,7 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     @endif
-                    <img id="lightbox-image" src="" alt="{{ $product->name }}" class="max-w-full max-h-[90vh] w-auto h-auto object-contain">
+                    <img id="lightbox-image" src="" alt="{{ $product->localized_name }}" class="max-w-full max-h-[90vh] w-auto h-auto object-contain">
                 </div>
             @else
                 <div class="w-full h-full flex items-center justify-center">
@@ -306,9 +306,9 @@
                 <p class="text-xs font-medium text-primary-600 uppercase tracking-wider mb-1">{{ $product->company->name }}</p>
             @endif
             @if($product->category)
-                <a href="{{ route('home', ['category' => $product->category->slug]) }}" class="inline-block text-sm text-slate-500 hover:text-primary-600 mb-2">{{ $product->category->name }}</a>
+                <a href="{{ route('home', ['category' => $product->category->slug]) }}" class="inline-block text-sm text-slate-500 hover:text-primary-600 mb-2">{{ $product->category->localized_name }}</a>
             @endif
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $product->name }}</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $product->localized_name }}</h1>
 
             @php $productStatus = $product->status ?? 'satista'; @endphp
             @if($productStatus !== 'satista')
@@ -333,7 +333,7 @@
 
             @if($product->description)
                 <div class="mt-6 prose prose-slate max-w-none text-slate-600 text-sm sm:text-base prose-img:rounded-lg">
-                    {!! $product->description !!}
+                    {!! $product->localized_description !!}
                 </div>
             @endif
 
@@ -547,21 +547,30 @@
                             align-items: center !important;
                             justify-content: center !important;
                             width: 100% !important;
-                            height: 44px !important;
-                            min-height: 44px !important;
-                            max-height: 44px !important;
-                            flex: 0 0 44px !important;
+                            height: 48px !important;
+                            min-height: 48px !important;
+                            max-height: 48px !important;
+                            flex: 0 0 48px !important;
                             box-sizing: border-box !important;
                             padding: 6px 8px !important;
                             margin: 0 !important;
                             background: #fff !important;
                             border-top: 1px solid #e8eef5 !important;
-                            font-size: 12px !important;
+                            font-size: 14px !important;
                             font-weight: 600 !important;
-                            line-height: 1.2 !important;
+                            line-height: 1.25 !important;
                             color: #334155 !important;
                             text-align: center !important;
                             overflow: hidden !important;
+                        }
+                        @media (min-width: 640px) {
+                            .vio-tile-label {
+                                height: 50px !important;
+                                min-height: 50px !important;
+                                max-height: 50px !important;
+                                flex-basis: 50px !important;
+                                font-size: 15px !important;
+                            }
                         }
                         .vio-tile-label > span {
                             display: -webkit-box !important;
@@ -616,42 +625,33 @@
                         .customization-position-preview-btn {
                             scroll-margin-top: 0.5rem;
                         }
-                        .customization-position-preview-btn:hover {
-                            transform: translateY(-1px);
-                        }
-                        .customization-position-preview-btn:active {
-                            transform: translateY(0);
-                        }
                         .customization-position-preview-btn .customization-position-preview-thumb img {
-                            transition: transform 0.25s ease;
+                            transition: transform 0.2s ease;
                         }
                         .customization-position-preview-btn:hover .customization-position-preview-thumb img {
-                            transform: scale(1.05);
+                            transform: scale(1.04);
                         }
                         .customization-row-card:has(input:checked) .customization-position-preview-btn {
-                            border-color: rgba(21, 95, 179, 0.35);
-                            background: linear-gradient(to bottom right, rgba(239, 246, 255, 0.95), rgba(255, 255, 255, 0.98));
-                            box-shadow: 0 2px 10px rgba(21, 95, 179, 0.08);
+                            border-color: rgba(21, 95, 179, 0.28);
+                            background: rgba(239, 246, 255, 0.65);
                         }
                         .customization-dim-wrap {
-                            border: 2px solid rgba(21, 95, 179, 0.22);
-                            background: linear-gradient(to bottom, rgba(239, 246, 255, 0.55), rgba(255, 255, 255, 0.95));
-                            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-                        }
-                        .customization-row-card:has(input:checked) .customization-dim-wrap {
-                            border-color: rgba(21, 95, 179, 0.42);
-                            background: linear-gradient(to bottom, rgba(219, 234, 254, 0.65), rgba(255, 255, 255, 0.98));
-                            box-shadow: 0 1px 8px rgba(21, 95, 179, 0.1);
+                            flex-wrap: nowrap;
+                            min-width: 0;
                         }
                         .customization-dim-en,
                         .customization-dim-boy {
-                            font-weight: 700;
-                            font-size: 1.0625rem;
+                            font-weight: 600;
+                            font-size: 0.9375rem;
                             letter-spacing: 0.01em;
                             color: #0f3c6f;
-                            border-width: 2px;
-                            border-color: rgba(21, 95, 179, 0.35);
+                            border-width: 1px;
+                            border-color: rgba(148, 163, 184, 0.75);
                             background-color: #fff;
+                        }
+                        .customization-row-card:has(input:checked) .customization-dim-en,
+                        .customization-row-card:has(input:checked) .customization-dim-boy {
+                            border-color: rgba(21, 95, 179, 0.4);
                         }
                         .customization-dim-en:focus,
                         .customization-dim-boy:focus {
@@ -659,9 +659,65 @@
                             color: #0b2a4d;
                         }
                         .customization-dim-separator {
-                            font-size: 1.125rem;
-                            font-weight: 800;
-                            color: #155fb3;
+                            font-size: 0.875rem;
+                            font-weight: 600;
+                            color: #64748b;
+                        }
+                        #product-customization-table .customization-row-body {
+                            display: flex;
+                            flex-wrap: nowrap;
+                            align-items: center;
+                            gap: 0.75rem;
+                            min-width: 0;
+                        }
+                        #product-customization-table .customization-row-body > * {
+                            min-width: 0;
+                        }
+                        #product-customization-table .customization-col-position {
+                            flex: 1.35 1 0;
+                            min-width: 9.5rem;
+                        }
+                        #product-customization-table .customization-col-dims {
+                            flex: 0 0 auto;
+                        }
+                        #product-customization-table .customization-col-print {
+                            flex: 1.1 1 0;
+                            min-width: 8.5rem;
+                        }
+                        #product-customization-table .customization-col-colors {
+                            flex: 0 0 4.75rem;
+                        }
+                        #product-customization-table .customization-header-row {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.75rem;
+                            min-width: 0;
+                        }
+                        #product-customization-table .customization-header-row .customization-col-position { flex: 1.35 1 0; min-width: 9.5rem; }
+                        #product-customization-table .customization-header-row .customization-col-dims { flex: 0 0 auto; width: 9.75rem; text-align: center; }
+                        #product-customization-table .customization-header-row .customization-col-print { flex: 1.1 1 0; min-width: 8.5rem; }
+                        #product-customization-table .customization-header-row .customization-col-colors { flex: 0 0 4.75rem; }
+                        @media (max-width: 639px) {
+                            #product-customization-table .customization-row-body {
+                                flex-wrap: wrap;
+                                gap: 0.65rem 0.75rem;
+                            }
+                            #product-customization-table .customization-col-position {
+                                flex: 1 1 100%;
+                                min-width: 0;
+                            }
+                            #product-customization-table .customization-col-dims,
+                            #product-customization-table .customization-col-print,
+                            #product-customization-table .customization-col-colors {
+                                flex: 1 1 auto;
+                                min-width: 0;
+                            }
+                            #product-customization-table .customization-col-dims {
+                                flex: 0 0 auto;
+                            }
+                            #product-customization-table .customization-col-colors {
+                                flex: 0 0 4.5rem;
+                            }
                         }
                         .customization-summary-metric-dim .customization-summary-dim-value {
                             font-size: 1.0625rem;
@@ -749,18 +805,18 @@
                                             <div class="w-0.5 flex-1 min-h-[6px] -mt-0.5 -mb-4 pb-4 bg-slate-200 rounded-full self-center" aria-hidden="true"></div>
                                         </div>
                                         <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
-                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $panelStepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $panelStepIndex }}" aria-label="{{ __('store.product.variation_pick_aria', ['name' => $variation->name]) }}">
+                                            <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors {{ $panelStepIndex === 0 ? 'bg-primary-50/90 border-primary-100/80' : '' }} focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $panelStepIndex }}" aria-label="{{ __('store.product.variation_pick_aria', ['name' => $variation->display_name]) }}">
                                                 <span class="variation-step-name flex flex-wrap items-center gap-2 text-sm sm:text-base font-semibold text-slate-800">
-                                                    <span>{{ $variation->name }}</span>
+                                                    <span>{{ $variation->display_name }}</span>
                                                     @if($variation->type === 'color' && $variation->options->count() > 0)
-                                                        <span class="variation-step-option-count inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">0 renk</span>
+                                                        <span class="variation-step-option-count inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">0 {{ __('store.product.customization_colors_unit') }}</span>
                                                     @endif
                                                 </span>
                                                 <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                             </button>
                                             <div class="variation-step-summary hidden flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
                                                 <div class="flex items-center gap-2 min-w-0">
-                                                    <span class="text-slate-500 text-sm">{{ $variation->name }}:</span>
+                                                    <span class="text-slate-500 text-sm">{{ $variation->display_name }}:</span>
                                                     <span class="variation-step-summary-value font-medium text-slate-800">—</span>
                                                 </div>
                                                 <button type="button" class="variation-step-change-btn text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.change') }}</button>
@@ -769,7 +825,7 @@
                                                 @if($hasVariationInfoText)
                                                     <div class="mb-3 flex justify-end">
                                                         @include('store.partials.variation-detail-info-btn', [
-                                                            'title' => $variation->name,
+                                                            'title' => $variation->display_name,
                                                             'text' => $variation->info_text,
                                                             'inline' => true,
                                                         ])
@@ -818,16 +874,16 @@
                                                 $customizationMaxColors = max(1, (int) ($productCustomization['max_color_count'] ?? 7));
                                                 $printTechniqueSlugCanonical = \App\Support\PrintTechniqueSlugResolver::canonicalMapForStoreSlugs($customizationPrintOptions);
                                             @endphp
-                                            <div id="product-customization-table" class="mb-5 space-y-3">
-                                                <div class="hidden items-center gap-3 text-left sm:flex sm:rounded-xl sm:bg-slate-100/90 sm:px-4 sm:py-2.5">
-                                                    <div class="flex w-11 shrink-0 justify-center" aria-hidden="true">
-                                                        <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">{{ __('store.product.customization_col_select') }}</span>
+                                            <div id="product-customization-table" class="mb-5 space-y-2">
+                                                <div class="hidden items-center gap-3 text-left sm:flex sm:px-1 sm:py-1.5">
+                                                    <div class="flex w-9 shrink-0 justify-center" aria-hidden="true">
+                                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('store.product.customization_col_select') }}</span>
                                                     </div>
-                                                    <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-3 sm:grid-cols-11 sm:items-center">
-                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_position') }}</div>
-                                                        <div class="text-xs font-bold uppercase tracking-wide text-primary-800 sm:col-span-3">{{ __('store.product.customization_col_dimensions') }}</div>
-                                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-3">{{ __('store.product.customization_col_print') }}</div>
-                                                        <div class="customization-colors-header text-[11px] font-semibold uppercase tracking-wide text-slate-600 sm:col-span-2">{{ __('store.product.customization_col_colors') }}</div>
+                                                    <div class="customization-header-row min-w-0 flex-1">
+                                                        <div class="customization-col-position text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('store.product.customization_col_position') }}</div>
+                                                        <div class="customization-col-dims text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('store.product.customization_col_dimensions') }}</div>
+                                                        <div class="customization-col-print text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('store.product.customization_col_print') }}</div>
+                                                        <div class="customization-col-colors customization-colors-header text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('store.product.customization_col_colors') }}</div>
                                                     </div>
                                                 </div>
                                                 @foreach ($productCustomization['rows'] ?? [] as $customRow)
@@ -850,70 +906,58 @@
                                                         $rowPositionImage = is_object($customRow) ? ($customRow->position_image ?? null) : ($customRow['position_image'] ?? null);
                                                         $rowPositionImageUrl = filled($rowPositionImage) ? \App\Support\MediaUrl::public($rowPositionImage) : '';
                                                     @endphp
-                                                    <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-3 sm:gap-4 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
-                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonum }}">
-                                                        <span class="pointer-events-none relative flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-gradient-to-b from-white to-slate-50 shadow-inner transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-gradient-to-br peer-checked:from-primary-500 peer-checked:to-primary-600 peer-checked:shadow-lg peer-checked:shadow-primary-500/40 peer-checked:ring-4 peer-checked:ring-primary-400/30 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                    <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-2.5 sm:gap-3 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
+                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                        <span class="pointer-events-none relative flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-white transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                                                         </span>
-                                                        <div class="min-w-0 flex-1 rounded-2xl border border-slate-200/90 bg-slate-50/40 p-3.5 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-white hover:shadow-md peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-500 sm:p-4 peer-checked:border-primary-500 peer-checked:bg-gradient-to-br peer-checked:from-primary-50 peer-checked:via-white peer-checked:to-emerald-50/40 peer-checked:shadow-lg peer-checked:shadow-primary-500/10 peer-checked:ring-2 peer-checked:ring-primary-400/25">
-                                                            <div class="grid grid-cols-1 gap-y-4 sm:grid-cols-11 sm:items-center sm:gap-x-3 sm:gap-y-0">
-                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
-                                                                    <span class="mb-1 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_position') }}</span>
+                                                        <div class="min-w-0 flex-1 rounded-xl border border-slate-200/90 bg-white px-3 py-2.5 transition-all duration-200 hover:border-slate-300 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-500 peer-checked:border-primary-400 peer-checked:bg-primary-50/40 peer-checked:ring-1 peer-checked:ring-primary-400/25">
+                                                            <div class="customization-row-body">
+                                                                <div class="customization-col-position flex min-w-0 items-center">
                                                                     @if($rowPositionImageUrl !== '')
                                                                         <button type="button"
-                                                                            class="customization-position-preview-btn group relative z-[1] flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/50 to-sky-50/40 p-2.5 text-left shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:border-sky-300/90 hover:from-sky-50/80 hover:to-blue-50/50 hover:shadow-md hover:ring-sky-200/70 focus:outline-none focus:ring-2 focus:ring-sky-400/45 focus:ring-offset-1 sm:p-3"
+                                                                            class="customization-position-preview-btn group relative z-[1] flex w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 py-1.5 text-left transition-colors duration-200 hover:border-slate-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                                                                             data-image-url="{{ $rowPositionImageUrl }}"
-                                                                            data-image-title="{{ $clKonum }}"
-                                                                            data-image-alt="{{ $clKonum }}"
+                                                                            data-image-title="{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}"
+                                                                            data-image-alt="{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}"
                                                                             aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonum]) }}">
-                                                                            <span class="customization-position-preview-thumb relative flex h-11 w-11 shrink-0 overflow-hidden rounded-lg ring-2 ring-white shadow-md sm:h-12 sm:w-12">
+                                                                            <span class="customization-position-preview-thumb relative flex h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-slate-200/80">
                                                                                 <img src="{{ $rowPositionImageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
-                                                                                <span class="absolute inset-0 flex items-center justify-center bg-slate-900/30 transition-colors group-hover:bg-slate-900/45" aria-hidden="true">
-                                                                                    <svg class="h-4 w-4 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                                                                <span class="absolute inset-0 flex items-center justify-center bg-slate-900/25 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true">
+                                                                                    <svg class="h-3.5 w-3.5 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                                                                 </span>
                                                                             </span>
                                                                             <span class="min-w-0 flex-1">
-                                                                                <span class="customization-konum-text block text-sm font-bold leading-snug tracking-tight text-slate-800 transition-colors group-hover:text-slate-900 sm:text-[0.9375rem]">{{ $clKonum }}</span>
-                                                                                <span class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-sky-700 transition-colors group-hover:text-sky-900 sm:text-xs">
-                                                                                    <svg class="h-3.5 w-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                                                    <span>{{ __('store.product.customization_position_inspect') }}</span>
-                                                                                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                                                </span>
+                                                                                <span class="customization-konum-text block truncate text-sm font-semibold leading-snug text-slate-800 transition-colors group-hover:text-slate-900">{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}</span>
+                                                                                <span class="mt-0.5 hidden text-[11px] font-medium text-slate-500 sm:block">{{ __('store.product.customization_position_inspect') }}</span>
                                                                             </span>
                                                                         </button>
                                                                     @else
-                                                                        <span class="customization-konum-text block text-center text-sm font-semibold leading-snug text-slate-600 transition-colors sm:text-left">{{ $clKonum }}</span>
+                                                                        <span class="customization-konum-text block text-sm font-semibold leading-snug text-slate-700">{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}</span>
                                                                     @endif
                                                                 </div>
-                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
-                                                                    <span class="mb-1.5 block text-center text-xs font-bold uppercase tracking-wide text-primary-700 sm:hidden">{{ __('store.product.customization_col_dimensions') }}</span>
-                                                                    <div class="customization-dim-wrap flex flex-wrap items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 sm:justify-center">
+                                                                <div class="customization-col-dims flex items-center">
+                                                                    <div class="customization-dim-wrap flex items-center gap-1.5">
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_en') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-11 w-[5.35rem] shrink-0 rounded-xl px-2 text-center tabular-nums leading-none shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/30" aria-label="{{ __('store.product.customization_dim_en') }}, {{ $clKonum }}">
-                                                                        <span class="customization-dim-separator flex h-11 shrink-0 select-none items-center justify-center" aria-hidden="true">×</span>
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_en') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                                        <span class="customization-dim-separator flex h-10 shrink-0 select-none items-center justify-center px-0.5" aria-hidden="true">×</span>
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_boy') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-11 w-[5.35rem] shrink-0 rounded-xl px-2 text-center tabular-nums leading-none shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/30" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ $clKonum }}">
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
                                                                     </div>
                                                                 </div>
-                                                                <div class="flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-3">
-                                                                    <span class="mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_print') }}</span>
-                                                                    <div class="flex justify-center">
-                                                                        <select name="customization_row_{{ $rowId }}_baski" data-default-baski="{{ $rowDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-xl border border-slate-300/90 bg-white px-3 text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_col_print') }}, {{ $clKonum }}">
-                                                                            @foreach ($customizationPrintOptions as $pSlug => $pLabel)
-                                                                                <option value="{{ $pSlug }}" {{ $pSlug === $rowDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
-                                                                            @endforeach
-                                                                        </select>
-                                                                    </div>
+                                                                <div class="customization-col-print flex items-center">
+                                                                    <select name="customization_row_{{ $rowId }}_baski" data-default-baski="{{ $rowDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2.5 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_print') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                                        @foreach ($customizationPrintOptions as $pSlug => $pLabel)
+                                                                            <option value="{{ $pSlug }}" {{ $pSlug === $rowDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
+                                                                        @endforeach
+                                                                    </select>
                                                                 </div>
-                                                                <div class="customization-color-field flex min-h-[2.75rem] min-w-0 flex-col justify-center sm:col-span-2 {{ $rowDefaultPrintCanonical !== 'emprime' ? 'hidden' : '' }}">
-                                                                    <span class="customization-color-label mb-1.5 block text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:hidden">{{ __('store.product.customization_col_colors') }}</span>
-                                                                    <div class="flex justify-center sm:justify-center">
-                                                                        <select name="customization_row_{{ $rowId }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full max-w-[7rem] rounded-xl border border-slate-300/90 bg-white px-3 text-center text-sm text-slate-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25 sm:max-w-[6.5rem]" aria-label="{{ __('store.product.customization_col_colors') }}, {{ $clKonum }}" @disabled($rowDefaultPrintCanonical !== 'emprime')>
-                                                                            @for ($ci = 1; $ci <= $customizationMaxColors; $ci++)
-                                                                                <option value="{{ $ci }}" {{ (int) $ci === (int) $defRenk ? 'selected' : '' }}>{{ $ci }}</option>
-                                                                            @endfor
-                                                                        </select>
-                                                                    </div>
+                                                                <div class="customization-col-colors customization-color-field flex items-center {{ $rowDefaultPrintCanonical !== 'emprime' ? 'invisible pointer-events-none' : '' }}">
+                                                                    <select name="customization_row_{{ $rowId }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2 text-center text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_colors') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}" @disabled($rowDefaultPrintCanonical !== 'emprime')>
+                                                                        @for ($ci = 1; $ci <= $customizationMaxColors; $ci++)
+                                                                            <option value="{{ $ci }}" {{ (int) $ci === (int) $defRenk ? 'selected' : '' }}>{{ $ci }}</option>
+                                                                        @endfor
+                                                                    </select>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1134,6 +1178,7 @@
                 'qty_row_label' => __('store.product.qty_row_label'),
                 'size_row_prefix' => __('store.product.size_row_prefix'),
                 'units_suffix' => __('store.product.units_suffix'),
+                'color_count_badge' => __('store.product.color_count_badge'),
                 'summary_pricing_weight' => __('store.product.summary_pricing_weight'),
                 'summary_size_weight_formula' => __('store.product.summary_size_weight_formula'),
                 'summary_product_base_price' => __('store.product.summary_product_base_price'),
@@ -1222,7 +1267,26 @@
                 'selectedExchangeRate' => (float) ($selectedCurrency->exchange_rate ?? 1),
                 'selectedDecimalPlaces' => (int) ($selectedCurrency->decimal_places ?? 2),
             ];
+            $storeLocaleBcp47 = match (app()->getLocale()) {
+                'en' => 'en-US',
+                'it' => 'it-IT',
+                default => 'tr-TR',
+            };
+            $storeCatalogLabels = [];
+            foreach ((array) config('catalog_labels.labels', []) as $src => $rows) {
+                $locale = app()->getLocale();
+                $translated = (string) $src;
+                if ($locale === 'en' && ! empty($rows['en'])) {
+                    $translated = (string) $rows['en'];
+                } elseif ($locale === 'it') {
+                    $translated = (string) ($rows['it'] ?? $rows['en'] ?? $src);
+                }
+                $storeCatalogLabels[(string) $src] = $translated;
+                $storeCatalogLabels[mb_strtolower((string) $src, 'UTF-8')] = $translated;
+            }
         @endphp
+        <script>window.storeLocale = @json($storeLocaleBcp47);</script>
+        <script>window.storeCatalogLabels = @json($storeCatalogLabels);</script>
         <script>window.storeProductUi = @json($storeProductUi);</script>
         <script>window.packagingCatalog = @json($packagingCatalog ?? []);</script>
         <script>window.deliveryCatalog = @json($deliveryCatalog ?? []);</script>
@@ -1233,6 +1297,21 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var PU = window.storeProductUi || {};
+                    function optionDisplayLabel(el) {
+                        if (!el) return '';
+                        var label = (el.getAttribute('data-option-label') || '').trim();
+                        if (label) return label;
+                        return (el.getAttribute('data-option') || '').trim();
+                    }
+                    function catalogLabel(text) {
+                        if (!text) return '';
+                        var map = window.storeCatalogLabels || {};
+                        if (Object.prototype.hasOwnProperty.call(map, text)) return map[text];
+                        var key = String(text).toLocaleLowerCase('tr-TR');
+                        if (Object.prototype.hasOwnProperty.call(map, key)) return map[key];
+                        return text;
+                    }
+
                     var variationInput = document.getElementById('variation-data-input');
                     var orderModeInput = document.getElementById('order-mode-input');
                     var orderModeTabs = document.querySelectorAll('.order-mode-tab');
@@ -1619,7 +1698,7 @@
                             return null;
                         }
                         var isWhole = Math.abs(cm2 - Math.round(cm2)) < 1e-9;
-                        return cm2.toLocaleString('tr-TR', {
+                        return cm2.toLocaleString((window.storeLocale || 'tr-TR'), {
                             minimumFractionDigits: isWhole ? 0 : 2,
                             maximumFractionDigits: isWhole ? 0 : 2
                         });
@@ -1676,7 +1755,10 @@
                         if (!printSel || !colorField) return;
                         var slug = String(printSel.value || '').trim() || 'emprime';
                         var showColor = printTechniqueUsesColorMultiplier(slug);
-                        colorField.classList.toggle('hidden', !showColor);
+                        // Keep column width stable across rows (invisible, not display:none).
+                        colorField.classList.toggle('invisible', !showColor);
+                        colorField.classList.toggle('pointer-events-none', !showColor);
+                        colorField.classList.remove('hidden');
                         colorField.setAttribute('aria-hidden', showColor ? 'false' : 'true');
                         if (colorSel) {
                             colorSel.disabled = !showColor;
@@ -1688,12 +1770,12 @@
                         if (!tbl) return;
                         var anyVisible = false;
                         tbl.querySelectorAll('.customization-color-field').forEach(function(el) {
-                            if (!el.classList.contains('hidden')) {
+                            if (!el.classList.contains('invisible') && !el.classList.contains('hidden')) {
                                 anyVisible = true;
                             }
                         });
                         tbl.querySelectorAll('.customization-colors-header').forEach(function(el) {
-                            el.classList.toggle('hidden', !anyVisible);
+                            el.classList.toggle('invisible', !anyVisible);
                         });
                     }
 
@@ -1744,7 +1826,7 @@
                             return '—';
                         }
                         var isWhole = Math.abs(n - Math.round(n)) < 1e-9;
-                        return n.toLocaleString('tr-TR', {
+                        return n.toLocaleString((window.storeLocale || 'tr-TR'), {
                             minimumFractionDigits: isWhole ? 0 : 2,
                             maximumFractionDigits: isWhole ? 0 : 4
                         });
@@ -2184,7 +2266,7 @@
                             return '—';
                         }
                         var isWhole = Math.abs(price - Math.round(price)) < 1e-9;
-                        return price.toLocaleString('tr-TR', {
+                        return price.toLocaleString((window.storeLocale || 'tr-TR'), {
                             minimumFractionDigits: isWhole ? 0 : 2,
                             maximumFractionDigits: isWhole ? 0 : 4
                         });
@@ -2279,7 +2361,7 @@
                         var blocks = slugs.map(function(slug) {
                             var ctx = buildQuantityContextForPrint(slug, orderQty);
                             var qtyVal = ctx.order_quantity > 0
-                                ? (ctx.order_quantity.toLocaleString('tr-TR') + ' ' + (PU.units_suffix || 'adet'))
+                                ? (ctx.order_quantity.toLocaleString((window.storeLocale || 'tr-TR')) + ' ' + (PU.units_suffix || 'adet'))
                                 : (PU.customization_qty_not_set || '—');
                             var rangeVal = ctx.quantity_range_label || '—';
                             var multVal = ctx.quantity_multiplier_price_display || '—';
@@ -2848,9 +2930,10 @@
                             if (item.payload !== undefined) {
                                 selected[item.name] = item.payload;
                             } else if (item.isMulti && item.values && item.values.length) {
-                                selected[item.name] = item.values;
+                                // values used for display may be labeled; keep raw data-option if available
+                                selected[item.name] = item.rawValues || item.values;
                             } else {
-                                selected[item.name] = item.value;
+                                selected[item.name] = item.rawValue || item.value;
                             }
                         });
                         return selected;
@@ -2874,17 +2957,19 @@
                             if (isMulti) {
                                 if (!confirmed) return;
                                 var values = [];
+                                var rawValues = [];
                                 var delta = 1;
                                 panel.querySelectorAll('.product-option.option-selected').forEach(function(sel) {
                                     if (sel.style.display === 'none') return;
-                                    values.push((sel.getAttribute('data-option') || '').trim());
+                                    values.push(optionDisplayLabel(sel));
+                                    rawValues.push((sel.getAttribute('data-option') || '').trim());
                                     delta *= variationMultiplierFromAttr(sel);
                                 });
                                 var displayVal = summary && summaryVal && !summary.classList.contains('hidden')
                                     ? (summaryVal.textContent || '').trim()
                                     : values.join(', ');
                                 if (values.length && displayVal && displayVal !== '—') {
-                                    list.push({ name: name, value: displayVal, values: values, priceDelta: delta, isMulti: true });
+                                    list.push({ name: name, value: displayVal, values: values, rawValues: rawValues, priceDelta: delta, isMulti: true });
                                 }
                             } else {
                                 if (!isProductVariationBlockComplete(panel)) return;
@@ -2918,8 +3003,8 @@
                                     value = (summaryVal.textContent || '').trim();
                                     if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false });
                                 } else if (sel && sel.style.display !== 'none') {
-                                    value = (sel.getAttribute('data-option') || '').trim();
-                                    if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false });
+                                    value = optionDisplayLabel(sel);
+                                    if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false, rawValue: (sel.getAttribute('data-option') || '').trim() });
                                 }
                             }
                         });
@@ -3164,7 +3249,7 @@
                             colorBlock.querySelectorAll('.product-option').forEach(function(opt) {
                                 if (opt.style.display !== 'none') visibleCount++;
                             });
-                            badge.textContent = visibleCount + ' renk';
+                            badge.textContent = (PU.color_count_badge || ':count colors').replace(':count', String(visibleCount));
                         });
                     }
 
@@ -3433,7 +3518,7 @@
                                             escapeHtml(formatVariationMultiplier(mult)) + '</span>'
                                         : '';
                                     return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
-                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(item.name) + '</span>' +
+                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(catalogLabel(item.name)) + '</span>' +
                                         '<div class="max-w-[62%] shrink-0 text-right sm:max-w-[70%]">' +
                                         '<p class="text-sm font-semibold leading-snug text-slate-900 break-words">' + escapeHtml(item.value) + '</p>' +
                                         multBadge +
@@ -4009,7 +4094,7 @@
                         if (!wrap || !sel) return;
                         var heading = wrap.querySelector('.label-type-suboptions-heading');
                         if (!heading) return;
-                        var optionName = (sel.getAttribute('data-option') || '').trim();
+                        var optionName = optionDisplayLabel(sel);
                         if (!optionName || !labelOptionNeedsSubOptions(sel)) {
                             heading.textContent = '';
                             return;
@@ -4431,7 +4516,7 @@
                         block.setAttribute('data-delivery-options-confirmed', '0');
                         wrap.classList.remove('hidden');
                         var heading = wrap.querySelector('.delivery-type-suboptions-heading');
-                        if (heading) heading.textContent = (sel.getAttribute('data-option') || '').trim();
+                        if (heading) heading.textContent = optionDisplayLabel(sel);
                         updateDeliverySubPanelEstimate(wrap, sel);
                         var list = wrap.querySelector('.delivery-type-suboptions-list');
                         if (list) {
@@ -5932,7 +6017,7 @@
                             if (!block || !validateSizeStepOrWarn()) return;
                             var info = getSizeQuantities();
                             var selectedBtn = block.querySelector('.product-option.option-selected');
-                            var label = selectedBtn ? (selectedBtn.getAttribute('data-option') || '').trim() : '';
+                            var label = selectedBtn ? optionDisplayLabel(selectedBtn) : '';
                             var summary = label;
                             if (info.total > 0) {
                                 summary += (summary ? ' · ' : '') + info.total + ' ' + (PU.units_suffix || '');

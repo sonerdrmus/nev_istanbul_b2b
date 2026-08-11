@@ -185,7 +185,9 @@ class StoreController extends Controller
         if ($searchQuery !== null && $searchQuery !== '') {
             $baseQuery->where(function ($q) use ($searchQuery) {
                 $q->where('name', 'like', '%' . $searchQuery . '%')
-                    ->orWhere('description', 'like', '%' . $searchQuery . '%');
+                    ->orWhere('name_en', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('description_en', 'like', '%' . $searchQuery . '%');
             });
         }
 
@@ -372,15 +374,17 @@ class StoreController extends Controller
             ->visibleInStore()
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', '%' . $q . '%')
-                    ->orWhere('description', 'like', '%' . $q . '%');
+                    ->orWhere('name_en', 'like', '%' . $q . '%')
+                    ->orWhere('description', 'like', '%' . $q . '%')
+                    ->orWhere('description_en', 'like', '%' . $q . '%');
             })
             ->orderBy('name')
             ->limit(10)
-            ->get(['id', 'name', 'slug', 'image']);
+            ->get(['id', 'name', 'name_en', 'slug', 'image']);
         $items = $products->map(function ($p) {
             return [
                 'id' => $p->id,
-                'name' => $p->name,
+                'name' => $p->localized_name,
                 'url' => route('store.product.show', $p),
                 'image' => $p->image ? MediaUrl::public($p->image) : null,
             ];
@@ -556,7 +560,7 @@ class StoreController extends Controller
                 if ($qty > 0) {
                     if ($qty < $minOrder) {
                         return redirect()->route('store.cart')->with('error', __('store.flash.min_qty_named', [
-                            'name' => $product?->name ?? __('store.generic.product'),
+                            'name' => $product?->localized_name ?? __('store.generic.product'),
                             'min' => $minOrder,
                         ]));
                     }

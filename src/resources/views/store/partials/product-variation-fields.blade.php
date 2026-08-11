@@ -1,3 +1,7 @@
+@php
+    $displayOptionValue = static fn ($option) => \App\Support\CatalogLabelTranslator::label(is_object($option) ? ($option->option_value ?? '') : (string) $option);
+    $displayCatalogLabel = static fn (?string $value) => \App\Support\CatalogLabelTranslator::label($value);
+@endphp
                                                 @if($variation->type === 'size_table')
                                                     @php $sizeTableOptionCount = $variation->options->count(); @endphp
                                                     @if($sizeTableOptionCount > 1)
@@ -8,7 +12,7 @@
                                                                     $linkedSizeTable = $option->sizeTable ?? $sizeTablesById->get($option->size_table_id);
                                                                     $sizeTableSlug = $linkedSizeTable?->slug ?? '';
                                                                     $optionDetailText = trim((string) ($option->info_text ?? ''));
-                                                                    $optionDetailTitle = $option->option_value;
+                                                                    $optionDetailTitle = $displayOptionValue($option);
                                                                     $hasOptionDetail = $optionDetailText !== '';
                                                                 @endphp
                                                                 @if($linkedSizeTable)
@@ -16,7 +20,7 @@
                                                                     <button type="button"
                                                                         class="product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]"
                                                                         data-variation="{{ $variation->name }}"
-                                                                        data-option="{{ $option->option_value }}"
+                                                                        data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                                         data-option-id="{{ $option->id }}"
                                                                         data-option-solo="1"
                                                                         data-size-table-slug="{{ $sizeTableSlug }}"
@@ -25,7 +29,7 @@
                                                                         data-price-delta="{{ (float) $option->price_delta }}"
                                                                         data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
                                                                         data-parent-option-ids="{{ json_encode($option->getParentOptionIdsList()) }}">
-                                                                        {{ $option->option_value }}
+                                                                        {{ $displayOptionValue($option) }}
                                                                     </button>
                                                                     @include('store.partials.variation-detail-info-btn', [
                                                                         'title' => $optionDetailTitle,
@@ -76,7 +80,7 @@
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
                                         @php
                                             $optionDetailText = trim((string) ($option->info_text ?? ''));
-                                            $optionDetailTitle = $option->option_value;
+                                            $optionDetailTitle = $displayOptionValue($option);
                                             $hasOptionDetail = $optionDetailText !== '';
                                             $colorFabricGroupIds = ($variation->type === 'color' && $option->interfaceColorVariation)
                                                 ? $option->interfaceColorVariation->resolveFabricTypeVariationIdsForStore()
@@ -102,7 +106,7 @@
                                             <button type="button"
                                                 class="{{ $optionClasses }} fabric-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
                                                 data-variation="{{ $variation->name }}"
-                                                data-option="{{ $option->option_value }}"
+                                                data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                 data-option-id="{{ $option->id }}"
                                                 data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
                                                 data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
@@ -145,7 +149,7 @@
                                             <button type="button"
                                                 class="{{ $optionClasses }} label-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
                                                 data-variation="{{ $variation->name }}"
-                                                data-option="{{ $option->option_value }}"
+                                                data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                 data-option-id="{{ $option->id }}"
                                                 data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
                                                 data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
@@ -155,20 +159,20 @@
                                                 data-packaging-preset-id="{{ $option->interface_packaging_preference_variation_id ?? '' }}"
                                                 data-packaging-slug="{{ $packagingPreset?->slug ?? '' }}"
                                                 data-packaging-requires-material="{{ $packagingRequiresMaterial ? '1' : '0' }}"
-                                                title="{{ $option->option_value }}">
+                                                title="{{ $displayOptionValue($option) }}">
                                                 <span class="label-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
                                                 <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">
                                                     @if($packagingImageUrl)
                                                         <span class="relative inline-block group/thumb shrink-0">
-                                                            <img src="{{ $packagingImageUrl }}" alt="{{ $option->option_value }}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-200/80">
-                                                            <span class="variation-zoom-btn absolute -top-1 -right-1 w-6 h-6 rounded-md bg-black/55 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer shadow-sm ring-1 ring-white/40 transition-all opacity-100 sm:opacity-0 sm:group-hover/thumb:opacity-100" data-image-url="{{ $packagingImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
+                                                            <img src="{{ $packagingImageUrl }}" alt="{{ $displayOptionValue($option) }}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-200/80">
+                                                            <span class="variation-zoom-btn absolute -top-1 -right-1 w-6 h-6 rounded-md bg-black/55 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer shadow-sm ring-1 ring-white/40 transition-all opacity-100 sm:opacity-0 sm:group-hover/thumb:opacity-100" data-image-url="{{ $packagingImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                             </span>
                                                         </span>
                                                     @endif
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $option->option_value }}</span>
+                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
                                                     </span>
                                                 </span>
                                             </button>
@@ -189,7 +193,7 @@
                                             <button type="button"
                                                 class="{{ $optionClasses }} label-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
                                                 data-variation="{{ $variation->name }}"
-                                                data-option="{{ $option->option_value }}"
+                                                data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                 data-option-id="{{ $option->id }}"
                                                 data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
                                                 data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
@@ -197,20 +201,20 @@
                                                 data-price-delta="{{ (float) $option->price_delta }}"
                                                 data-option-image-url="{{ $certificateImageUrl ?? '' }}"
                                                 data-certificate-preset-id="{{ $option->interface_certificate_variation_id ?? '' }}"
-                                                title="{{ $option->option_value }}">
+                                                title="{{ $displayOptionValue($option) }}">
                                                 <span class="label-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
                                                 <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">
                                                     @if($certificateImageUrl)
                                                         <span class="relative inline-block group/thumb shrink-0">
-                                                            <img src="{{ $certificateImageUrl }}" alt="{{ $option->option_value }}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-200/80">
-                                                            <span class="variation-zoom-btn absolute -top-1 -right-1 w-6 h-6 rounded-md bg-black/55 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer shadow-sm ring-1 ring-white/40 transition-all opacity-100 sm:opacity-0 sm:group-hover/thumb:opacity-100" data-image-url="{{ $certificateImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
+                                                            <img src="{{ $certificateImageUrl }}" alt="{{ $displayOptionValue($option) }}" class="w-11 h-11 sm:w-12 sm:h-12 rounded-lg object-cover border border-slate-200/80">
+                                                            <span class="variation-zoom-btn absolute -top-1 -right-1 w-6 h-6 rounded-md bg-black/55 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer shadow-sm ring-1 ring-white/40 transition-all opacity-100 sm:opacity-0 sm:group-hover/thumb:opacity-100" data-image-url="{{ $certificateImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                             </span>
                                                         </span>
                                                     @endif
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $option->option_value }}</span>
+                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
                                                     </span>
                                                 </span>
                                             </button>
@@ -232,7 +236,7 @@
                                             <button type="button"
                                                 class="{{ $optionClasses }} label-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
                                                 data-variation="{{ $variation->name }}"
-                                                data-option="{{ $option->option_value }}"
+                                                data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                 data-option-id="{{ $option->id }}"
                                                 data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
                                                 data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
@@ -241,7 +245,7 @@
                                                 data-option-image-url="{{ $deliveryImageUrl ?? '' }}"
                                                 data-delivery-preset-id="{{ $option->interface_delivery_method_variation_id ?? '' }}"
                                                 data-estimated-delivery-time="{{ e($deliveryEstimatedTime) }}"
-                                                title="{{ $option->option_value }}">
+                                                title="{{ $displayOptionValue($option) }}">
                                                 <span class="label-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
                                                 <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">
                                                     @if($deliveryImageUrl)
@@ -249,7 +253,7 @@
                                                     @endif
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $option->option_value }}</span>
+                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
                                                     </span>
                                                 </span>
                                             </button>
@@ -271,7 +275,7 @@
                                             <button type="button"
                                                 class="{{ $optionClasses }} label-option-card group w-full text-left flex items-stretch overflow-hidden bg-white hover:bg-slate-50/80 min-h-[4.25rem]"
                                                 data-variation="{{ $variation->name }}"
-                                                data-option="{{ $option->option_value }}"
+                                                data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}"
                                                 data-option-id="{{ $option->id }}"
                                                 data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}"
                                                 data-parent-option-id="{{ $option->parent_option_id ?? '' }}"
@@ -284,7 +288,7 @@
                                                 data-label-position-back="{{ ($labelPreset?->position_back ?? false) ? '1' : '0' }}"
                                                 data-label-ask-description="{{ ($labelPreset?->ask_description ?? false) ? '1' : '0' }}"
                                                 data-label-description-title="{{ e($labelPreset?->description_title ?? '') }}"
-                                                title="{{ $option->option_value }}">
+                                                title="{{ $displayOptionValue($option) }}">
                                                 <span class="label-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
                                                 <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">
                                                     @if($labelImageUrl)
@@ -292,7 +296,7 @@
                                                     @endif
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
-                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $option->option_value }}</span>
+                                                        <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
                                                         <span class="mt-1 flex flex-wrap gap-1.5">
                                                             @if($labelPreset?->is_custom_print)
                                                                 <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200/80">{{ __('store.product.label_custom_print') }}</span>
@@ -315,18 +319,18 @@
                                             @endphp
                                             <div class="variation-option-wrap vio-tile-wrap relative overflow-visible">
                                             <div class="mold-model-option-shell vio-tile-shell">
-                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">
+                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">
                                                 <span class="vio-tile-media group">
-                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="vio-tile-img" loading="lazy" decoding="async">
-                                                    <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
+                                                    <img src="{{ $optionImageUrl }}" alt="{{ $displayOptionValue($option) }}" class="vio-tile-img" loading="lazy" decoding="async">
+                                                    <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
-                                                <span class="vio-tile-label"><span>{{ $option->option_value }}</span></span>
+                                                <span class="vio-tile-label"><span>{{ $displayOptionValue($option) }}</span></span>
                                             </button>
                                             @include('store.partials.mold-model-size-table-view-btn', [
                                                 'sizeTableImageUrl' => $moldSizeTableImageUrl,
-                                                'optionTitle' => $option->option_value,
+                                                'optionTitle' => $displayOptionValue($option),
                                             ])
                                             </div>
                                             @include('store.partials.variation-detail-info-btn', [
@@ -339,14 +343,14 @@
                                                 $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
                                             @endphp
                                             <div class="variation-option-wrap vio-tile-wrap relative overflow-visible">
-                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
+                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
                                                 <span class="vio-tile-media group">
-                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="vio-tile-img" loading="lazy" decoding="async">
-                                                    <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
+                                                    <img src="{{ $optionImageUrl }}" alt="{{ $displayOptionValue($option) }}" class="vio-tile-img" loading="lazy" decoding="async">
+                                                    <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
-                                                <span class="vio-tile-label"><span>{{ $option->option_value }}</span></span>
+                                                <span class="vio-tile-label"><span>{{ $displayOptionValue($option) }}</span></span>
                                             </button>
                                             @include('store.partials.variation-detail-info-btn', [
                                                 'title' => $optionDetailTitle,
@@ -355,9 +359,9 @@
                                             </div>
                                         @elseif($variation->type === 'color' && $option->option_color)
                                             <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}" title="{{ $option->option_value }}">
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}" title="{{ $displayOptionValue($option) }}">
                                                 <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $option->option_color }}"></span>
-                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $option->option_value }}</span>
+                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $displayOptionValue($option) }}</span>
                                             </button>
                                             @include('store.partials.variation-detail-info-btn', [
                                                 'title' => $optionDetailTitle,
@@ -367,10 +371,10 @@
                                         @elseif($variation->type === 'mold_model_type')
                                             <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
                                             <div class="mold-model-option-shell flex min-w-[7.5rem] flex-col overflow-hidden rounded-xl border-2 border-slate-300 bg-white transition-all hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 sm:min-w-[8.5rem]">
-                                            <button type="button" class="product-option w-full rounded-none border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50/50 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 sm:px-5 sm:py-3 sm:text-base min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">{{ $option->option_value }}</button>
+                                            <button type="button" class="product-option w-full rounded-none border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50/50 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 sm:px-5 sm:py-3 sm:text-base min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">{{ $displayOptionValue($option) }}</button>
                                             @include('store.partials.mold-model-size-table-view-btn', [
                                                 'sizeTableImageUrl' => $moldSizeTableImageUrl,
-                                                'optionTitle' => $option->option_value,
+                                                'optionTitle' => $displayOptionValue($option),
                                             ])
                                             </div>
                                             @include('store.partials.variation-detail-info-btn', [
@@ -380,7 +384,7 @@
                                             </div>
                                         @else
                                             <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
-                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">{{ $option->option_value }}</button>
+                                            <button type="button" class="{{ $optionClasses }} px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">{{ $displayOptionValue($option) }}</button>
                                             @include('store.partials.variation-detail-info-btn', [
                                                 'title' => $optionDetailTitle,
                                                 'text' => $optionDetailText,
@@ -446,9 +450,11 @@
                                                     </div>
                                                 @elseif($variation->type === 'packaging_type')
                                                     @php
-                                                        $packagingCatalogData = $packagingCatalog ?? ['materials' => [], 'customizations' => [], 'barcode' => ['enabled' => false]];
+                                                        $packagingCatalogData = $packagingCatalog ?? ['materials' => [], 'customizations' => [], 'customizations_enabled' => true, 'barcode' => ['enabled' => false]];
                                                         $packagingMaterials = $packagingCatalogData['materials'] ?? [];
                                                         $packagingCustomizations = $packagingCatalogData['customizations'] ?? [];
+                                                        $packagingCustomizationsEnabled = (bool) ($packagingCatalogData['customizations_enabled'] ?? true)
+                                                            && count($packagingCustomizations) > 0;
                                                         $packagingBarcode = $packagingCatalogData['barcode'] ?? [];
                                                     @endphp
                                                     <div class="packaging-type-suboptions-wrap mt-4 pt-3 border-t border-slate-100 hidden">
@@ -465,6 +471,7 @@
                                                                 @endforeach
                                                             </div>
                                                         </div>
+                                                        @if($packagingCustomizationsEnabled)
                                                         <div class="packaging-type-customization-section mb-4">
                                                             <p class="text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.packaging_customization_pick') }}</p>
                                                             <div class="flex flex-col gap-2.5">
@@ -487,6 +494,7 @@
                                                                 @endforeach
                                                             </div>
                                                         </div>
+                                                        @endif
                                                         @if(!empty($packagingBarcode['enabled']))
                                                             <div class="packaging-type-sticker-design-section mb-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 sm:p-4">
                                                                 <p class="text-sm sm:text-base font-bold text-slate-900 mb-3">{{ __('store.product.packaging_sticker_design_hint') }}</p>

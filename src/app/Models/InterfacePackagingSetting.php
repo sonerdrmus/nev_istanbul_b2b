@@ -14,6 +14,7 @@ class InterfacePackagingSetting extends Model
         'barcode_extra_price',
         'barcode_description',
         'barcode_image_path',
+        'customizations_enabled',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class InterfacePackagingSetting extends Model
         return [
             'barcode_enabled' => 'boolean',
             'barcode_extra_price' => 'decimal:2',
+            'customizations_enabled' => 'boolean',
         ];
     }
 
@@ -32,6 +34,7 @@ class InterfacePackagingSetting extends Model
             'barcode_extra_price' => 0,
             'barcode_description' => null,
             'barcode_image_path' => null,
+            'customizations_enabled' => true,
         ]);
     }
 }

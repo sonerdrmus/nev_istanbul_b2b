@@ -4,7 +4,7 @@ return [
     'meta_suffix' => 'Store',
 
     'topbar' => [
-        'free_shipping' => 'En uygun teslimat şeklini kontrol ediniz​...',
+        'free_shipping' => 'Check the most suitable delivery method for your order…',
     ],
 
     'header' => [
@@ -124,6 +124,7 @@ return [
         'section_products_title' => 'Products in this category',
         'products_list_title' => 'Products',
         'subcategories_title' => 'Subcategories',
+        'submenu_aria' => ':category submenu',
     ],
 
     'cart' => [
@@ -294,6 +295,7 @@ return [
         'customization_summary_empty' => 'Not specified',
         'customization_summary_section_label' => 'Print customization',
         'customization_colors_unit' => 'colors',
+        'color_count_badge' => ':count colors',
         'customization_area_cm2' => ':area cm²',
         'customization_matched_ebat' => 'Size: :ebat',
         'customization_summary_dim' => 'Dimensions',

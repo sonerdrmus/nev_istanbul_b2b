@@ -53,11 +53,15 @@ class CategoryResource extends Resource
                             ->placeholder('Üst kategori yok (ana kategori)')
                             ->nullable(),
                         Forms\Components\TextInput::make('name')
-                            ->label('Kategori Adı')
+                            ->label('Kategori Adı (TR)')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Forms\Set $set, ?string $state) => $set('slug', \Illuminate\Support\Str::slug($state ?? ''))),
+                        Forms\Components\TextInput::make('name_en')
+                            ->label('Category name (EN)')
+                            ->helperText('Boşsa kaydedince Türkçeden otomatik İngilizce üretilir.')
+                            ->maxLength(255),
                         Forms\Components\TextInput::make('slug')
                             ->label('URL Slug')
                             ->required()

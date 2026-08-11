@@ -19,7 +19,7 @@
                 @foreach($topMenuCategories ?? collect() as $cat)
                     @php
                         $slug = $cat->slug;
-                        $label = $cat->name;
+                        $label = $cat->localized_name;
                         $activeCategory = (string) request('category');
                         $isActive = $activeCategory === $slug
                             || (string) request('parent') === $slug
@@ -43,7 +43,7 @@
                              class="home-mega-panel-shell overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-900/[0.05]"
                              aria-hidden="true"
                              role="menu"
-                             aria-label="{{ $label }} alt menü">
+                             aria-label="{{ __('store.mega_nav.submenu_aria', ['category' => $label]) }}">
                             <div class="max-h-[min(70vh,22rem)] overflow-y-auto py-2">
                                 <p class="px-4 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500" id="mega-panel-heading-{{ $slug }}">
                                     {{ __('store.mega_nav.section_products_title') }}
@@ -59,7 +59,7 @@
                                                 <a href="{{ route('store.product.show', $megaProduct) }}"
                                                    class="block px-4 py-2 text-sm leading-snug text-slate-700 transition-colors hover:bg-slate-50 hover:text-primary-700 line-clamp-2"
                                                    role="menuitem">
-                                                    {{ $megaProduct->name }}
+                                                    {{ $megaProduct->localized_name }}
                                                 </a>
                                             </li>
                                         @endforeach

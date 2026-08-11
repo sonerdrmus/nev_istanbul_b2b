@@ -89,6 +89,7 @@ class ManagePackagingPreferences extends Page implements HasForms
             'barcode_extra_price' => $settings->barcode_extra_price,
             'barcode_description' => $settings->barcode_description,
             'barcode_image_path' => $settings->barcode_image_path,
+            'customizations_enabled' => (bool) ($settings->customizations_enabled ?? true),
         ]);
     }
 
@@ -178,10 +179,16 @@ class ManagePackagingPreferences extends Page implements HasForms
                             ->itemLabel(fn (array $state): ?string => $state['name'] ?? null),
                     ]),
                 Forms\Components\Section::make('Özelleştirme ekle')
-                    ->description('Müşteri tek seçim yapar. Ekstra ücret TL olarak birim fiyata eklenir.')
+                    ->description('Kapalıysa mağaza ürün sayfasında “Özelleştirme ekleyin” adımı hiç gösterilmez. Açıkken müşteri tek seçim yapar; ekstra ücret TL olarak birim fiyata eklenir.')
                     ->schema([
+                        Forms\Components\Toggle::make('customizations_enabled')
+                            ->label('Özelleştirme ekleyin adımını göster')
+                            ->helperText('Pasif yapıldığında ürün sayfasında ambalaj özelleştirme seçenekleri gizlenir.')
+                            ->default(true)
+                            ->live(),
                         Forms\Components\Repeater::make('customizations')
                             ->label('')
+                            ->visible(fn (Forms\Get $get): bool => (bool) $get('customizations_enabled'))
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('name')
@@ -410,6 +417,7 @@ class ManagePackagingPreferences extends Page implements HasForms
             'barcode_extra_price' => max(0, (float) ($data['barcode_extra_price'] ?? 0)),
             'barcode_description' => filled($data['barcode_description'] ?? null) ? trim((string) $data['barcode_description']) : null,
             'barcode_image_path' => $data['barcode_image_path'] ?? null,
+            'customizations_enabled' => (bool) ($data['customizations_enabled'] ?? true),
         ]);
 
         $notification = Notification::make()

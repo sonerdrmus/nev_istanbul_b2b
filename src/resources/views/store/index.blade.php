@@ -118,11 +118,11 @@
                     <a href="{{ route('home', ['category' => $cat->slug]) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
                             <div class="absolute inset-[2px] overflow-hidden">
-                                <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
+                                <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->localized_name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
                             </div>
                         </div>
                         <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
-                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $cat->name }}</span>
+                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $cat->localized_name }}</span>
                         </div>
                     </a>
                 @endforeach
@@ -132,14 +132,14 @@
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
                             @if($vitrinThumb)
                                 <div class="absolute inset-[2px] overflow-hidden">
-                                    <img src="{{ \App\Support\MediaUrl::public($vitrinThumb) }}" alt="{{ $product->name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
+                                    <img src="{{ \App\Support\MediaUrl::public($vitrinThumb) }}" alt="{{ $product->localized_name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
                                 </div>
                             @else
                                 <span class="absolute inset-0 flex items-center justify-center text-slate-400 text-5xl select-none" aria-hidden="true">📦</span>
                             @endif
                         </div>
                         <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
-                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $product->name }}</span>
+                            <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $product->localized_name }}</span>
                         </div>
                     </a>
                 @endforeach
@@ -211,7 +211,7 @@
                     <a href="{{ route('store.product.show', $product) }}" class="relative block aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
                         @php $thumbPath = $product->image ?? $product->productImages->first()?->path; @endphp
                         @if($thumbPath)
-                            <img src="{{ \App\Support\MediaUrl::public($thumbPath) }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
+                            <img src="{{ \App\Support\MediaUrl::public($thumbPath) }}" alt="{{ $product->localized_name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 {{ $isComingSoon ? 'opacity-95' : '' }}">
                         @else
                             <span class="text-slate-300 text-5xl">📦</span>
                         @endif
@@ -219,7 +219,7 @@
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
                         @endif
                         @if($product->category)
-                            <span class="absolute top-3 left-3 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-xs font-medium text-slate-700 shadow-sm">{{ $product->category->name }}</span>
+                            <span class="absolute top-3 left-3 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-xs font-medium text-slate-700 shadow-sm">{{ $product->category->localized_name }}</span>
                         @endif
                         @if($isComingSoon)
                             <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/95 backdrop-blur-sm text-xs font-semibold text-white shadow-sm">
@@ -232,7 +232,7 @@
                     <div class="p-6 flex-1 flex flex-col min-h-0">
                         <a href="{{ route('store.product.show', $product) }}" class="block flex-1 flex flex-col min-h-0">
                             <p class="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">{{ $product->company?->name ?? '—' }}</p>
-                            <h2 class="font-semibold text-slate-900 text-lg leading-snug hover:text-primary-600 transition-colors line-clamp-2" title="{{ $product->name }}">{{ $product->name }}</h2>
+                            <h2 class="font-semibold text-slate-900 text-lg leading-snug hover:text-primary-600 transition-colors line-clamp-2" title="{{ $product->localized_name }}">{{ $product->localized_name }}</h2>
                             @if($product->description)
                                 <p class="text-sm text-slate-500 mt-2 line-clamp-2 min-h-[2.5rem]">{{ Str::limit($product->description, 80) }}</p>
                             @else

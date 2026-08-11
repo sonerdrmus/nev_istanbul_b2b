@@ -30,14 +30,14 @@
                                 <li class="flex gap-4 p-5 sm:p-6">
                                     <div class="flex-shrink-0 w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
                                         @if($p->image)
-                                            <img src="{{ \App\Support\MediaUrl::public($p->image) }}" alt="{{ $p->name }}" class="w-full h-full object-cover">
+                                            <img src="{{ \App\Support\MediaUrl::public($p->image) }}" alt="{{ $p->localized_name }}" class="w-full h-full object-cover">
                                         @else
                                             <span class="text-slate-400 text-2xl">📦</span>
                                         @endif
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-xs text-primary-600 font-medium">{{ $p->company?->name }}</p>
-                                        <h2 class="font-semibold text-slate-900 truncate">{{ $p->name }}</h2>
+                                        <h2 class="font-semibold text-slate-900 truncate">{{ $p->localized_name }}</h2>
                                         @if(!empty($item->variation_data) && is_array($item->variation_data))
                                             <ul class="mt-1.5 text-sm text-slate-600 space-y-0.5">
                                                 @foreach($item->variation_data as $optName => $optValue)

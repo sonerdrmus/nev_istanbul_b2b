@@ -181,8 +181,13 @@ class ProductResource extends Resource
                                             ->nullable()
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Ürün Adı')
+                                            ->label('Ürün Adı (TR)')
                                             ->required()
+                                            ->maxLength(255)
+                                            ->columnSpan(1),
+                                        Forms\Components\TextInput::make('name_en')
+                                            ->label('Product name (EN)')
+                                            ->helperText('Boş bırakılırsa kaydedince Türkçe addan otomatik İngilizce üretilir.')
                                             ->maxLength(255)
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('slug')
@@ -191,7 +196,11 @@ class ProductResource extends Resource
                                             ->maxLength(255)
                                             ->columnSpan(1),
                                         Forms\Components\RichEditor::make('description')
-                                            ->label('Açıklama')
+                                            ->label('Açıklama (TR)')
+                                            ->columnSpanFull(),
+                                        Forms\Components\RichEditor::make('description_en')
+                                            ->label('Description (EN)')
+                                            ->helperText('Boş bırakılırsa kaydedince Türkçe açıklamadan otomatik İngilizceye çevrilir.')
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2),
@@ -243,11 +252,20 @@ class ProductResource extends Resource
                                     ->description('Arama motorları ve sosyal paylaşımlar için meta bilgileri.')
                                     ->schema([
                                         Forms\Components\TextInput::make('meta_title')
-                                            ->label('Meta Tag Title')
+                                            ->label('Meta Tag Title (TR)')
+                                            ->maxLength(255)
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('meta_title_en')
+                                            ->label('Meta Tag Title (EN)')
                                             ->maxLength(255)
                                             ->columnSpanFull(),
                                         Forms\Components\Textarea::make('meta_description')
-                                            ->label('Meta Tag Description')
+                                            ->label('Meta Tag Description (TR)')
+                                            ->rows(3)
+                                            ->maxLength(512)
+                                            ->columnSpanFull(),
+                                        Forms\Components\Textarea::make('meta_description_en')
+                                            ->label('Meta Tag Description (EN)')
                                             ->rows(3)
                                             ->maxLength(512)
                                             ->columnSpanFull(),

@@ -15,6 +15,7 @@ final class PackagingPreferenceCatalog
      *     types: array<int, array<string, mixed>>,
      *     materials: array<int, array<string, mixed>>,
      *     customizations: array<int, array<string, mixed>>,
+     *     customizations_enabled: bool,
      *     barcode: array<string, mixed>
      * }
      */
@@ -54,7 +55,13 @@ final class PackagingPreferenceCatalog
                 ->all()
             : [];
 
-        $customizations = Schema::hasTable('interface_packaging_customizations')
+        $settings = Schema::hasTable('interface_packaging_settings')
+            ? InterfacePackagingSetting::instance()
+            : null;
+
+        $customizationsEnabled = (bool) ($settings?->customizations_enabled ?? true);
+
+        $customizations = ($customizationsEnabled && Schema::hasTable('interface_packaging_customizations'))
             ? InterfacePackagingCustomization::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
@@ -71,14 +78,11 @@ final class PackagingPreferenceCatalog
                 ->all()
             : [];
 
-        $settings = Schema::hasTable('interface_packaging_settings')
-            ? InterfacePackagingSetting::instance()
-            : null;
-
         return [
             'types' => $types,
             'materials' => $materials,
             'customizations' => $customizations,
+            'customizations_enabled' => $customizationsEnabled,
             'barcode' => [
                 'enabled' => (bool) ($settings?->barcode_enabled ?? false),
                 'label' => (string) ($settings?->barcode_label ?? ''),
@@ -98,6 +102,7 @@ final class PackagingPreferenceCatalog
             'types' => [],
             'materials' => [],
             'customizations' => [],
+            'customizations_enabled' => false,
             'barcode' => [
                 'enabled' => false,
                 'label' => '',

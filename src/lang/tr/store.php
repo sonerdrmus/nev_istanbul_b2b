@@ -124,6 +124,7 @@ return [
         'section_products_title' => 'Bu kategorideki ürünler',
         'products_list_title' => 'Ürünler',
         'subcategories_title' => 'Alt kategoriler',
+        'submenu_aria' => ':category alt menü',
     ],
 
     'cart' => [
@@ -294,6 +295,7 @@ return [
         'customization_summary_empty' => 'Belirtilmedi',
         'customization_summary_section_label' => 'Baskı özelleştirme',
         'customization_colors_unit' => 'renk',
+        'color_count_badge' => ':count renk',
         'customization_area_cm2' => ':area cm²',
         'customization_matched_ebat' => 'EBAT: :ebat',
         'customization_summary_dim' => 'Ölçü',

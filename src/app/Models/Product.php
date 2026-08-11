@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\LocaleContent;
+use App\Support\MachineTranslator;
 use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -14,10 +16,14 @@ class Product extends Model
         'tax_class_id',
         'currency_id',
         'name',
+        'name_en',
         'slug',
         'description',
+        'description_en',
         'meta_title',
+        'meta_title_en',
         'meta_description',
+        'meta_description_en',
         'meta_keywords',
         'price',
         'stock_quantity',
@@ -53,6 +59,79 @@ class Product extends Model
                 $product->slug = Str::slug($product->name);
             }
         });
+
+        static::saving(function (Product $product): void {
+            $product->autoFillEnglishFields();
+        });
+    }
+
+    /**
+     * Fill missing English content from Turkish via machine translation.
+     */
+    public function autoFillEnglishFields(bool $force = false): void
+    {
+        if (filled($this->name) && ($force || blank($this->name_en))) {
+            $translated = MachineTranslator::translate((string) $this->name, 'tr', 'en');
+            if (filled($translated)) {
+                $this->name_en = $translated;
+            }
+        }
+
+        if (filled($this->description) && ($force || blank($this->description_en))) {
+            $translated = MachineTranslator::translateHtml((string) $this->description, 'tr', 'en');
+            if (filled($translated)) {
+                $this->description_en = $translated;
+            }
+        }
+
+        if (filled($this->meta_title) && ($force || blank($this->meta_title_en))) {
+            $translated = MachineTranslator::translate((string) $this->meta_title, 'tr', 'en');
+            if (filled($translated)) {
+                $this->meta_title_en = $translated;
+            }
+        }
+
+        if (filled($this->meta_description) && ($force || blank($this->meta_description_en))) {
+            $translated = MachineTranslator::translate((string) $this->meta_description, 'tr', 'en');
+            if (filled($translated)) {
+                $this->meta_description_en = $translated;
+            }
+        }
+    }
+
+    public function getLocalizedNameAttribute(): string
+    {
+        return LocaleContent::display($this->name, $this->name_en);
+    }
+
+    public function getLocalizedDescriptionAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        if (in_array($locale, ['en', 'it'], true) && filled($this->description_en)) {
+            return $this->description_en;
+        }
+
+        return $this->description;
+    }
+
+    public function getLocalizedMetaTitleAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        if (in_array($locale, ['en', 'it'], true) && filled($this->meta_title_en)) {
+            return $this->meta_title_en;
+        }
+
+        return $this->meta_title;
+    }
+
+    public function getLocalizedMetaDescriptionAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        if (in_array($locale, ['en', 'it'], true) && filled($this->meta_description_en)) {
+            return $this->meta_description_en;
+        }
+
+        return $this->meta_description;
     }
 
     public function company()

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\LocaleContent;
+use App\Support\MachineTranslator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -10,6 +12,7 @@ class Category extends Model
     protected $fillable = [
         'parent_id',
         'name',
+        'name_en',
         'slug',
         'image_path',
         'sort_order',
@@ -34,6 +37,12 @@ class Category extends Model
             }
         });
         static::saving(function (Category $category): void {
+            if (filled($category->name) && blank($category->name_en)) {
+                $translated = MachineTranslator::translate((string) $category->name, 'tr', 'en');
+                if (filled($translated)) {
+                    $category->name_en = $translated;
+                }
+            }
             if (! $category->parent_id) {
                 return;
             }
@@ -47,6 +56,11 @@ class Category extends Model
                 $category->parent_id = null;
             }
         });
+    }
+
+    public function getLocalizedNameAttribute(): string
+    {
+        return LocaleContent::display($this->name, $this->name_en);
     }
 
     public function parent()

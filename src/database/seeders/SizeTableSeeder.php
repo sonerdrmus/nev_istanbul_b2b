@@ -12,9 +12,9 @@ class SizeTableSeeder extends Seeder
     {
         $tables = [
             [
-                'name' => 'Erkek',
+                'name' => 'Erkek/Unisex',
                 'slug' => 'erkek',
-                'title' => 'BEDEN TABLOSU (ERKEK)',
+                'title' => 'Erkek/Unisex Beden Tablosu',
                 'trigger_variation_name' => 'Cinsiyet',
                 'trigger_option_value' => 'Erkek',
                 'sort_order' => 0,
