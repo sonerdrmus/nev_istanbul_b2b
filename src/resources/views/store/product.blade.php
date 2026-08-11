@@ -436,133 +436,175 @@
                             color: #1e40af;
                             box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.15);
                         }
-                        /* Görsel seçenek kartları: sabit kutu + görsel tam sığdır (modern grid) */
-                        .variation-image-option-card {
-                            width: 7.5rem;
-                            flex: 0 0 7.5rem;
-                            box-sizing: border-box;
-                            display: flex;
-                            flex-direction: column;
-                            border-radius: 0.9rem;
-                            border: 2px solid #dbe3ee;
-                            background: #fff;
-                            overflow: hidden;
-                            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-                            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+                        /* Sabit, eşit görsel seçenek kartları */
+                        .variation-image-options-grid {
+                            display: flex !important;
+                            flex-wrap: wrap !important;
+                            align-items: flex-start !important;
+                            gap: 12px !important;
+                        }
+                        .vio-tile-wrap {
+                            flex: 0 0 auto;
+                            width: 140px;
+                            max-width: 140px;
                         }
                         @media (min-width: 640px) {
-                            .variation-image-option-card {
-                                width: 8.25rem;
-                                flex-basis: 8.25rem;
+                            .vio-tile-wrap {
+                                width: 152px;
+                                max-width: 152px;
                             }
                         }
-                        .variation-image-option-card:hover {
-                            border-color: #84c5ff;
-                            box-shadow: 0 8px 22px rgba(21, 95, 179, 0.12);
+                        button.product-option.vio-tile {
+                            display: flex !important;
+                            flex-direction: column !important;
+                            align-items: stretch !important;
+                            justify-content: flex-start !important;
+                            width: 140px !important;
+                            min-width: 140px !important;
+                            max-width: 140px !important;
+                            height: auto !important;
+                            min-height: 0 !important;
+                            max-height: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            border: 2px solid #d5dee9 !important;
+                            border-radius: 14px !important;
+                            background: #ffffff !important;
+                            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+                            overflow: hidden !important;
+                            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease !important;
+                        }
+                        @media (min-width: 640px) {
+                            button.product-option.vio-tile {
+                                width: 152px !important;
+                                min-width: 152px !important;
+                                max-width: 152px !important;
+                            }
+                        }
+                        button.product-option.vio-tile:hover {
+                            border-color: #4ea6ff !important;
+                            box-shadow: 0 8px 20px rgba(21, 95, 179, 0.14) !important;
                             transform: translateY(-2px);
                         }
-                        .variation-image-option-card:has(.product-option.option-selected),
-                        .variation-image-option-card.product-option.option-selected,
-                        .mold-model-option-shell.variation-image-option-card:has(.product-option.option-selected) {
-                            border-color: #155fb3;
-                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.2), 0 8px 20px rgba(21, 95, 179, 0.1);
+                        button.product-option.vio-tile.option-selected {
+                            border-color: #155fb3 !important;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.22), 0 6px 16px rgba(21, 95, 179, 0.12) !important;
                             transform: none;
                         }
-                        .variation-image-option-btn.product-option {
-                            display: flex !important;
-                            flex-direction: column;
-                            align-items: stretch !important;
-                            width: 100%;
-                            min-height: 0;
-                            margin: 0;
+                        .vio-tile-media {
+                            position: relative !important;
+                            display: block !important;
+                            width: 100% !important;
+                            height: 140px !important;
+                            min-height: 140px !important;
+                            max-height: 140px !important;
+                            flex: 0 0 140px !important;
+                            overflow: hidden !important;
+                            background: #f1f5f9 !important;
+                            box-sizing: border-box !important;
+                        }
+                        @media (min-width: 640px) {
+                            .vio-tile-media {
+                                height: 152px !important;
+                                min-height: 152px !important;
+                                max-height: 152px !important;
+                                flex-basis: 152px !important;
+                            }
+                        }
+                        .vio-tile-media img.vio-tile-img,
+                        button.product-option.vio-tile img.vio-tile-img {
+                            position: absolute !important;
+                            top: 8px !important;
+                            left: 8px !important;
+                            right: auto !important;
+                            bottom: auto !important;
+                            width: calc(100% - 16px) !important;
+                            height: calc(100% - 16px) !important;
+                            max-width: none !important;
+                            max-height: none !important;
+                            min-width: 0 !important;
+                            min-height: 0 !important;
+                            margin: 0 !important;
                             padding: 0 !important;
+                            border: 0 !important;
+                            border-radius: 10px !important;
+                            object-fit: cover !important;
+                            object-position: center center !important;
+                            transform: none !important;
+                            display: block !important;
+                        }
+                        @media (min-width: 640px) {
+                            .vio-tile-media img.vio-tile-img,
+                            button.product-option.vio-tile img.vio-tile-img {
+                                top: 2px !important;
+                                left: 2px !important;
+                                width: calc(100% - 6px) !important;
+                                height: calc(100% - 6px) !important;
+                            }
+                        }
+                        .vio-tile-label {
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            width: 100% !important;
+                            height: 44px !important;
+                            min-height: 44px !important;
+                            max-height: 44px !important;
+                            flex: 0 0 44px !important;
+                            box-sizing: border-box !important;
+                            padding: 6px 8px !important;
+                            margin: 0 !important;
+                            background: #fff !important;
+                            border-top: 1px solid #e8eef5 !important;
+                            font-size: 12px !important;
+                            font-weight: 600 !important;
+                            line-height: 1.2 !important;
+                            color: #334155 !important;
+                            text-align: center !important;
+                            overflow: hidden !important;
+                        }
+                        .vio-tile-label > span {
+                            display: -webkit-box !important;
+                            -webkit-box-orient: vertical !important;
+                            -webkit-line-clamp: 2 !important;
+                            overflow: hidden !important;
+                            word-break: break-word !important;
+                        }
+                        .mold-model-option-shell.vio-tile-shell {
+                            width: 140px;
+                            max-width: 140px;
+                            border-radius: 14px;
+                            border: 2px solid #d5dee9;
+                            background: #fff;
+                            overflow: hidden;
+                            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+                            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+                        }
+                        @media (min-width: 640px) {
+                            .mold-model-option-shell.vio-tile-shell {
+                                width: 152px;
+                                max-width: 152px;
+                            }
+                        }
+                        .mold-model-option-shell.vio-tile-shell:has(.product-option.option-selected) {
+                            border-color: #155fb3;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.22), 0 6px 16px rgba(21, 95, 179, 0.12);
+                        }
+                        .mold-model-option-shell.vio-tile-shell button.product-option.vio-tile {
+                            width: 100% !important;
+                            min-width: 0 !important;
+                            max-width: none !important;
                             border: 0 !important;
                             border-radius: 0 !important;
                             box-shadow: none !important;
-                            background: transparent !important;
                         }
-                        .variation-image-option-btn.product-option:hover,
-                        .variation-image-option-btn.product-option:focus {
+                        .mold-model-option-shell.vio-tile-shell button.product-option.vio-tile:hover {
+                            transform: none;
                             box-shadow: none !important;
-                            border: 0 !important;
                         }
-                        .variation-image-option-media {
-                            position: relative;
-                            width: 100%;
-                            height: 7.5rem;
-                            flex: 0 0 7.5rem;
-                            overflow: hidden;
-                            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-                        }
-                        @media (min-width: 640px) {
-                            .variation-image-option-media {
-                                height: 8.25rem;
-                                flex-basis: 8.25rem;
-                            }
-                        }
-                        .variation-image-option-media img.variation-option-thumb {
-                            position: absolute;
-                            inset: 0;
-                            width: 100%;
-                            height: 100%;
-                            max-width: none;
-                            max-height: none;
-                            object-fit: contain;
-                            object-position: center center;
-                            padding: 0.4rem;
-                            box-sizing: border-box;
-                            transform: none;
-                        }
-                        .product-option.option-selected .variation-image-option-media img.variation-option-thumb {
-                            transform: none;
-                        }
-                        .variation-image-option-label {
-                            flex: 0 0 2.75rem;
-                            height: 2.75rem;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            padding: 0.3rem 0.35rem;
-                            box-sizing: border-box;
-                            font-size: 0.7rem;
-                            font-weight: 600;
-                            line-height: 1.15;
-                            letter-spacing: 0.01em;
-                            color: #334155;
-                            text-align: center;
-                            background: #fff;
-                            border-top: 1px solid #eef2f7;
-                            overflow: hidden;
-                        }
-                        .variation-image-option-label > span {
-                            display: -webkit-box;
-                            -webkit-box-orient: vertical;
-                            -webkit-line-clamp: 2;
-                            overflow: hidden;
-                            word-break: break-word;
-                        }
-                        @media (min-width: 640px) {
-                            .variation-image-option-label {
-                                font-size: 0.75rem;
-                                flex-basis: 2.85rem;
-                                height: 2.85rem;
-                            }
-                        }
-                        .variation-image-option-card .mold-model-size-table-btn-wrap {
-                            border-top: 1px solid #e8eef5;
-                            background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
-                            padding: 0.35rem 0.4rem 0.45rem;
-                        }
-                        .product-variation-options.variation-image-options-grid {
-                            display: flex;
-                            flex-wrap: wrap;
-                            align-items: flex-start;
-                            gap: 0.7rem 0.75rem;
-                        }
-                        @media (min-width: 640px) {
-                            .product-variation-options.variation-image-options-grid {
-                                gap: 0.85rem 0.9rem;
-                            }
+                        .mold-model-option-shell.vio-tile-shell:hover {
+                            border-color: #4ea6ff;
+                            box-shadow: 0 8px 20px rgba(21, 95, 179, 0.14);
                         }
                         .label-type-standard-wash-info:not(.hidden) {
                             animation: labelWashInfoIn 0.35s ease-out;
@@ -644,29 +686,6 @@
                         }
                         #mold-model-size-table-zoom-viewport.is-dragging #mold-model-size-table-modal-image {
                             transition: none;
-                        }
-                        .mold-model-option-shell.variation-image-option-card {
-                            min-width: 7.5rem;
-                        }
-                        @media (min-width: 640px) {
-                            .mold-model-option-shell.variation-image-option-card {
-                                min-width: 8.25rem;
-                            }
-                        }
-                        .mold-model-option-shell {
-                            min-width: 0;
-                        }
-                        .mold-model-option-shell:has(.product-option.option-selected) {
-                            border-color: #155fb3;
-                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.22);
-                        }
-                        .mold-model-option-shell .product-option {
-                            border-width: 0;
-                            box-shadow: none;
-                        }
-                        .mold-model-option-shell .product-option:hover,
-                        .mold-model-option-shell .product-option:focus {
-                            box-shadow: none;
                         }
                         .variation-customization-panel .variation-step-summary-value {
                             line-height: 1.5;
