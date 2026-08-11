@@ -60,7 +60,17 @@
                                                         </button>
                                                     </div>
                                                 @else
-                                                <div class="@if(in_array($variation->type, ['fabric', 'label_type', 'packaging_type', 'certificate_type', 'delivery_type'], true)) fabric-options-grid grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 @else flex flex-wrap items-start gap-2.5 sm:gap-3 lg:gap-3.5 @endif product-variation-options">
+                                                @php
+                                                    $variationOptionsGridClass = match (true) {
+                                                        in_array($variation->type, ['fabric', 'label_type', 'packaging_type', 'certificate_type', 'delivery_type'], true)
+                                                            => 'fabric-options-grid grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 product-variation-options',
+                                                        in_array($variation->type, ['image', 'color', 'mold_model_type'], true)
+                                                            => 'product-variation-options variation-image-options-grid',
+                                                        default
+                                                            => 'flex flex-wrap items-start gap-2.5 sm:gap-3 lg:gap-3.5 product-variation-options',
+                                                    };
+                                                @endphp
+                                                <div class="{{ $variationOptionsGridClass }}">
                                     @foreach($variation->options as $option)
                                         @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
@@ -302,25 +312,17 @@
                                         @elseif($variation->type === 'mold_model_type' && $option->option_image)
                                             @php
                                                 $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
-                                                $imgSize = $option->option_image_size ?? 'medium';
-                                                // Kart genişliği; görsel alan edge-to-edge + hafif scale ile dolu görünür
-                                                $cardWClass = match($imgSize) {
-                                                    'small' => 'w-[5.5rem] sm:w-24',
-                                                    'large' => 'w-32 sm:w-36',
-                                                    default => 'w-[6.75rem] sm:w-28',
-                                                };
-                                                $labelMaxW = 'w-full';
                                             @endphp
-                                            <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
-                                            <div class="mold-model-option-shell flex flex-col overflow-hidden rounded-xl border-2 border-slate-300 bg-white transition-all hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 {{ $cardWClass }}">
-                                            <button type="button" class="product-option flex w-full flex-col items-stretch rounded-none border-0 bg-transparent p-0 shadow-none hover:bg-slate-50/40 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">
-                                                <span class="relative block w-full aspect-square overflow-hidden bg-slate-100 group">
-                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="variation-option-thumb h-full w-full object-cover object-center" loading="lazy" decoding="async">
+                                            <div class="variation-option-wrap relative shrink-0 overflow-visible">
+                                            <div class="mold-model-option-shell variation-image-option-card">
+                                            <button type="button" class="product-option variation-image-option-btn" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">
+                                                <span class="variation-image-option-media group">
+                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="variation-option-thumb" loading="lazy" decoding="async">
                                                     <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
-                                                <span class="px-1.5 py-2 text-sm font-medium text-slate-600 w-full {{ $labelMaxW }} text-center break-words leading-tight">{{ $option->option_value }}</span>
+                                                <span class="variation-image-option-label"><span>{{ $option->option_value }}</span></span>
                                             </button>
                                             @include('store.partials.mold-model-size-table-view-btn', [
                                                 'sizeTableImageUrl' => $moldSizeTableImageUrl,
@@ -335,22 +337,16 @@
                                         @elseif(in_array($variation->type, ['image', 'color'], true) && $option->option_image)
                                             @php
                                                 $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
-                                                $imgSize = $option->option_image_size ?? 'medium';
-                                                $cardWClass = match($imgSize) {
-                                                    'small' => 'w-[5.5rem] sm:w-24',
-                                                    'large' => 'w-32 sm:w-36',
-                                                    default => 'w-[6.75rem] sm:w-28',
-                                                };
                                             @endphp
-                                            <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-stretch overflow-hidden rounded-xl p-0 {{ $cardWClass }}" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
-                                                <span class="relative block w-full aspect-square overflow-hidden bg-slate-100 group">
-                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="variation-option-thumb h-full w-full object-cover object-center" loading="lazy" decoding="async">
+                                            <div class="variation-option-wrap relative shrink-0 overflow-visible">
+                                            <button type="button" class="product-option variation-image-option-card variation-image-option-btn" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
+                                                <span class="variation-image-option-media group">
+                                                    <img src="{{ $optionImageUrl }}" alt="{{ $option->option_value }}" class="variation-option-thumb" loading="lazy" decoding="async">
                                                     <span class="variation-zoom-btn absolute top-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $option->option_value }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $option->option_value }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
-                                                <span class="px-1.5 py-2 text-sm font-medium text-slate-600 w-full text-center break-words leading-tight">{{ $option->option_value }}</span>
+                                                <span class="variation-image-option-label"><span>{{ $option->option_value }}</span></span>
                                             </button>
                                             @include('store.partials.variation-detail-info-btn', [
                                                 'title' => $optionDetailTitle,

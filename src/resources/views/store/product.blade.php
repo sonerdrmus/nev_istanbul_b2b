@@ -436,17 +436,133 @@
                             color: #1e40af;
                             box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.15);
                         }
-                        /* Görsel seçenekleri: kare alana otomatik sığdır + hafif yakınlaştır (boş kenarları kırp) */
-                        .variation-option-thumb {
+                        /* Görsel seçenek kartları: sabit kutu + görsel tam sığdır (modern grid) */
+                        .variation-image-option-card {
+                            width: 7.5rem;
+                            flex: 0 0 7.5rem;
+                            box-sizing: border-box;
+                            display: flex;
+                            flex-direction: column;
+                            border-radius: 0.9rem;
+                            border: 2px solid #dbe3ee;
+                            background: #fff;
+                            overflow: hidden;
+                            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+                        }
+                        @media (min-width: 640px) {
+                            .variation-image-option-card {
+                                width: 8.25rem;
+                                flex-basis: 8.25rem;
+                            }
+                        }
+                        .variation-image-option-card:hover {
+                            border-color: #84c5ff;
+                            box-shadow: 0 8px 22px rgba(21, 95, 179, 0.12);
+                            transform: translateY(-2px);
+                        }
+                        .variation-image-option-card:has(.product-option.option-selected),
+                        .variation-image-option-card.product-option.option-selected,
+                        .mold-model-option-shell.variation-image-option-card:has(.product-option.option-selected) {
+                            border-color: #155fb3;
+                            box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.2), 0 8px 20px rgba(21, 95, 179, 0.1);
+                            transform: none;
+                        }
+                        .variation-image-option-btn.product-option {
+                            display: flex !important;
+                            flex-direction: column;
+                            align-items: stretch !important;
+                            width: 100%;
+                            min-height: 0;
+                            margin: 0;
+                            padding: 0 !important;
+                            border: 0 !important;
+                            border-radius: 0 !important;
+                            box-shadow: none !important;
+                            background: transparent !important;
+                        }
+                        .variation-image-option-btn.product-option:hover,
+                        .variation-image-option-btn.product-option:focus {
+                            box-shadow: none !important;
+                            border: 0 !important;
+                        }
+                        .variation-image-option-media {
+                            position: relative;
+                            width: 100%;
+                            height: 7.5rem;
+                            flex: 0 0 7.5rem;
+                            overflow: hidden;
+                            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+                        }
+                        @media (min-width: 640px) {
+                            .variation-image-option-media {
+                                height: 8.25rem;
+                                flex-basis: 8.25rem;
+                            }
+                        }
+                        .variation-image-option-media img.variation-option-thumb {
+                            position: absolute;
+                            inset: 0;
                             width: 100%;
                             height: 100%;
-                            object-fit: cover;
-                            object-position: center;
-                            transform: scale(1.14);
-                            transform-origin: center center;
+                            max-width: none;
+                            max-height: none;
+                            object-fit: contain;
+                            object-position: center center;
+                            padding: 0.4rem;
+                            box-sizing: border-box;
+                            transform: none;
                         }
-                        .product-option.option-selected .variation-option-thumb {
-                            transform: scale(1.18);
+                        .product-option.option-selected .variation-image-option-media img.variation-option-thumb {
+                            transform: none;
+                        }
+                        .variation-image-option-label {
+                            flex: 0 0 2.75rem;
+                            height: 2.75rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 0.3rem 0.35rem;
+                            box-sizing: border-box;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            line-height: 1.15;
+                            letter-spacing: 0.01em;
+                            color: #334155;
+                            text-align: center;
+                            background: #fff;
+                            border-top: 1px solid #eef2f7;
+                            overflow: hidden;
+                        }
+                        .variation-image-option-label > span {
+                            display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 2;
+                            overflow: hidden;
+                            word-break: break-word;
+                        }
+                        @media (min-width: 640px) {
+                            .variation-image-option-label {
+                                font-size: 0.75rem;
+                                flex-basis: 2.85rem;
+                                height: 2.85rem;
+                            }
+                        }
+                        .variation-image-option-card .mold-model-size-table-btn-wrap {
+                            border-top: 1px solid #e8eef5;
+                            background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+                            padding: 0.35rem 0.4rem 0.45rem;
+                        }
+                        .product-variation-options.variation-image-options-grid {
+                            display: flex;
+                            flex-wrap: wrap;
+                            align-items: flex-start;
+                            gap: 0.7rem 0.75rem;
+                        }
+                        @media (min-width: 640px) {
+                            .product-variation-options.variation-image-options-grid {
+                                gap: 0.85rem 0.9rem;
+                            }
                         }
                         .label-type-standard-wash-info:not(.hidden) {
                             animation: labelWashInfoIn 0.35s ease-out;
@@ -528,6 +644,14 @@
                         }
                         #mold-model-size-table-zoom-viewport.is-dragging #mold-model-size-table-modal-image {
                             transition: none;
+                        }
+                        .mold-model-option-shell.variation-image-option-card {
+                            min-width: 7.5rem;
+                        }
+                        @media (min-width: 640px) {
+                            .mold-model-option-shell.variation-image-option-card {
+                                min-width: 8.25rem;
+                            }
                         }
                         .mold-model-option-shell {
                             min-width: 0;
