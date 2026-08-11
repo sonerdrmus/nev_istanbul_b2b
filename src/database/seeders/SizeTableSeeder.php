@@ -16,7 +16,7 @@ class SizeTableSeeder extends Seeder
                 'slug' => 'erkek',
                 'title' => 'Erkek/Unisex Beden Tablosu',
                 'trigger_variation_name' => 'Cinsiyet',
-                'trigger_option_value' => 'Erkek',
+                'trigger_option_value' => 'Erkek|Unisex',
                 'sort_order' => 0,
                 'columns' => ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', '8XL'],
             ],

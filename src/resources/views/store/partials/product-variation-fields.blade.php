@@ -50,7 +50,7 @@
                                                                     'availableStock' => $availableStock,
                                                                     'wrapClass' => ($sizeTableOptionCount > 1 ? 'hidden ' : '').'mt-4 first:mt-0 size-table-wrap size-table-wrap-in-variation',
                                                                     'wrapId' => 'size-table-var-'.$variation->id.'-'.$linkedSizeTable->slug,
-                                                                    'wrapExtraAttrs' => 'data-size-table-option="'.e($option->option_value).'" data-size-table-slug="'.e($linkedSizeTable->slug).'" data-parent-option-id="'.e($option->parent_option_id ?? '').'" data-parent-option-ids="'.e(json_encode($option->getParentOptionIdsList())).'"',
+                                                                    'wrapExtraAttrs' => 'data-size-table-option="'.e($option->option_value).'" data-size-table-slug="'.e($linkedSizeTable->slug).'" data-trigger-variation="'.e($linkedSizeTable->trigger_variation_name ?? '').'" data-trigger-value="'.e($linkedSizeTable->trigger_option_value ?? '').'" data-parent-option-id="'.e($option->parent_option_id ?? '').'" data-parent-option-ids="'.e(json_encode($option->getParentOptionIdsList())).'"',
                                                                 ])
                                                             @endif
                                                         @endforeach

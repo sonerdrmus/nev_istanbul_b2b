@@ -5559,16 +5559,42 @@
                         var x = s.trim().toLowerCase();
                         return x.replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
                     }
+                    /** Erkek beden tablosu: Erkek, Unisex ve Erkek/Unisex aynı grubu paylaşır. */
+                    function isErkekUnisexFamily(s) {
+                        var n = normalizeForMatch(s)
+                            .replace(/[\/|_-]+/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        if (!n) return false;
+                        if (n === 'erkek' || n === 'unisex' || n === 'erkek unisex') return true;
+                        if (n === 'men' || n === 'male' || n === 'men unisex') return true;
+                        // "erkek unisex beden tablosu" gibi etiketler
+                        if (n.indexOf('erkek') !== -1 && n.indexOf('unisex') !== -1) return true;
+                        if (n === 'unisex' || (n.indexOf('unisex') !== -1 && n.indexOf('kadin') === -1 && n.indexOf('cocuk') === -1)) {
+                            // pure unisex labels still count
+                            if (n === 'unisex' || n.indexOf('unisex') === 0) return true;
+                        }
+                        return false;
+                    }
                     function valueMatchesTrigger(selectedValue, triggerValue) {
                         if (!triggerValue) return false;
+                        var tRaw = (triggerValue || '').trim();
+                        // Admin: "Erkek|Unisex" veya "Erkek,Unisex"
+                        if (/[|,]/.test(tRaw)) {
+                            return tRaw.split(/[|,]/).some(function(part) {
+                                return valueMatchesTrigger(selectedValue, (part || '').trim());
+                            });
+                        }
                         var v = (selectedValue || '').trim();
-                        var t = (triggerValue || '').trim();
+                        var t = tRaw;
+                        if (!v || !t) return false;
                         if (v === t) return true;
                         if (v.toLowerCase() === t.toLowerCase()) return true;
                         if (normalizeForMatch(v) === normalizeForMatch(t)) return true;
+                        if (isErkekUnisexFamily(v) && isErkekUnisexFamily(t)) return true;
                         var kadinAliases = ['kadın', 'kadin'];
                         if (kadinAliases.indexOf(v.toLowerCase()) !== -1 && kadinAliases.indexOf(t.toLowerCase()) !== -1) return true;
-                        var cocukAliases = ['çocuk', 'cocuk', 'çoçuk', 'coçuk', 'cocuk'];
+                        var cocukAliases = ['çocuk', 'cocuk', 'çoçuk', 'coçuk'];
                         var vn = normalizeForMatch(v), tn = normalizeForMatch(t);
                         if (vn === 'cocuk' && tn === 'cocuk') return true;
                         return cocukAliases.indexOf(v.toLowerCase()) !== -1 && cocukAliases.indexOf(t.toLowerCase()) !== -1;
@@ -5607,18 +5633,21 @@
                             if (nLower === tLower) { panel = p; return; }
                             if (nLower.indexOf(tLower) === 0) { panel = p; return; }
                             if (tLower.indexOf(nLower) === 0) { panel = p; return; }
+                            // "Cinsiyet" ↔ "Cinsiyet Seçiniz"
                             var firstWord = nLower.split(/\s+/)[0] || '';
-                            if (firstWord === tLower || tLower === firstWord) { panel = p; }
+                            var tFirst = tLower.split(/\s+/)[0] || '';
+                            if (firstWord && firstWord === tFirst) { panel = p; }
                         });
                         return panel;
                     }
                     /**
                      * Çoklu seçimde "Devam et" öncesi veya özet nesnesinde eksik anahtar olsa bile,
                      * varyasyon panelindeki gerçek seçimi döndürür (beden önkoşulu / tetikleyici için).
+                     * Panel gizlenmiş olsa bile seçim korunur (sadece stil.display yüzünden boş dönme).
                      */
                     function getDomSelectionValuesForVariation(variationName) {
                         var panel = findVariationPanelByName(variationName);
-                        if (!panel || panel.style.display === 'none') return [];
+                        if (!panel) return [];
                         var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
                         var confirmed = (panel.getAttribute('data-multi-confirmed') || '') === '1';
                         if (isMulti && !confirmed) return [];
@@ -5658,6 +5687,10 @@
                         var dependsOn = (block.getAttribute('data-depends-on') || '').trim();
                         var parentIds = dependsOn ? normalizeOptionIdList(getSelectedParentOptionIdsForVariation(dependsOn)) : [];
                         var options = block.querySelectorAll('.product-variation-options .product-option');
+                        var anyTriggerAttr = false;
+                        options.forEach(function(opt) {
+                            if ((opt.getAttribute('data-trigger-variation') || '').trim()) anyTriggerAttr = true;
+                        });
                         options.forEach(function(opt) {
                             var triggerMatch = sizeTableElementMatchesSelections(opt);
                             if (triggerMatch !== null) {
@@ -5671,7 +5704,8 @@
                                 setProductOptionVisibility(opt, true);
                             }
                         });
-                        if (options.length && parentIds.length) {
+                        // Cinsiyet tetikleyicisi varken eşleşme yoksa tüm tabloları tekrar açma (yeniden "cinsiyet" seçimi gibi görünür).
+                        if (options.length && parentIds.length && !anyTriggerAttr) {
                             var visible = [];
                             options.forEach(function(opt) {
                                 if (opt.style.display !== 'none') visible.push(opt);
@@ -5765,11 +5799,33 @@
                                 triggerMatches.push(wrap);
                             }
                         });
-                        if (triggerMatches.length > 0) {
+                        if (triggerMatches.length === 1) {
+                            return targetFromSizeTableWrap(triggerMatches[0], 'trigger');
+                        }
+                        if (triggerMatches.length > 1) {
                             var withValue = triggerMatches.filter(function(w) {
                                 return (w.getAttribute('data-trigger-value') || '').trim() !== '';
                             });
-                            return targetFromSizeTableWrap(withValue.length === 1 ? withValue[0] : triggerMatches[0], 'trigger');
+                            if (withValue.length === 1) {
+                                return targetFromSizeTableWrap(withValue[0], 'trigger');
+                            }
+                            // Birden fazla eşleşme (örn. Erkek + Unisex ailesi) → ilk erkek/unisex tablosu
+                            return targetFromSizeTableWrap(triggerMatches[0], 'trigger');
+                        }
+
+                        // Buton tarafında tetikleyici eşleşmesi (wrap attribute yoksa)
+                        var optionTriggerMatches = [];
+                        block.querySelectorAll('.product-variation-options .product-option').forEach(function(opt) {
+                            if (opt.style.display === 'none') return;
+                            if (sizeTableElementMatchesSelections(opt) === true) {
+                                optionTriggerMatches.push(opt);
+                            }
+                        });
+                        if (optionTriggerMatches.length === 1) {
+                            return targetFromSizeTableOption(optionTriggerMatches[0], 'trigger');
+                        }
+                        if (optionTriggerMatches.length > 1) {
+                            return targetFromSizeTableOption(optionTriggerMatches[0], 'trigger');
                         }
 
                         var visible = [];
