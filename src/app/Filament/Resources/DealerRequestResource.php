@@ -93,7 +93,7 @@ class DealerRequestResource extends Resource
             Forms\Components\Section::make('Tercihler ve şartlar')
                 ->schema([
                     Forms\Components\Placeholder::make('business_profile_display')
-                        ->label('İş profili')
+                        ->label('Müşteri / satıcı tipi')
                         ->content(fn (DealerRequest $record): ?string => $record->businessProfileLabel()),
                     Forms\Components\Placeholder::make('interest_areas_display')
                         ->label('İlgi alanları')

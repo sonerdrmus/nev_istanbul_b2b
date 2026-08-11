@@ -7,12 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class DealerRequest extends Model
 {
     public const BUSINESS_PROFILES = [
-        'printer',
-        'embroiderer',
-        'garment_manufacturer',
-        'promotional_product_distributor',
-        'retailer',
-        'other',
+        'agency',
+        'end_user',
+        'wholesaler',
+        'commission_agent',
     ];
 
     public const INTEREST_AREA_KEYS = [
@@ -30,6 +28,11 @@ class DealerRequest extends Model
 
     /** @var array<string, string> */
     public const BUSINESS_PROFILE_LABELS = [
+        'agency' => 'Ajans',
+        'end_user' => 'Nihai Kullanıcı',
+        'wholesaler' => 'Toptancı',
+        'commission_agent' => 'Komisyoncu',
+        // Eski başvurular
         'printer' => 'Matbaa / baskı',
         'embroiderer' => 'Nakış',
         'garment_manufacturer' => 'Konfeksiyon / giysi üreticisi',
