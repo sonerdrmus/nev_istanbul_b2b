@@ -436,6 +436,18 @@
                             color: #1e40af;
                             box-shadow: 0 0 0 2px rgba(21, 95, 179, 0.15);
                         }
+                        /* Görsel seçenekleri: kare alana otomatik sığdır + hafif yakınlaştır (boş kenarları kırp) */
+                        .variation-option-thumb {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            object-position: center;
+                            transform: scale(1.14);
+                            transform-origin: center center;
+                        }
+                        .product-option.option-selected .variation-option-thumb {
+                            transform: scale(1.18);
+                        }
                         .label-type-standard-wash-info:not(.hidden) {
                             animation: labelWashInfoIn 0.35s ease-out;
                         }
