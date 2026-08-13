@@ -85,7 +85,7 @@ final class ProductDimensionMultiplierFormSchema
                 Forms\Components\TextInput::make('height')->label('BOY (cm)')->numeric()->minValue(0)->step(0.01)->hiddenLabel(),
                 Forms\Components\TextInput::make('auto_multiplier')->label('Ebat cm²')->numeric()->minValue(0)->step(0.01)->default(1)->required()->hiddenLabel(),
                 Forms\Components\TextInput::make('fixed_multiplier')->label('SABİT ÇARPAN')->maxLength(64)->nullable()->hiddenLabel(),
-                Forms\Components\TextInput::make('extra_multiplier')->label('EKSTRA ÇARPAN')->numeric()->step(0.0001)->default(0)->required()->hiddenLabel(),
+                Forms\Components\TextInput::make('extra_multiplier')->label('EKSTRA ÇARPAN')->numeric()->step(0.001)->default(0)->required()->hiddenLabel(),
                 Forms\Components\Toggle::make('is_active')->label('Aktif')->default(true)->inline(false)->hiddenLabel(),
             ])
             ->defaultItems(0)
@@ -113,7 +113,7 @@ final class ProductDimensionMultiplierFormSchema
             ->schema([
                 Forms\Components\Hidden::make('id'),
                 Forms\Components\Select::make('color_count')->label('Renk Sayısı Seç')->options($options)->required()->native(true)->hiddenLabel(),
-                Forms\Components\TextInput::make('multiplier_price')->label('Çarpan Fiyatı')->numeric()->minValue(0)->step(0.0001)->default(0)->required()->hiddenLabel(),
+                Forms\Components\TextInput::make('multiplier_price')->label('Çarpan Fiyatı')->numeric()->minValue(0)->step(0.001)->default(0)->required()->hiddenLabel(),
                 Forms\Components\Toggle::make('is_active')->label('Aktif')->default(true)->inline(false)->hiddenLabel(),
             ])
             ->defaultItems(0)
@@ -137,7 +137,7 @@ final class ProductDimensionMultiplierFormSchema
                 Forms\Components\Hidden::make('id'),
                 Forms\Components\TextInput::make('quantity_from')->label('Başlangıç')->numeric()->integer()->minValue(1)->maxValue(1000)->required()->default(1)->hiddenLabel(),
                 Forms\Components\TextInput::make('quantity_to')->label('Bitiş')->numeric()->integer()->minValue(1)->maxValue(1000)->required()->default(1)->hiddenLabel(),
-                Forms\Components\TextInput::make('multiplier_price')->label('Çarpan Fiyatı')->numeric()->minValue(0)->step(0.0001)->default(0)->required()->hiddenLabel(),
+                Forms\Components\TextInput::make('multiplier_price')->label('Çarpan Fiyatı')->numeric()->minValue(0)->step(0.001)->default(0)->required()->hiddenLabel(),
                 Forms\Components\Toggle::make('is_active')->label('Aktif')->default(true)->inline(false)->hiddenLabel(),
             ])
             ->defaultItems(0)

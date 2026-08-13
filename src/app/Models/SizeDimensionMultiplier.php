@@ -29,7 +29,7 @@ class SizeDimensionMultiplier extends Model
             'width' => 'decimal:2',
             'height' => 'decimal:2',
             'auto_multiplier' => 'decimal:2',
-            'extra_multiplier' => 'decimal:4',
+            'extra_multiplier' => 'decimal:3',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

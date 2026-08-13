@@ -66,9 +66,9 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                             ->numeric()
                             ->default(1)
                             ->minValue(0)
-                            ->step(0.01)
+                            ->step(0.001)
                             ->required()
-                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde birim fiyat × 1,50 olur.'),
+                            ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar).'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -101,7 +101,7 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                                     ->numeric()
                                     ->default(1)
                                     ->minValue(0)
-                                    ->step(0.01)
+                                    ->step(0.001)
                                     ->required()
                                     ->helperText('Ana teslim şekli çarpanına ek olarak uygulanır.'),
                                 Forms\Components\TextInput::make('sort_order')
@@ -154,7 +154,7 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')
-                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 2, ',', '.'))
+                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 3, ',', '.'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')

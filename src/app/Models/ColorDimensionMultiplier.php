@@ -21,7 +21,7 @@ class ColorDimensionMultiplier extends Model
         return [
             'product_id' => 'integer',
             'color_count' => 'integer',
-            'multiplier_price' => 'decimal:4',
+            'multiplier_price' => 'decimal:3',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

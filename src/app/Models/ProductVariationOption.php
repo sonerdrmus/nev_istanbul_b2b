@@ -32,7 +32,7 @@ class ProductVariationOption extends Model
     protected function casts(): array
     {
         return [
-            'price_delta' => 'decimal:2',
+            'price_delta' => 'decimal:3',
             'parent_option_ids' => 'array',
         ];
     }

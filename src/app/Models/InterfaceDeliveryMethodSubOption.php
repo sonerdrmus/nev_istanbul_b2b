@@ -22,7 +22,7 @@ class InterfaceDeliveryMethodSubOption extends Model
     protected function casts(): array
     {
         return [
-            'price_multiplier' => 'decimal:4',
+            'price_multiplier' => 'decimal:3',
             'sort_order' => 'integer',
             'is_default' => 'boolean',
             'is_active' => 'boolean',

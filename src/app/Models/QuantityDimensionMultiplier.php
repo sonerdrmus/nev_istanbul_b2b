@@ -23,7 +23,7 @@ class QuantityDimensionMultiplier extends Model
             'product_id' => 'integer',
             'quantity_from' => 'integer',
             'quantity_to' => 'integer',
-            'multiplier_price' => 'decimal:4',
+            'multiplier_price' => 'decimal:3',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

@@ -124,11 +124,11 @@ class SizeTableResource extends Resource
                                     ->minValue(0),
                                 Forms\Components\TextInput::make('price_multiplier')
                                     ->label('Çarpan miktarı')
-                                    ->helperText('Birim fiyat ile çarpılır. Örn: 0,90 — o beden satırı adet × (fiyat × 0,90).')
+                                    ->helperText('Birim fiyat ile çarpılır. Örn: 1,009 — o beden satırı adet × (fiyat × 1,009). 3 ondalığa kadar.')
                                     ->numeric()
                                     ->default(1)
                                     ->minValue(0)
-                                    ->step(0.0001)
+                                    ->step(0.001)
                                     ->required(),
                             ])
                             ->columns(3)

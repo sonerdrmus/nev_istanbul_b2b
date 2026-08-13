@@ -352,9 +352,9 @@ class ProductResource extends Resource
                                                     ->required()
                                                     ->numeric()
                                                     ->minValue(0)
-                                                    ->step(0.01)
+                                                    ->step(0.001)
                                                     ->default(1)
-                                                    ->helperText('1 = ürün fiyatı aynı; 2 girilirse birim fiyat = ürün fiyatı × 2')
+                                                    ->helperText('1 = ürün fiyatı aynı; 1,009 veya 2 girilirse birim fiyat = ürün fiyatı × çarpan (3 ondalığa kadar)')
                                                     ->columnSpan(1),
                                                 Forms\Components\TextInput::make('sort_order')
                                                     ->label('Sıra')
@@ -955,8 +955,8 @@ class ProductResource extends Resource
                                                             ->numeric()
                                                             ->default(1)
                                                             ->minValue(0)
-                                                            ->step(0.01)
-                                                            ->helperText('1 = temel fiyat aynı kalır; 1,50 girildiğinde birim fiyat × 1,50 olur. 0 veya boş kayıtta 1 kabul edilir.')
+                                                            ->step(0.001)
+                                                            ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
                                                             ->columnSpan(1),
                                                         Forms\Components\TextInput::make('stock_quantity')
                                                             ->label('Stok miktarı')
@@ -2354,7 +2354,7 @@ class ProductResource extends Resource
         $name = trim((string) ($preset->name ?? ''));
 
         return ($name !== '' ? $name : 'Kumaş #'.$preset->id)
-            .' · ×'.number_format((float) ($preset->price_multiplier ?? 1), 2, ',', '.')
+            .' · ×'.number_format((float) ($preset->price_multiplier ?? 1), 3, ',', '.')
             .' · #'.$preset->id;
     }
 
@@ -2444,7 +2444,7 @@ class ProductResource extends Resource
     protected static function formatInterfaceCertificateLabel(InterfaceCertificateVariation $preset): string
     {
         return $preset->name
-            .' · ×'.number_format((float) $preset->price_multiplier, 2, ',', '.')
+            .' · ×'.number_format((float) $preset->price_multiplier, 3, ',', '.')
             .' · #'.$preset->id;
     }
 
@@ -2484,7 +2484,7 @@ class ProductResource extends Resource
     protected static function formatInterfaceMoldModelLabel(InterfaceMoldModelVariation $preset): string
     {
         return $preset->name
-            .' · ×'.number_format((float) $preset->price_multiplier, 2, ',', '.')
+            .' · ×'.number_format((float) $preset->price_multiplier, 3, ',', '.')
             .' · #'.$preset->id;
     }
 
@@ -2524,7 +2524,7 @@ class ProductResource extends Resource
     protected static function formatInterfaceDeliveryMethodLabel(InterfaceDeliveryMethodVariation $preset): string
     {
         return $preset->name
-            .' · ×'.number_format((float) $preset->price_multiplier, 2, ',', '.')
+            .' · ×'.number_format((float) $preset->price_multiplier, 3, ',', '.')
             .' · #'.$preset->id;
     }
 

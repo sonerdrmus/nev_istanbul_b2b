@@ -26,7 +26,7 @@ class InterfaceFabricTypeVariation extends Model
     protected function casts(): array
     {
         return [
-            'price_multiplier' => 'decimal:4',
+            'price_multiplier' => 'decimal:3',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];

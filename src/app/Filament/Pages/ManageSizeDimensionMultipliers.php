@@ -178,7 +178,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
                 Forms\Components\TextInput::make('extra_multiplier')
                     ->label('EKSTRA ÇARPAN')
                     ->numeric()
-                    ->step(0.0001)
+                    ->step(0.001)
                     ->default(0)
                     ->required()
                     ->hiddenLabel(),
@@ -221,7 +221,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
                     ->label('Çarpan Fiyatı')
                     ->numeric()
                     ->minValue(0)
-                    ->step(0.0001)
+                    ->step(0.001)
                     ->default(0)
                     ->required()
                     ->hiddenLabel(),
@@ -279,7 +279,7 @@ class ManageSizeDimensionMultipliers extends Page implements HasForms
                     ->label('Çarpan Fiyatı')
                     ->numeric()
                     ->minValue(0)
-                    ->step(0.0001)
+                    ->step(0.001)
                     ->default(0)
                     ->required()
                     ->hiddenLabel(),
