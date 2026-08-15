@@ -62,6 +62,10 @@ class CategoryResource extends Resource
                             ->label('Category name (EN)')
                             ->helperText('Boşsa kaydedince Türkçeden otomatik İngilizce üretilir.')
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('name_it')
+                            ->label('Nome categoria (IT)')
+                            ->helperText('Boşsa kayıtlı sözlük veya Türkçe ad kullanılır. URL / eşleştirmeyi etkilemez.')
+                            ->maxLength(255),
                         Forms\Components\TextInput::make('slug')
                             ->label('URL Slug')
                             ->required()

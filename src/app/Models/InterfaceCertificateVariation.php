@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class InterfaceCertificateVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     use SyncsLinkedProductVariationOptions;
 
     protected $table = 'interface_certificate_variations';
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'description',
         'image_path',
         'price_multiplier',

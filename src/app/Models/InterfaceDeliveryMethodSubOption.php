@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InterfaceDeliveryMethodSubOption extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     protected $table = 'interface_delivery_method_sub_options';
 
     protected $fillable = [
         'interface_delivery_method_variation_id',
         'name',
+        'name_en',
+        'name_it',
         'description',
         'price_multiplier',
         'sort_order',

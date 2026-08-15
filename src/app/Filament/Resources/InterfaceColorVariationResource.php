@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceColorVariationResource\Pages;
 use App\Models\InterfaceColorVariation;
 use App\Support\InterfaceColorSwatchGenerator;
@@ -41,8 +42,10 @@ class InterfaceColorVariationResource extends Resource
                     ->description('Kumaş bağlantısı Kumaş Türü Varyasyonları sayfasından yapılır.')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Renk adı (opsiyonel)')
+                            ->label('Renk adı (TR, opsiyonel)')
+                            ->helperText('Eşleştirme için kullanılır. Çeviri EN/IT alanlarındadır.')
                             ->maxLength(255),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\TextInput::make('hex_color')
                             ->label('Renk kodu (hex)')
                             ->placeholder('#FFFFFF')

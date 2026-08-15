@@ -23,7 +23,7 @@
 
 @section('store_content_full_width', '1')
 
-@section('title', $currentCategory ? ($currentCategory->name . ' ' . __('store.index.title_category_suffix')) : ($showHomeProductSection ? __('store.index.title_products') : __('store.index.title_home')))
+@section('title', $currentCategory ? ($currentCategory->localized_name . ' ' . __('store.index.title_category_suffix')) : ($showHomeProductSection ? __('store.index.title_products') : __('store.index.title_home')))
 
 @section('hero')
     @if(!$currentCategory)
@@ -160,13 +160,13 @@
                 <a href="{{ route('home') }}" class="hover:text-primary-600 transition-colors">{{ __('store.index.all_products') }}</a>
                 <span>/</span>
                 @if($currentCategory->parent)
-                    <span class="text-slate-700 font-medium">{{ $currentCategory->parent->name }} › {{ $currentCategory->name }}</span>
+                    <span class="text-slate-700 font-medium">{{ $currentCategory->parent->localized_name }} › {{ $currentCategory->localized_name }}</span>
                 @else
-                    <span class="text-slate-700 font-medium">{{ $currentCategory->name }}</span>
+                    <span class="text-slate-700 font-medium">{{ $currentCategory->localized_name }}</span>
                 @endif
             </nav>
         @endif
-        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">{{ $currentCategory ? ($currentCategory->name . ' ' . __('store.index.title_category_suffix')) : __('store.index.title_products') }}</h1>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">{{ $currentCategory ? ($currentCategory->localized_name . ' ' . __('store.index.title_category_suffix')) : __('store.index.title_products') }}</h1>
         <p class="mt-2 text-slate-600">{{ __('store.index.products_intro') }}</p>
     </div>
 
@@ -233,33 +233,32 @@
                         <a href="{{ route('store.product.show', $product) }}" class="block flex-1 flex flex-col min-h-0">
                             <p class="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">{{ $product->company?->name ?? '—' }}</p>
                             <h2 class="font-semibold text-slate-900 text-lg leading-snug hover:text-primary-600 transition-colors line-clamp-2" title="{{ $product->localized_name }}">{{ $product->localized_name }}</h2>
-                            @if($product->description)
-                                <p class="text-sm text-slate-500 mt-2 line-clamp-2 min-h-[2.5rem]">{{ Str::limit($product->description, 80) }}</p>
+                            @php
+                                $listExcerpt = trim(preg_replace(
+                                    '/\s+/u',
+                                    ' ',
+                                    html_entity_decode(strip_tags((string) ($product->localized_description ?: $product->description)), ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                                ) ?? '');
+                            @endphp
+                            @if($listExcerpt !== '')
+                                <p class="text-sm text-slate-500 mt-2 line-clamp-2 min-h-[2.5rem]">{{ \Illuminate\Support\Str::limit($listExcerpt, 80) }}</p>
                             @else
                                 <p class="mt-2 min-h-[2.5rem]"></p>
                             @endif
                         </a>
-                        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 min-h-[3.25rem] flex-wrap">
-                            @if($canSeePrices)
-                                <p class="text-xl font-bold text-slate-900 whitespace-nowrap">{{ $product->getPriceInCurrency($selectedCurrency ?? null, $customerDiscountPercent ?? null) }}</p>
-                                @if($isComingSoon)
-                                    <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0">
-                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <span>{{ __('store.index.coming_soon_cta') }}</span>
-                                    </a>
-                                @else
-                                    @if($product->stock_quantity === null || (int) $product->stock_quantity > 0)
-                                        <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm shadow-sm hover:shadow transition-all duration-200 flex-shrink-0">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                                            {{ __('store.index.choose_variation') }}
-                                        </a>
-                                    @else
-                                        <span class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 font-medium text-sm flex-shrink-0">{{ __('store.index.out_of_stock') }}</span>
-                                    @endif
-                                @endif
+                        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-end gap-3 min-h-[3.25rem] flex-wrap">
+                            @if($isComingSoon)
+                                <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0">
+                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>{{ __('store.index.coming_soon_cta') }}</span>
+                                </a>
+                            @elseif($product->stock_quantity === null || (int) $product->stock_quantity > 0)
+                                <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm shadow-sm hover:shadow transition-all duration-200 flex-shrink-0">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                    {{ __('store.index.choose_variation') }}
+                                </a>
                             @else
-                                <p class="text-slate-500 text-sm">{{ __('store.index.login_for_prices') }}</p>
-                                <a href="{{ route('store.product.show', $product) }}" class="text-sm font-medium text-primary-600 hover:text-primary-700 flex-shrink-0">{{ __('store.index.product_detail') }}</a>
+                                <span class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 font-medium text-sm flex-shrink-0">{{ __('store.index.out_of_stock') }}</span>
                             @endif
                         </div>
                     </div>

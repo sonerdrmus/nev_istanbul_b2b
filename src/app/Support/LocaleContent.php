@@ -3,17 +3,17 @@
 namespace App\Support;
 
 /**
- * Shared helpers for bilingual (TR primary + EN) content fields.
+ * Shared helpers for TR primary + EN/IT display fields.
  */
 class LocaleContent
 {
     /**
      * Display name/label for the active locale.
-     * EN/IT prefer *En field, then catalog map, then TR source.
+     * Prefers the locale field, then catalog map, then the TR source.
      */
-    public static function display(?string $tr, ?string $en = null, ?string $locale = null): string
+    public static function display(?string $tr, ?string $en = null, ?string $it = null, ?string $locale = null): string
     {
-        return CatalogLabelTranslator::field($tr, $en, $locale);
+        return CatalogLabelTranslator::field($tr, $en, $it, $locale);
     }
 
     public static function fillEnglishFromTurkish(?string $tr, bool $isHtml = false): ?string

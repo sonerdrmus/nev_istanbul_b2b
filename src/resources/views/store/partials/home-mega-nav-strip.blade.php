@@ -76,7 +76,7 @@
                                         <a href="{{ route('home', array_merge($qBase, ['parent' => $slug, 'category' => $child->slug])) }}"
                                            class="block px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-primary-700"
                                            role="menuitem">
-                                            {{ $child->name }}
+                                            {{ $child->localized_name }}
                                         </a>
                                     @endforeach
                                 @endif

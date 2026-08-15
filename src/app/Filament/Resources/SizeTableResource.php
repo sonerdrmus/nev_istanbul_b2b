@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\SizeTableResource\Pages;
 use App\Models\ProductVariation;
 use App\Models\SizeTable;
@@ -71,14 +72,17 @@ class SizeTableResource extends Resource
                 Forms\Components\Section::make('Tablo bilgisi')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Ad')
+                            ->label('Ad (TR)')
                             ->required()
                             ->maxLength(255)
+                            ->helperText('Kayıt kimliği. Eşleştirme bu addan yürür; çeviri için EN/IT kullanın.')
                             ->disabled(fn (?SizeTable $record) => $record !== null),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\TextInput::make('title')
-                            ->label('Başlık (ürün sayfasında görünen)')
+                            ->label('Başlık (TR, ürün sayfasında görünen)')
                             ->placeholder('Örn: BEDEN TABLOSU (ERKEK)')
                             ->maxLength(255),
+                        ...LocaleNameInputs::make('title', 'Başlık (EN)', 'Başlık (IT)'),
                         Forms\Components\Select::make('trigger_combined')
                             ->label('Hangi varyasyon seçildiğinde bu tablo açılsın?')
                             ->options(fn (): array => self::getTriggerVariationOptions())

@@ -33,6 +33,7 @@ final class PackagingPreferenceCatalog
             ->map(fn (InterfacePackagingPreferenceVariation $t): array => [
                 'id' => $t->id,
                 'name' => $t->name,
+                'label' => $t->localized_name,
                 'slug' => $t->slug,
                 'requires_material' => (bool) $t->requires_material,
                 'image_url' => filled($t->image_path) ? MediaUrl::public($t->image_path) : null,
@@ -49,6 +50,7 @@ final class PackagingPreferenceCatalog
                 ->map(fn (InterfacePackagingMaterial $m): array => [
                     'id' => $m->id,
                     'name' => $m->name,
+                    'label' => $m->localized_name,
                     'slug' => $m->slug,
                 ])
                 ->values()
@@ -70,6 +72,7 @@ final class PackagingPreferenceCatalog
                 ->map(fn (InterfacePackagingCustomization $c): array => [
                     'id' => $c->id,
                     'name' => $c->name,
+                    'label' => $c->localized_name,
                     'slug' => $c->slug,
                     'extra_price' => (float) $c->extra_price,
                     'is_default' => (bool) $c->is_default,

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Forms\Components\ProductMultiSelect;
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceFabricTypeVariationResource\Pages;
 use App\Models\InterfaceColorVariation;
 use App\Models\InterfaceFabricTypeVariation;
@@ -39,8 +40,10 @@ class InterfaceFabricTypeVariationResource extends Resource
                 Forms\Components\Section::make('Kumaş türü varyasyonu')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Kumaş / tür adı (opsiyonel)')
+                            ->label('Kumaş / tür adı (TR, opsiyonel)')
+                            ->helperText('Eşleştirme ve ürün seçenek adı bu alandan gelir. Çeviri için EN/IT kullanın.')
                             ->maxLength(255),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\Section::make('Kumaş görseli')
                             ->description('Görsel opsiyoneldir. Altına detay metni ekleyebilirsiniz; mağazada «detaylı bilgi» modalında gösterilir.')
                             ->schema([

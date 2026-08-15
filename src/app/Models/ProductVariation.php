@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
-use App\Support\CatalogLabelTranslator;
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
+
     protected $fillable = [
         'product_id',
         'name',
+        'name_en',
+        'name_it',
         'type',
         'depends_on',
         'depends_on_option_ids',
@@ -31,7 +37,7 @@ class ProductVariation extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        return CatalogLabelTranslator::label($this->name);
+        return $this->localized_name;
     }
 
     /** Bağlı varyasyondaki hangi seçeneklerde bu adım görünsün (boş = üst varyasyonda herhangi bir seçim). */

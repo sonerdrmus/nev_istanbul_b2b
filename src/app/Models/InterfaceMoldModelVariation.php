@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class InterfaceMoldModelVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     use SyncsLinkedProductVariationOptions;
 
     protected $table = 'interface_mold_model_variations';
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'image_path',
         'size_table_image_path',
         'price_multiplier',

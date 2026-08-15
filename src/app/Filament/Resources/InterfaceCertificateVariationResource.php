@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceCertificateVariationResource\Pages;
 use App\Models\InterfaceCertificateVariation;
 use Filament\Forms;
@@ -38,9 +39,11 @@ class InterfaceCertificateVariationResource extends Resource
                 Forms\Components\Section::make('Sertifika')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Sertifika adı')
+                            ->label('Sertifika adı (TR)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\Textarea::make('description')
                             ->label('Açıklama')
                             ->rows(4)

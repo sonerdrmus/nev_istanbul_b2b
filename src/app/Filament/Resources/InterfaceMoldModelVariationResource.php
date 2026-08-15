@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceMoldModelVariationResource\Pages;
 use App\Models\InterfaceMoldModelVariation;
 use Filament\Forms;
@@ -38,9 +39,11 @@ class InterfaceMoldModelVariationResource extends Resource
                 Forms\Components\Section::make('Kalıp modeli')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Kalıp model adı')
+                            ->label('Kalıp model adı (TR)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_mold_model_variations')

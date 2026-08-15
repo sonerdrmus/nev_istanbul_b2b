@@ -890,6 +890,9 @@
                                                     @php
                                                         $rowId = is_object($customRow) ? ($customRow->id ?? null) : ($customRow['id'] ?? null);
                                                         $clKonum = is_object($customRow) ? ($customRow->position_name ?? '') : ($customRow['position_name'] ?? '');
+                                                        $clKonumLabel = is_object($customRow)
+                                                            ? $customRow->localized_position_name
+                                                            : \App\Support\CatalogLabelTranslator::label($clKonum);
                                                         $defEn = is_object($customRow) ? ($customRow->default_width ?? '') : ($customRow['default_width'] ?? '');
                                                         $defBoy = is_object($customRow) ? ($customRow->default_height ?? '') : ($customRow['default_height'] ?? '');
                                                         $defEn = $defEn !== null && $defEn !== '' ? rtrim(rtrim((string) $defEn, '0'), '.') : '';
@@ -907,7 +910,7 @@
                                                         $rowPositionImageUrl = filled($rowPositionImage) ? \App\Support\MediaUrl::public($rowPositionImage) : '';
                                                     @endphp
                                                     <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-2.5 sm:gap-3 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
-                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                        <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonumLabel }}">
                                                         <span class="pointer-events-none relative flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-white transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                                                         </span>
@@ -918,8 +921,8 @@
                                                                         <button type="button"
                                                                             class="customization-position-preview-btn group relative z-[1] flex w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-50/60 px-2 py-1.5 text-left transition-colors duration-200 hover:border-slate-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/40"
                                                                             data-image-url="{{ $rowPositionImageUrl }}"
-                                                                            data-image-title="{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}"
-                                                                            data-image-alt="{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}"
+                                                                            data-image-title="{{ $clKonumLabel }}"
+                                                                            data-image-alt="{{ $clKonumLabel }}"
                                                                             aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonum]) }}">
                                                                             <span class="customization-position-preview-thumb relative flex h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-slate-200/80">
                                                                                 <img src="{{ $rowPositionImageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
@@ -928,32 +931,32 @@
                                                                                 </span>
                                                                             </span>
                                                                             <span class="min-w-0 flex-1">
-                                                                                <span class="customization-konum-text block truncate text-sm font-semibold leading-snug text-slate-800 transition-colors group-hover:text-slate-900">{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}</span>
+                                                                                <span class="customization-konum-text block truncate text-sm font-semibold leading-snug text-slate-800 transition-colors group-hover:text-slate-900">{{ $clKonumLabel }}</span>
                                                                                 <span class="mt-0.5 hidden text-[11px] font-medium text-slate-500 sm:block">{{ __('store.product.customization_position_inspect') }}</span>
                                                                             </span>
                                                                         </button>
                                                                     @else
-                                                                        <span class="customization-konum-text block text-sm font-semibold leading-snug text-slate-700">{{ \App\Support\CatalogLabelTranslator::label($clKonum) }}</span>
+                                                                        <span class="customization-konum-text block text-sm font-semibold leading-snug text-slate-700">{{ $clKonumLabel }}</span>
                                                                     @endif
                                                                 </div>
                                                                 <div class="customization-col-dims flex items-center">
                                                                     <div class="customization-dim-wrap flex items-center gap-1.5">
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_en') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_en') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defEn }}" data-default="{{ $defEn }}" class="customization-dim-en h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_en') }}, {{ $clKonumLabel }}">
                                                                         <span class="customization-dim-separator flex h-10 shrink-0 select-none items-center justify-center px-0.5" aria-hidden="true">×</span>
                                                                         <span class="sr-only">{{ __('store.product.customization_dim_boy') }}</span>
-                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                                        <input type="number" inputmode="decimal" min="0.01" step="any" autocomplete="off" value="{{ $defBoy }}" data-default="{{ $defBoy }}" class="customization-dim-boy h-10 w-[4.25rem] shrink-0 rounded-lg px-1.5 text-center tabular-nums leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/25" aria-label="{{ __('store.product.customization_dim_boy') }}, {{ $clKonumLabel }}">
                                                                     </div>
                                                                 </div>
                                                                 <div class="customization-col-print flex items-center">
-                                                                    <select name="customization_row_{{ $rowId }}_baski" data-default-baski="{{ $rowDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2.5 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_print') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}">
+                                                                    <select name="customization_row_{{ $rowId }}_baski" data-default-baski="{{ $rowDefaultPrint }}" class="customization-print-tech h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2.5 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_print') }}, {{ $clKonumLabel }}">
                                                                         @foreach ($customizationPrintOptions as $pSlug => $pLabel)
                                                                             <option value="{{ $pSlug }}" {{ $pSlug === $rowDefaultPrint ? 'selected' : '' }}>{{ $pLabel }}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
                                                                 <div class="customization-col-colors customization-color-field flex items-center {{ $rowDefaultPrintCanonical !== 'emprime' ? 'invisible pointer-events-none' : '' }}">
-                                                                    <select name="customization_row_{{ $rowId }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2 text-center text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_colors') }}, {{ \App\Support\CatalogLabelTranslator::label($clKonum) }}" @disabled($rowDefaultPrintCanonical !== 'emprime')>
+                                                                    <select name="customization_row_{{ $rowId }}_renk" data-default-renk="{{ $defRenk }}" class="customization-color-count h-10 w-full min-w-0 rounded-lg border border-slate-300/90 bg-white px-2 text-center text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" aria-label="{{ __('store.product.customization_col_colors') }}, {{ $clKonumLabel }}" @disabled($rowDefaultPrintCanonical !== 'emprime')>
                                                                         @for ($ci = 1; $ci <= $customizationMaxColors; $ci++)
                                                                             <option value="{{ $ci }}" {{ (int) $ci === (int) $defRenk ? 'selected' : '' }}>{{ $ci }}</option>
                                                                         @endfor
@@ -4535,7 +4538,7 @@
                                 var multHtml = subMult > 0 && Math.abs(subMult - 1) > 0.0001
                                     ? '<span class="shrink-0 text-xs font-semibold text-slate-500">' + escapeHtml(formatVariationMultiplier(subMult)) + '</span>'
                                     : '';
-                                btn.innerHTML = '<span class="min-w-0">' + escapeHtml(String(opt.name || '')) + '</span>' + multHtml;
+                                btn.innerHTML = '<span class="min-w-0">' + escapeHtml(String(opt.label || opt.name || '')) + '</span>' + multHtml;
                                 list.appendChild(btn);
                             });
                             selectDefaultDeliverySubOption(wrap);

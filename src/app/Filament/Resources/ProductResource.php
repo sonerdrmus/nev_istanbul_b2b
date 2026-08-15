@@ -19,6 +19,7 @@ use App\Models\ProductCustomizationRow;
 use App\Models\ProductVariation;
 use App\Models\ProductVariationOption;
 use App\Models\SizeTable;
+use App\Support\CatalogLabelTranslator;
 use App\Support\ProductVariationFlowSteps;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -188,6 +189,11 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('name_en')
                                             ->label('Product name (EN)')
                                             ->helperText('Boş bırakılırsa kaydedince Türkçe addan otomatik İngilizce üretilir.')
+                                            ->maxLength(255)
+                                            ->columnSpan(1),
+                                        Forms\Components\TextInput::make('name_it')
+                                            ->label('Nome prodotto (IT)')
+                                            ->helperText('Boşsa kayıtlı sözlük veya Türkçe ad kullanılır. Eşleştirmeyi etkilemez.')
                                             ->maxLength(255)
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('slug')
@@ -530,10 +536,21 @@ class ProductResource extends Resource
                                             ->addActionLabel('Varyasyon ekle')
                                             ->schema([
                                                 Forms\Components\TextInput::make('name')
-                                                    ->label('Varyasyon adı')
+                                                    ->label('Varyasyon adı (TR)')
                                                     ->placeholder('Örn: Renk, Beden')
                                                     ->required()
                                                     ->maxLength(255)
+                                                    ->helperText('Eşleştirme anahtarıdır (bağımlılıklar, tetikleyiciler). Çeviri için EN/IT alanlarını kullanın.')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('name_en')
+                                                    ->label('Varyasyon adı (EN)')
+                                                    ->maxLength(255)
+                                                    ->helperText('Mağaza İngilizce gösterimi. Eşleştirmeyi değiştirmez.')
+                                                    ->columnSpan(1),
+                                                Forms\Components\TextInput::make('name_it')
+                                                    ->label('Varyasyon adı (IT)')
+                                                    ->maxLength(255)
+                                                    ->helperText('Mağaza İtalyanca gösterimi. Eşleştirmeyi değiştirmez.')
                                                     ->columnSpan(1),
                                                 Forms\Components\Select::make('type')
                                                     ->label('Tip')
@@ -726,11 +743,24 @@ class ProductResource extends Resource
                                                         Forms\Components\Hidden::make('option_value')
                                                             ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'size_table'),
                                                         Forms\Components\TextInput::make('option_value')
-                                                            ->label('Seçenek değeri')
+                                                            ->label('Seçenek değeri (TR)')
                                                             ->placeholder('Örn: Kırmızı, XL')
                                                             ->required(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
                                                             ->maxLength(255)
+                                                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT alanlarını kullanın.')
                                                             ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
+                                                            ->columnSpan(1),
+                                                        Forms\Components\TextInput::make('option_value_en')
+                                                            ->label('Seçenek (EN)')
+                                                            ->maxLength(255)
+                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
+                                                            ->helperText('Mağaza İngilizce gösterimi.')
+                                                            ->columnSpan(1),
+                                                        Forms\Components\TextInput::make('option_value_it')
+                                                            ->label('Seçenek (IT)')
+                                                            ->maxLength(255)
+                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
+                                                            ->helperText('Mağaza İtalyanca gösterimi.')
                                                             ->columnSpan(1),
                                                         Forms\Components\Textarea::make('info_text')
                                                             ->label('Mağaza açıklama metni (seçenek)')
@@ -1760,6 +1790,8 @@ class ProductResource extends Resource
         ProductVariationOption::query()->create([
             'product_variation_id' => $variation->getKey(),
             'option_value' => $row['option_value'],
+            'option_value_en' => $row['option_value_en'] ?? null,
+            'option_value_it' => $row['option_value_it'] ?? null,
             'info_text' => $row['info_text'] ?? null,
             'interface_color_variation_id' => $row['interface_color_variation_id'] ?? null,
             'interface_fabric_type_variation_id' => $row['interface_fabric_type_variation_id'] ?? null,
@@ -2633,6 +2665,21 @@ class ProductResource extends Resource
             ?? $get('id');
 
         return $productId ? (int) $productId : null;
+    }
+
+    /**
+     * @return array{option_value_en: ?string, option_value_it: ?string}
+     */
+    private static function optionLocaleFields(?string $source, ?object $preset = null): array
+    {
+        $en = is_object($preset) ? ($preset->name_en ?? $preset->title_en ?? null) : null;
+        $it = is_object($preset) ? ($preset->name_it ?? $preset->title_it ?? null) : null;
+        $pair = CatalogLabelTranslator::fillPair($source, $en, $it);
+
+        return [
+            'option_value_en' => $pair['en'] !== '' ? $pair['en'] : null,
+            'option_value_it' => $pair['it'] !== '' ? $pair['it'] : null,
+        ];
     }
 
     public static function getRelations(): array

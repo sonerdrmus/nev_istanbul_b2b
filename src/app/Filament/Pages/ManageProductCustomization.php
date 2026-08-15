@@ -67,6 +67,8 @@ class ManageProductCustomization extends Page implements HasForms
                 ->map(fn (ProductCustomizationPrintTechnique $t): array => [
                     'id' => $t->id,
                     'name' => $t->name,
+                    'name_en' => $t->name_en,
+                    'name_it' => $t->name_it,
                     'slug' => $t->slug,
                     'sort_order' => $t->sort_order,
                     'is_active' => $t->is_active,
@@ -81,6 +83,8 @@ class ManageProductCustomization extends Page implements HasForms
                 ->map(fn (ProductCustomizationRow $r): array => [
                     'id' => $r->id,
                     'position_name' => $r->position_name,
+                    'position_name_en' => $r->position_name_en,
+                    'position_name_it' => $r->position_name_it,
                     'position_image' => filled($r->position_image) ? [$r->position_image] : null,
                     'default_width' => $r->default_width,
                     'default_height' => $r->default_height,
@@ -125,7 +129,9 @@ class ManageProductCustomization extends Page implements HasForms
                             ->view('filament.forms.components.form-table-repeater')
                             ->viewData([
                                 'tableHeaders' => [
-                                    'Ad',
+                                    'Ad (TR)',
+                                    'Ad (EN)',
+                                    'Ad (IT)',
                                     'Kod (slug)',
                                     ['label' => 'Aktif', 'align' => 'center'],
                                 ],
@@ -135,17 +141,26 @@ class ManageProductCustomization extends Page implements HasForms
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Ad')
+                                    ->label('Ad (TR)')
                                     ->required()
                                     ->maxLength(255)
                                     ->live(onBlur: true)
                                     ->hiddenLabel()
+                                    ->helperText('Slug eşleştirmesi TR addan üretilir.')
                                     ->afterStateUpdated(function (Forms\Set $set, ?string $state, Get $get): void {
                                         if (filled($get('slug'))) {
                                             return;
                                         }
                                         $set('slug', Str::slug($state ?? ''));
                                     }),
+                                Forms\Components\TextInput::make('name_en')
+                                    ->label('Ad (EN)')
+                                    ->maxLength(255)
+                                    ->hiddenLabel(),
+                                Forms\Components\TextInput::make('name_it')
+                                    ->label('Ad (IT)')
+                                    ->maxLength(255)
+                                    ->hiddenLabel(),
                                 Forms\Components\TextInput::make('slug')
                                     ->label('Kod (slug)')
                                     ->required()
@@ -174,8 +189,17 @@ class ManageProductCustomization extends Page implements HasForms
                                 Forms\Components\Grid::make(12)
                                     ->schema([
                                         Forms\Components\TextInput::make('position_name')
-                                            ->label('Konum')
+                                            ->label('Konum (TR)')
                                             ->required()
+                                            ->maxLength(255)
+                                            ->helperText('İç eşleştirme bu addan yapılır.')
+                                            ->columnSpan(4),
+                                        Forms\Components\TextInput::make('position_name_en')
+                                            ->label('Konum (EN)')
+                                            ->maxLength(255)
+                                            ->columnSpan(4),
+                                        Forms\Components\TextInput::make('position_name_it')
+                                            ->label('Konum (IT)')
                                             ->maxLength(255)
                                             ->columnSpan(4),
                                         Forms\Components\TextInput::make('default_width')
@@ -308,6 +332,8 @@ class ManageProductCustomization extends Page implements HasForms
 
             $attrs = [
                 'name' => trim((string) ($row['name'] ?? $slug)),
+                'name_en' => filled($row['name_en'] ?? null) ? trim((string) $row['name_en']) : null,
+                'name_it' => filled($row['name_it'] ?? null) ? trim((string) $row['name_it']) : null,
                 'slug' => $slug,
                 'sort_order' => (int) ($row['sort_order'] ?? ($sort * 10)),
                 'is_active' => (bool) ($row['is_active'] ?? true),
@@ -339,6 +365,8 @@ class ManageProductCustomization extends Page implements HasForms
             }
             $attrs = [
                 'position_name' => $position,
+                'position_name_en' => filled($row['position_name_en'] ?? null) ? trim((string) $row['position_name_en']) : null,
+                'position_name_it' => filled($row['position_name_it'] ?? null) ? trim((string) $row['position_name_it']) : null,
                 'position_image' => self::normalizeUploadedPath($row['position_image'] ?? null),
                 'default_width' => filled($row['default_width'] ?? null) ? $row['default_width'] : null,
                 'default_height' => filled($row['default_height'] ?? null) ? $row['default_height'] : null,

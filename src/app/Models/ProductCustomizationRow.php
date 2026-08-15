@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -9,8 +11,12 @@ use Illuminate\Support\Facades\Schema;
 
 class ProductCustomizationRow extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+
     protected $fillable = [
         'position_name',
+        'position_name_en',
+        'position_name_it',
         'position_image',
         'default_width',
         'default_height',
@@ -29,6 +35,16 @@ class ProductCustomizationRow extends Model
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function localizedNameSourceAttribute(): string
+    {
+        return 'position_name';
+    }
+
+    public function getLocalizedPositionNameAttribute(): string
+    {
+        return LocaleContent::display($this->position_name, $this->position_name_en, $this->position_name_it);
     }
 
     public function products()

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use App\Support\CatalogLabelTranslator;
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariationOption extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+
     protected $fillable = [
         'product_variation_id',
         'interface_color_variation_id',
@@ -18,6 +21,8 @@ class ProductVariationOption extends Model
         'interface_mold_model_variation_id',
         'size_table_id',
         'option_value',
+        'option_value_en',
+        'option_value_it',
         'info_text',
         'option_color',
         'option_image',
@@ -37,9 +42,14 @@ class ProductVariationOption extends Model
         ];
     }
 
+    protected static function localizedNameSourceAttribute(): string
+    {
+        return 'option_value';
+    }
+
     public function getDisplayValueAttribute(): string
     {
-        return CatalogLabelTranslator::label($this->option_value);
+        return LocaleContent::display($this->option_value, $this->option_value_en, $this->option_value_it);
     }
 
     protected static function booted(): void

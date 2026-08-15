@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceDeliveryMethodVariationResource\Pages;
 use App\Models\InterfaceDeliveryMethodVariation;
 use Filament\Forms;
@@ -38,9 +39,11 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                 Forms\Components\Section::make('Teslim şekli')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Teslimat türü adı')
+                            ->label('Teslimat türü adı (TR)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\Textarea::make('description')
                             ->label('Açıklama')
                             ->rows(4)
@@ -87,9 +90,10 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                             ->label('')
                             ->schema([
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Alt teslim şekli')
+                                    ->label('Alt teslim şekli (TR)')
                                     ->required()
                                     ->maxLength(255),
+                                ...LocaleNameInputs::make(),
                                 Forms\Components\Textarea::make('description')
                                     ->label('Bilgi metni')
                                     ->rows(3)

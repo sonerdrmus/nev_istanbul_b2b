@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabelTranslator;
 use App\Support\LocaleContent;
 use App\Support\MachineTranslator;
 use App\Support\MediaUrl;
@@ -17,6 +18,7 @@ class Product extends Model
         'currency_id',
         'name',
         'name_en',
+        'name_it',
         'slug',
         'description',
         'description_en',
@@ -70,10 +72,21 @@ class Product extends Model
      */
     public function autoFillEnglishFields(bool $force = false): void
     {
-        if (filled($this->name) && ($force || blank($this->name_en))) {
-            $translated = MachineTranslator::translate((string) $this->name, 'tr', 'en');
-            if (filled($translated)) {
-                $this->name_en = $translated;
+        if (filled($this->name)) {
+            $pair = CatalogLabelTranslator::fillPair($this->name, $this->name_en, $this->name_it);
+            if ($force || blank($this->name_en)) {
+                if (filled($this->name_en) === false) {
+                    $translated = MachineTranslator::translate((string) $this->name, 'tr', 'en');
+                    $this->name_en = filled($translated) ? $translated : $pair['en'];
+                } elseif ($force) {
+                    $translated = MachineTranslator::translate((string) $this->name, 'tr', 'en');
+                    if (filled($translated)) {
+                        $this->name_en = $translated;
+                    }
+                }
+            }
+            if ($force || blank($this->name_it)) {
+                $this->name_it = $pair['it'] !== '' ? $pair['it'] : $this->name_it;
             }
         }
 
@@ -101,37 +114,22 @@ class Product extends Model
 
     public function getLocalizedNameAttribute(): string
     {
-        return LocaleContent::display($this->name, $this->name_en);
+        return LocaleContent::display($this->name, $this->name_en, $this->name_it);
     }
 
     public function getLocalizedDescriptionAttribute(): ?string
     {
-        $locale = app()->getLocale();
-        if (in_array($locale, ['en', 'it'], true) && filled($this->description_en)) {
-            return $this->description_en;
-        }
-
-        return $this->description;
+        return LocaleContent::display($this->description, $this->description_en, null);
     }
 
     public function getLocalizedMetaTitleAttribute(): ?string
     {
-        $locale = app()->getLocale();
-        if (in_array($locale, ['en', 'it'], true) && filled($this->meta_title_en)) {
-            return $this->meta_title_en;
-        }
-
-        return $this->meta_title;
+        return LocaleContent::display($this->meta_title, $this->meta_title_en, null) ?: null;
     }
 
     public function getLocalizedMetaDescriptionAttribute(): ?string
     {
-        $locale = app()->getLocale();
-        if (in_array($locale, ['en', 'it'], true) && filled($this->meta_description_en)) {
-            return $this->meta_description_en;
-        }
-
-        return $this->meta_description;
+        return LocaleContent::display($this->meta_description, $this->meta_description_en, null) ?: null;
     }
 
     public function company()

@@ -31,6 +31,7 @@ final class DeliveryMethodCatalog
                     ->map(fn (InterfaceDeliveryMethodSubOption $option): array => [
                         'id' => $option->id,
                         'name' => $option->name,
+                        'label' => $option->localized_name,
                         'description' => (string) ($option->description ?? ''),
                         'price_multiplier' => (float) ($option->price_multiplier ?? 1),
                         'is_default' => (bool) $option->is_default,

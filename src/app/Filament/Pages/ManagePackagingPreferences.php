@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Models\InterfacePackagingCustomization;
 use App\Models\InterfacePackagingMaterial;
 use App\Models\InterfacePackagingPreferenceVariation;
@@ -51,6 +52,8 @@ class ManagePackagingPreferences extends Page implements HasForms
                 ->map(fn (InterfacePackagingPreferenceVariation $row): array => [
                     'id' => $row->id,
                     'name' => $row->name,
+                    'name_en' => $row->name_en,
+                    'name_it' => $row->name_it,
                     'slug' => $row->slug,
                     'image_path' => $row->image_path,
                     'requires_material' => $row->requires_material,
@@ -65,6 +68,8 @@ class ManagePackagingPreferences extends Page implements HasForms
                 ->map(fn (InterfacePackagingMaterial $row): array => [
                     'id' => $row->id,
                     'name' => $row->name,
+                    'name_en' => $row->name_en,
+                    'name_it' => $row->name_it,
                     'slug' => $row->slug,
                     'is_active' => $row->is_active,
                 ])
@@ -77,6 +82,8 @@ class ManagePackagingPreferences extends Page implements HasForms
                 ->map(fn (InterfacePackagingCustomization $row): array => [
                     'id' => $row->id,
                     'name' => $row->name,
+                    'name_en' => $row->name_en,
+                    'name_it' => $row->name_it,
                     'slug' => $row->slug,
                     'extra_price' => $row->extra_price,
                     'is_default' => $row->is_default,
@@ -105,9 +112,10 @@ class ManagePackagingPreferences extends Page implements HasForms
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Ambalaj adı')
+                                    ->label('Ambalaj adı (TR)')
                                     ->required()
                                     ->maxLength(255)
+                                    ->helperText('Slug eşleştirmesi TR addan üretilir.')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Forms\Set $set, ?string $state, Forms\Get $get): void {
                                         if (filled($get('slug'))) {
@@ -115,6 +123,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                                         }
                                         $set('slug', Str::slug($state ?? ''));
                                     }),
+                                ...LocaleNameInputs::make(),
                                 Forms\Components\TextInput::make('slug')
                                     ->label('Kod (slug)')
                                     ->required()
@@ -151,9 +160,10 @@ class ManagePackagingPreferences extends Page implements HasForms
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Malzeme adı')
+                                    ->label('Malzeme adı (TR)')
                                     ->required()
                                     ->maxLength(255)
+                                    ->helperText('Slug eşleştirmesi TR addan üretilir.')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Forms\Set $set, ?string $state, Forms\Get $get): void {
                                         if (filled($get('slug'))) {
@@ -161,6 +171,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                                         }
                                         $set('slug', Str::slug($state ?? ''));
                                     }),
+                                ...LocaleNameInputs::make(),
                                 Forms\Components\TextInput::make('slug')
                                     ->label('Kod (slug)')
                                     ->required()
@@ -192,9 +203,10 @@ class ManagePackagingPreferences extends Page implements HasForms
                             ->schema([
                                 Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Seçenek adı')
+                                    ->label('Seçenek adı (TR)')
                                     ->required()
                                     ->maxLength(255)
+                                    ->helperText('Slug eşleştirmesi TR addan üretilir.')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Forms\Set $set, ?string $state, Forms\Get $get): void {
                                         if (filled($get('slug'))) {
@@ -202,6 +214,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                                         }
                                         $set('slug', Str::slug($state ?? ''));
                                     }),
+                                ...LocaleNameInputs::make(),
                                 Forms\Components\TextInput::make('slug')
                                     ->label('Kod (slug)')
                                     ->required()
@@ -293,6 +306,8 @@ class ManagePackagingPreferences extends Page implements HasForms
             }
             $attrs = [
                 'name' => $name,
+                'name_en' => filled($row['name_en'] ?? null) ? trim((string) $row['name_en']) : null,
+                'name_it' => filled($row['name_it'] ?? null) ? trim((string) $row['name_it']) : null,
                 'slug' => $slug,
                 'image_path' => $row['image_path'] ?? null,
                 'requires_material' => (bool) ($row['requires_material'] ?? false),
@@ -332,6 +347,8 @@ class ManagePackagingPreferences extends Page implements HasForms
             }
             $attrs = [
                 'name' => $name,
+                'name_en' => filled($row['name_en'] ?? null) ? trim((string) $row['name_en']) : null,
+                'name_it' => filled($row['name_it'] ?? null) ? trim((string) $row['name_it']) : null,
                 'slug' => $slug,
                 'sort_order' => $sort * 10,
                 'is_active' => (bool) ($row['is_active'] ?? true),
@@ -369,6 +386,8 @@ class ManagePackagingPreferences extends Page implements HasForms
             $isDefault = (bool) ($row['is_default'] ?? false);
             $attrs = [
                 'name' => $name,
+                'name_en' => filled($row['name_en'] ?? null) ? trim((string) $row['name_en']) : null,
+                'name_it' => filled($row['name_it'] ?? null) ? trim((string) $row['name_it']) : null,
                 'slug' => $slug,
                 'extra_price' => max(0, (float) ($row['extra_price'] ?? 0)),
                 'is_default' => $isDefault,

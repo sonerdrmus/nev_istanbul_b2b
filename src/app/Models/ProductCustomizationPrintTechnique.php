@@ -2,13 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class ProductCustomizationPrintTechnique extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
+
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'slug',
         'sort_order',
         'is_active',

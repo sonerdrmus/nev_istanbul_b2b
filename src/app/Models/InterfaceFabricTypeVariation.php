@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,12 +12,16 @@ use Illuminate\Support\Facades\Schema;
 
 class InterfaceFabricTypeVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     use SyncsLinkedProductVariationOptions;
 
     protected $table = 'interface_fabric_type_variations';
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'image_path',
         'detail_text',
         'price_multiplier',

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfacePackagingPreferenceVariationResource\Pages;
 use App\Models\InterfacePackagingPreferenceVariation;
 use Filament\Forms;
@@ -38,9 +39,11 @@ class InterfacePackagingPreferenceVariationResource extends Resource
                 Forms\Components\Section::make('Ambalaj tercihi')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Ambalaj türü')
+                            ->label('Ambalaj türü (TR)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\TextInput::make('price_multiplier')
                             ->label('Fiyat çarpanı (×)')
                             ->numeric()

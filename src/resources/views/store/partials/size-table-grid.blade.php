@@ -13,7 +13,7 @@
         <table class="w-full min-w-[520px] border-collapse text-sm">
             <thead>
                 <tr class="bg-primary-600 text-white">
-                    <th class="text-left font-semibold py-3 px-3 rounded-tl-xl">{{ $sizeTable->title ?: $sizeTable->name }}</th>
+                    <th class="text-left font-semibold py-3 px-3 rounded-tl-xl">{{ $sizeTable->localized_title }}</th>
                     @foreach($sizeTable->columns as $col)
                         <th class="font-semibold py-3 px-2 text-center">{{ $col->size_value }}</th>
                     @endforeach

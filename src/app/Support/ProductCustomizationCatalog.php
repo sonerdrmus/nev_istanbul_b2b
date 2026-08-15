@@ -59,7 +59,7 @@ final class ProductCustomizationCatalog
 
         $printMap = [];
         foreach ($techniques as $technique) {
-            $printMap[$technique->slug] = $technique->name;
+            $printMap[$technique->slug] = $technique->localized_name;
         }
 
         $defaultSlug = (string) ($settings->default_print_technique_slug ?? '');
@@ -90,7 +90,7 @@ final class ProductCustomizationCatalog
     {
         $printMap = [];
         foreach ($techniques as $technique) {
-            $printMap[$technique->slug] = $technique->name;
+            $printMap[$technique->slug] = $technique->localized_name;
         }
 
         $defaultSlug = (string) ($settings->default_print_technique_slug ?? '');

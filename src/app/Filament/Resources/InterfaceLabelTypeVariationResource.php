@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceLabelTypeVariationResource\Pages;
 use App\Models\InterfaceLabelTypeVariation;
 use Filament\Forms;
@@ -39,9 +40,11 @@ class InterfaceLabelTypeVariationResource extends Resource
                 Forms\Components\Section::make('Etiket türü')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Etiket adı')
+                            ->label('Etiket adı (TR)')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
+                        ...LocaleNameInputs::make(),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_label_type_variations')
@@ -69,11 +72,19 @@ class InterfaceLabelTypeVariationResource extends Resource
                             ->live()
                             ->helperText('Aktifken ürün sayfasında bu etiket seçildiğinde kullanıcıdan kısa açıklama istenir.'),
                         Forms\Components\TextInput::make('description_title')
-                            ->label('Açıklama başlığı')
+                            ->label('Açıklama başlığı (TR)')
                             ->maxLength(255)
                             ->required(fn (Get $get): bool => (bool) $get('ask_description'))
                             ->visible(fn (Get $get): bool => (bool) $get('ask_description'))
                             ->helperText('Ürün sayfasında metin alanının üstünde görünen başlık.'),
+                        Forms\Components\TextInput::make('description_title_en')
+                            ->label('Açıklama başlığı (EN)')
+                            ->maxLength(255)
+                            ->visible(fn (Get $get): bool => (bool) $get('ask_description')),
+                        Forms\Components\TextInput::make('description_title_it')
+                            ->label('Açıklama başlığı (IT)')
+                            ->maxLength(255)
+                            ->visible(fn (Get $get): bool => (bool) $get('ask_description')),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()

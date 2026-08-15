@@ -12,6 +12,7 @@ use App\Models\InterfaceMoldModelVariation;
 use App\Models\InterfacePackagingPreferenceVariation;
 use App\Models\ProductVariationOption;
 use App\Models\SizeTable;
+use App\Support\CatalogLabelTranslator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
@@ -233,6 +234,7 @@ class ProductVariationOptionInterfaceSync
 
         return $preset->productVariationOptions()->update([
             'option_value' => static::displayName($preset->name, 'Renk #'.$preset->getKey()),
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
             'option_color' => filled($preset->hex_color) ? (string) $preset->hex_color : null,
@@ -247,6 +249,7 @@ class ProductVariationOptionInterfaceSync
 
         return $preset->productVariationOptions()->update([
             'option_value' => static::displayName($preset->name, 'Kumaş #'.$preset->getKey()),
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
             'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
@@ -264,6 +267,8 @@ class ProductVariationOptionInterfaceSync
             (string) $preset->name,
             $preset->image_path,
             (int) ($preset->sort_order ?? 0),
+            $preset->name_en ?? null,
+            $preset->name_it ?? null,
         );
     }
 
@@ -278,6 +283,8 @@ class ProductVariationOptionInterfaceSync
             (string) $preset->name,
             $preset->image_path,
             (int) ($preset->sort_order ?? 0),
+            $preset->name_en ?? null,
+            $preset->name_it ?? null,
         );
     }
 
@@ -289,6 +296,7 @@ class ProductVariationOptionInterfaceSync
 
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'info_text' => filled($preset->description) ? (string) $preset->description : null,
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
@@ -304,6 +312,7 @@ class ProductVariationOptionInterfaceSync
 
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
             'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
@@ -318,6 +327,7 @@ class ProductVariationOptionInterfaceSync
 
         return $preset->productVariationOptions()->update([
             'option_value' => (string) $preset->name,
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'info_text' => filled($preset->description) ? (string) $preset->description : null,
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
@@ -336,6 +346,11 @@ class ProductVariationOptionInterfaceSync
             ->where('size_table_id', $table->getKey())
             ->update([
                 'option_value' => $label,
+                ...static::optionLocaleColumns(
+                    $label,
+                    $table->title_en ?: $table->name_en,
+                    $table->title_it ?: $table->name_it,
+                ),
                 'sort_order' => (int) ($table->sort_order ?? 0),
             ]);
     }
@@ -348,12 +363,32 @@ class ProductVariationOptionInterfaceSync
         string $optionValue,
         ?string $imagePath,
         int $sortOrder,
+        ?string $nameEn = null,
+        ?string $nameIt = null,
     ): int {
         return $relation->update([
             'option_value' => $optionValue,
+            ...static::optionLocaleColumns($optionValue, $nameEn, $nameIt),
             'sort_order' => $sortOrder,
             'option_image' => filled($imagePath) ? $imagePath : null,
         ]);
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private static function optionLocaleColumns(?string $source, ?string $en = null, ?string $it = null): array
+    {
+        if (! static::hasProductVariationOptionColumn('option_value_en')) {
+            return [];
+        }
+
+        $pair = CatalogLabelTranslator::fillPair($source, $en, $it);
+
+        return [
+            'option_value_en' => $pair['en'] !== '' ? $pair['en'] : null,
+            'option_value_it' => $pair['it'] !== '' ? $pair['it'] : null,
+        ];
     }
 
     private static function displayName(?string $name, string $fallback): string

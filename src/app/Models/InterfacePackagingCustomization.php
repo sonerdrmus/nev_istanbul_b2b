@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use Illuminate\Database\Eloquent\Model;
 
 class InterfacePackagingCustomization extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     protected $table = 'interface_packaging_customizations';
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'slug',
         'extra_price',
         'is_default',

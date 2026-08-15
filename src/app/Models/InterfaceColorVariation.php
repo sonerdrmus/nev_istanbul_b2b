@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 
 class InterfaceColorVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     use SyncsLinkedProductVariationOptions;
 
     protected $table = 'interface_color_variations';
@@ -15,6 +19,8 @@ class InterfaceColorVariation extends Model
     protected $fillable = [
         'interface_fabric_type_variation_id',
         'name',
+        'name_en',
+        'name_it',
         'hex_color',
         'image_path',
         'sort_order',

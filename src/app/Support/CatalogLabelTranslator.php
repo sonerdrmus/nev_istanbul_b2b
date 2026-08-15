@@ -7,7 +7,7 @@ namespace App\Support;
  */
 class CatalogLabelTranslator
 {
-    /** @var array<string, array{en?: string, it?: string}>|null */
+    /** @var array<string, array{tr?: string, en?: string, it?: string}>|null */
     private static ?array $map = null;
 
     /** @var array<string, string>|null */
@@ -21,7 +21,7 @@ class CatalogLabelTranslator
         }
 
         $locale = $locale ?? app()->getLocale();
-        if ($locale === 'tr' || ! in_array($locale, ['en', 'it'], true)) {
+        if (! in_array($locale, ['tr', 'en', 'it'], true)) {
             return $text;
         }
 
@@ -31,6 +31,9 @@ class CatalogLabelTranslator
         if ($key !== '' && isset(self::$lookup[$key])) {
             $original = self::$lookup[$key];
             $translations = self::$map[$original] ?? [];
+            if ($locale === 'tr' && filled($translations['tr'] ?? null)) {
+                return (string) $translations['tr'];
+            }
             if ($locale === 'en' && filled($translations['en'] ?? null)) {
                 return (string) $translations['en'];
             }
@@ -48,18 +51,58 @@ class CatalogLabelTranslator
     }
 
     /**
-     * Prefer explicit EN field, then catalog map, then source text.
+     * Prefer explicit locale field, then catalog map, then TR source.
      */
-    public static function field(?string $source, ?string $en = null, ?string $locale = null): string
+    public static function field(?string $source, ?string $en = null, ?string $it = null, ?string $locale = null): string
     {
         $locale = $locale ?? app()->getLocale();
         $source = (string) ($source ?? '');
 
-        if (in_array($locale, ['en', 'it'], true) && filled($en)) {
+        if ($locale === 'en' && filled($en)) {
             return (string) $en;
         }
 
+        if ($locale === 'it') {
+            if (filled($it)) {
+                return (string) $it;
+            }
+            if (filled($en)) {
+                return (string) $en;
+            }
+        }
+
         return self::label($source, $locale);
+    }
+
+    /**
+     * @return array{en: string, it: string}
+     */
+    public static function pair(?string $source): array
+    {
+        $source = trim((string) $source);
+        if ($source === '') {
+            return ['en' => '', 'it' => ''];
+        }
+
+        return [
+            'en' => self::label($source, 'en'),
+            'it' => self::label($source, 'it'),
+        ];
+    }
+
+    /**
+     * Keep existing translations; otherwise catalog map or the TR source.
+     *
+     * @return array{en: string, it: string}
+     */
+    public static function fillPair(?string $source, ?string $en = null, ?string $it = null): array
+    {
+        $pair = self::pair($source);
+
+        return [
+            'en' => filled($en) ? (string) $en : $pair['en'],
+            'it' => filled($it) ? (string) $it : $pair['it'],
+        ];
     }
 
     private static function boot(): void
@@ -68,7 +111,7 @@ class CatalogLabelTranslator
             return;
         }
 
-        /** @var array<string, array{en?: string, it?: string}> $labels */
+        /** @var array<string, array{tr?: string, en?: string, it?: string}> $labels */
         $labels = (array) config('catalog_labels.labels', []);
         self::$map = $labels;
         self::$lookup = [];
@@ -79,6 +122,7 @@ class CatalogLabelTranslator
 
     private static function normalizeKey(string $text): string
     {
+        $text = str_replace(["\u{200B}", "\u{200C}", "\u{200D}", "\u{00A0}", "\u{FEFF}"], '', $text);
         $text = mb_strtolower(trim($text), 'UTF-8');
         $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
 

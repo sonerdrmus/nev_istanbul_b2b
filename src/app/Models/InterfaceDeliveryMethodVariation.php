@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FillsLocalizedNameFromCatalog;
+use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -9,12 +11,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InterfaceDeliveryMethodVariation extends Model
 {
+    use FillsLocalizedNameFromCatalog;
+    use HasLocalizedName;
     use SyncsLinkedProductVariationOptions;
 
     protected $table = 'interface_delivery_method_variations';
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_it',
         'description',
         'estimated_delivery_time',
         'image_path',

@@ -11,9 +11,9 @@ class FillEnglishCatalogTranslations extends Command
 {
     protected $signature = 'catalog:fill-english
                             {--force : Overwrite existing English fields}
-                            {--only=products : products|categories|all}';
+                            {--only=products : products|categories|labels|all}';
 
-    protected $description = 'Auto-translate empty product/category English name and description fields from Turkish';
+    protected $description = 'Auto-translate empty product/category English fields and fill EN/IT catalog names';
 
     public function handle(): int
     {
@@ -27,7 +27,10 @@ class FillEnglishCatalogTranslations extends Command
             $this->fillCategories($force);
         }
 
-        $this->info('Done.');
+        if ($only === 'all' || $only === 'labels') {
+            $n = \App\Support\CatalogLocaleBackfill::all();
+            $this->info("Catalog names filled: {$n} rows");
+        }
 
         return self::SUCCESS;
     }

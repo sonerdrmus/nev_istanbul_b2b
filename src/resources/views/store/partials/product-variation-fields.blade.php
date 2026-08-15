@@ -1,5 +1,7 @@
 @php
-    $displayOptionValue = static fn ($option) => \App\Support\CatalogLabelTranslator::label(is_object($option) ? ($option->option_value ?? '') : (string) $option);
+    $displayOptionValue = static fn ($option) => is_object($option)
+        ? $option->display_value
+        : \App\Support\CatalogLabelTranslator::label((string) $option);
     $displayCatalogLabel = static fn (?string $value) => \App\Support\CatalogLabelTranslator::label($value);
 @endphp
                                                 @if($variation->type === 'size_table')
@@ -94,7 +96,7 @@
                                         @endphp
                                         @if($variation->type === 'fabric')
                                             @php
-                                                $fabricParts = \App\Support\FabricOptionDisplay::parse($option->option_value);
+                                                $fabricParts = \App\Support\FabricOptionDisplay::parse($option->display_value);
                                                 $fabricImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
                                                 if ($optionDetailText === '') {
                                                     $optionDetailText = trim((string) ($option->interfaceFabricTypeVariation?->detail_text ?? ''));
@@ -466,7 +468,7 @@
                                                                         class="packaging-type-material-btn px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 min-h-[2.75rem]"
                                                                         data-material-slug="{{ $material['slug'] ?? '' }}"
                                                                         data-material-name="{{ $material['name'] ?? '' }}">
-                                                                        {{ $material['name'] ?? '' }}
+                                                                        {{ $material['label'] ?? $material['name'] ?? '' }}
                                                                     </button>
                                                                 @endforeach
                                                             </div>
@@ -488,7 +490,7 @@
                                                                         data-customization-name="{{ $customization['name'] ?? '' }}"
                                                                         data-extra-price="{{ $extraPrice }}"
                                                                         data-is-default="{{ !empty($customization['is_default']) ? '1' : '0' }}">
-                                                                        <span>{{ $customization['name'] ?? '' }}</span>
+                                                                        <span>{{ $customization['label'] ?? $customization['name'] ?? '' }}</span>
                                                                         <span class="text-xs text-slate-500 shrink-0">{{ $extraLabel }}</span>
                                                                     </button>
                                                                 @endforeach

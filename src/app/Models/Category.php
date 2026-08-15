@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabelTranslator;
 use App\Support\LocaleContent;
 use App\Support\MachineTranslator;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ class Category extends Model
         'parent_id',
         'name',
         'name_en',
+        'name_it',
         'slug',
         'image_path',
         'sort_order',
@@ -37,10 +39,14 @@ class Category extends Model
             }
         });
         static::saving(function (Category $category): void {
-            if (filled($category->name) && blank($category->name_en)) {
-                $translated = MachineTranslator::translate((string) $category->name, 'tr', 'en');
-                if (filled($translated)) {
-                    $category->name_en = $translated;
+            if (filled($category->name)) {
+                $pair = CatalogLabelTranslator::fillPair($category->name, $category->name_en, $category->name_it);
+                if (blank($category->name_en)) {
+                    $translated = MachineTranslator::translate((string) $category->name, 'tr', 'en');
+                    $category->name_en = filled($translated) ? $translated : $pair['en'];
+                }
+                if (blank($category->name_it)) {
+                    $category->name_it = $pair['it'] !== '' ? $pair['it'] : null;
                 }
             }
             if (! $category->parent_id) {
@@ -60,7 +66,7 @@ class Category extends Model
 
     public function getLocalizedNameAttribute(): string
     {
-        return LocaleContent::display($this->name, $this->name_en);
+        return LocaleContent::display($this->name, $this->name_en, $this->name_it);
     }
 
     public function parent()
