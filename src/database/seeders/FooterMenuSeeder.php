@@ -54,8 +54,12 @@ class FooterMenuSeeder extends Seeder
                 'items' => [
                     ['label' => 'Kullanım Koşulları', 'url' => '/sozlesme/kullanim-kosullari', 'sort_order' => 1],
                     ['label' => 'Gizlilik Politikası', 'url' => '/sozlesme/gizlilik-politikasi', 'sort_order' => 2],
-                    ['label' => 'Mesafeli Satış Sözleşmesi', 'url' => '#', 'sort_order' => 3],
-                    ['label' => 'Çerez Politikası', 'url' => '#', 'sort_order' => 4],
+                    ['label' => 'Çerez Politikası', 'url' => '/sozlesme/cerez-politikasi', 'sort_order' => 3],
+                    ['label' => 'B2B Satış Koşulları', 'url' => '/sozlesme/b2b-satis-kosullari', 'sort_order' => 4],
+                    ['label' => 'Teslimat ve Kargo', 'url' => '/sozlesme/teslimat-ve-kargo', 'sort_order' => 5],
+                    ['label' => 'İade ve Talepler', 'url' => '/sozlesme/iade-ve-talepler', 'sort_order' => 6],
+                    ['label' => 'Veri Koruma', 'url' => '/sozlesme/veri-koruma', 'sort_order' => 7],
+                    ['label' => 'Ödeme Koşulları', 'url' => '/sozlesme/odeme-kosullari', 'sort_order' => 8],
                 ],
             ],
             [

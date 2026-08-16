@@ -40,6 +40,7 @@ class LegalPageSeeder extends Seeder
         ]);
 
         $this->seedContact();
+        $this->seedLegalFooterPages();
     }
 
     public function seedContact(): void
@@ -81,6 +82,79 @@ class LegalPageSeeder extends Seeder
         FooterMenuItem::query()
             ->whereIn('label', $meta['footer_labels'])
             ->update(['url' => $meta['url'] ?? '/sozlesme/'.$slug]);
+    }
+
+    public function seedLegalFooterPages(): void
+    {
+        /** @var list<array{slug: string, sort_order: int, footer_label: string, title: string, title_en: string, title_it: string, body: string, body_en: string, body_it: string, overwrite_body: bool}> $pages */
+        $pages = require database_path('seeders/data/legal_footer_pages.php');
+
+        foreach ($pages as $page) {
+            $existing = LegalPage::query()->where('slug', $page['slug'])->first();
+            if ($existing) {
+                $keep = [
+                    'is_published' => true,
+                    'sort_order' => $page['sort_order'],
+                ];
+                if (blank($existing->title_en)) {
+                    $keep['title_en'] = $page['title_en'];
+                }
+                if (blank($existing->title_it)) {
+                    $keep['title_it'] = $page['title_it'];
+                }
+                if ($page['body'] !== '' && $page['overwrite_body'] && blank($existing->body)) {
+                    $keep['body'] = LegalPage::inlineBareClauseNumbers($page['body']);
+                    $keep['body_en'] = LegalPage::inlineBareClauseNumbers($page['body_en']);
+                    $keep['body_it'] = LegalPage::inlineBareClauseNumbers($page['body_it']);
+                }
+                $existing->update($keep);
+
+                continue;
+            }
+
+            $create = [
+                'slug' => $page['slug'],
+                'title' => $page['title'],
+                'title_en' => $page['title_en'],
+                'title_it' => $page['title_it'],
+                'is_published' => true,
+                'sort_order' => $page['sort_order'],
+            ];
+            if ($page['body'] !== '') {
+                $create['body'] = LegalPage::inlineBareClauseNumbers($page['body']);
+                $create['body_en'] = LegalPage::inlineBareClauseNumbers($page['body_en']);
+                $create['body_it'] = LegalPage::inlineBareClauseNumbers($page['body_it']);
+            }
+
+            LegalPage::create($create);
+        }
+
+        $group = \App\Models\FooterMenuGroup::query()
+            ->whereIn('title', ['Sözleşmeler', 'Legal', 'Documenti legali'])
+            ->orderBy('id')
+            ->first();
+
+        if (! $group) {
+            $group = \App\Models\FooterMenuGroup::create([
+                'title' => 'Sözleşmeler',
+                'type' => \App\Models\FooterMenuGroup::TYPE_MENU,
+                'sort_order' => 30,
+            ]);
+        }
+
+        \App\Models\FooterMenuItem::query()
+            ->where('footer_menu_group_id', $group->id)
+            ->delete();
+
+        foreach (array_values($pages) as $index => $page) {
+            \App\Models\FooterMenuItem::create([
+                'footer_menu_group_id' => $group->id,
+                'label' => $page['footer_label'],
+                'url' => '/sozlesme/'.$page['slug'],
+                'open_in_new_tab' => false,
+                'sort_order' => $index + 1,
+            ]);
+        }
     }
 
     private function html(string $prefix, string $locale): string

@@ -14,6 +14,18 @@ class LegalPage extends Model
 
     public const CONTACT_SLUG = 'iletisim';
 
+    public const COOKIE_SLUG = 'cerez-politikasi';
+
+    public const SALES_SLUG = 'b2b-satis-kosullari';
+
+    public const DELIVERY_SLUG = 'teslimat-ve-kargo';
+
+    public const RETURNS_SLUG = 'iade-ve-talepler';
+
+    public const DATA_PROTECTION_SLUG = 'veri-koruma';
+
+    public const PAYMENT_SLUG = 'odeme-kosullari';
+
     protected $fillable = [
         'slug',
         'title',
