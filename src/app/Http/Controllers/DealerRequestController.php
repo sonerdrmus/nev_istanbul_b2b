@@ -22,6 +22,12 @@ class DealerRequestController extends Controller
             'city' => ['required', 'string', 'max:120'],
             'postcode' => ['required', 'string', 'max:32'],
             'country' => ['required', 'string', 'max:120'],
+            'different_delivery_address' => ['sometimes', 'boolean'],
+            'delivery_address_line_1' => ['required_if:different_delivery_address,1', 'nullable', 'string', 'max:255'],
+            'delivery_address_line_2' => ['nullable', 'string', 'max:255'],
+            'delivery_city' => ['required_if:different_delivery_address,1', 'nullable', 'string', 'max:120'],
+            'delivery_postcode' => ['required_if:different_delivery_address,1', 'nullable', 'string', 'max:32'],
+            'delivery_country' => ['required_if:different_delivery_address,1', 'nullable', 'string', 'max:120'],
             'business_type' => ['required', 'string', 'max:255'],
             'limited_company_name' => ['nullable', 'string', 'max:255'],
             'company_registration_number' => ['nullable', 'string', 'max:128'],
@@ -40,6 +46,8 @@ class DealerRequestController extends Controller
 
         $fullName = trim($validated['first_name'].' '.$validated['last_name']);
 
+        $differentDelivery = $request->boolean('different_delivery_address');
+
         DealerRequest::create([
             'full_name' => $fullName,
             'first_name' => $validated['first_name'],
@@ -55,6 +63,12 @@ class DealerRequestController extends Controller
             'city' => $validated['city'],
             'postcode' => $validated['postcode'],
             'country' => $validated['country'],
+            'different_delivery_address' => $differentDelivery,
+            'delivery_address_line_1' => $differentDelivery ? ($validated['delivery_address_line_1'] ?? null) : null,
+            'delivery_address_line_2' => $differentDelivery ? ($validated['delivery_address_line_2'] ?? null) : null,
+            'delivery_city' => $differentDelivery ? ($validated['delivery_city'] ?? null) : null,
+            'delivery_postcode' => $differentDelivery ? ($validated['delivery_postcode'] ?? null) : null,
+            'delivery_country' => $differentDelivery ? ($validated['delivery_country'] ?? null) : null,
             'business_type' => $validated['business_type'],
             'limited_company_name' => $validated['limited_company_name'] ?? null,
             'company_registration_number' => $validated['company_registration_number'] ?? null,

@@ -48,21 +48,59 @@ class BannerSlideResource extends Resource
                     ]),
                 Forms\Components\Section::make('Metinler')
                     ->schema([
-                        Forms\Components\TextInput::make('title')
-                            ->label('Üst etiket')
-                            ->placeholder('Örn: Yeni Sezon')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('headline')
-                            ->label('Ana başlık')
-                            ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
-                            ->label('Açıklama')
-                            ->rows(3)
-                            ->maxLength(500),
-                        Forms\Components\TextInput::make('button_text')
-                            ->label('Buton metni')
-                            ->placeholder('Örn: Alışverişe Başla')
-                            ->maxLength(100),
+                        Forms\Components\Tabs::make('languages')
+                            ->tabs([
+                                Forms\Components\Tabs\Tab::make('Türkçe')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('title')
+                                            ->label('Üst etiket (TR)')
+                                            ->placeholder('Örn: Yeni Sezon')
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('headline')
+                                            ->label('Ana başlık (TR)')
+                                            ->maxLength(255),
+                                        Forms\Components\Textarea::make('description')
+                                            ->label('Açıklama (TR)')
+                                            ->rows(4)
+                                            ->maxLength(1000),
+                                        Forms\Components\TextInput::make('button_text')
+                                            ->label('Buton metni (TR)')
+                                            ->placeholder('Örn: Alışverişe Başla')
+                                            ->maxLength(100),
+                                    ]),
+                                Forms\Components\Tabs\Tab::make('English')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('title_en')
+                                            ->label('Eyebrow (EN)')
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('headline_en')
+                                            ->label('Headline (EN)')
+                                            ->maxLength(255),
+                                        Forms\Components\Textarea::make('description_en')
+                                            ->label('Description (EN)')
+                                            ->rows(4)
+                                            ->maxLength(1000),
+                                        Forms\Components\TextInput::make('button_text_en')
+                                            ->label('Button text (EN)')
+                                            ->maxLength(100),
+                                    ]),
+                                Forms\Components\Tabs\Tab::make('Italiano')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('title_it')
+                                            ->label('Etichetta (IT)')
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('headline_it')
+                                            ->label('Titolo (IT)')
+                                            ->maxLength(255),
+                                        Forms\Components\Textarea::make('description_it')
+                                            ->label('Descrizione (IT)')
+                                            ->rows(4)
+                                            ->maxLength(1000),
+                                        Forms\Components\TextInput::make('button_text_it')
+                                            ->label('Testo pulsante (IT)')
+                                            ->maxLength(100),
+                                    ]),
+                            ]),
                         Forms\Components\TextInput::make('button_url')
                             ->label('Buton linki (URL)')
                             ->placeholder('https://... veya /sepet')

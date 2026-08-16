@@ -7,7 +7,7 @@
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
         $totalSymbol = $selectedCurrency?->symbol ?? '₺';
     @endphp
-    <div class="max-w-2xl mx-auto">
+    <div class="w-full">
         <div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
             <div class="bg-primary-50 border-b border-primary-100 px-6 py-8 text-center">
                 <div class="w-16 h-16 mx-auto rounded-full bg-primary-500 flex items-center justify-center text-white mb-4">

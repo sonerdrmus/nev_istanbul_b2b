@@ -21,8 +21,6 @@
     };
 @endphp
 
-@section('store_content_full_width', '1')
-
 @section('title', $currentCategory ? ($currentCategory->localized_name . ' ' . __('store.index.title_category_suffix')) : ($showHomeProductSection ? __('store.index.title_products') : __('store.index.title_home')))
 
 @section('hero')
@@ -33,23 +31,30 @@
     <div class="w-full px-4 sm:px-6 lg:px-12 xl:px-[200px]">
     <div class="relative w-full overflow-hidden rounded-2xl bg-slate-900 shadow-sm ring-1 ring-black/10 mt-4 mb-4" id="hero-carousel">
         @foreach($bannerSlides as $index => $slide)
+        @php
+            $slideTitle = $slide->localized_title;
+            $slideHeadline = $slide->localized_headline;
+            $slideDescription = $slide->localized_description;
+            $slideButton = $slide->localized_button_text;
+            $slideAlt = $slideHeadline !== '' ? $slideHeadline : $slideTitle;
+        @endphp
         <div class="carousel-slide {{ $index === 0 ? 'active' : '' }} relative {{ $slide->text_align === 'center' ? 'text-center' : ($slide->text_align === 'right' ? 'text-right' : '') }}">
             @if($slide->image_path)
-                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="{{ $slide->headline ?: $slide->title ?: '' }}" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" width="1024" height="278" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
+                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="{{ $slideAlt }}" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" width="1024" height="278" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
             @else
                 <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#114a8c] via-[#155fb3] to-[#0f3c6f]" aria-hidden="true"></div>
             @endif
-            @if(filled($slide->title) || filled($slide->headline) || filled($slide->description) || ($slide->button_text && $slide->button_url))
+            @if(filled($slideTitle) || filled($slideHeadline) || filled($slideDescription) || ($slideButton && $slide->button_url))
             <div class="relative z-10 flex h-full w-full items-center px-4 sm:px-8 lg:px-16 {{ $slide->text_align === 'center' ? 'justify-center text-center' : ($slide->text_align === 'right' ? 'justify-end text-right' : 'justify-start') }}">
-            <div class="max-w-7xl mx-auto w-full py-4 sm:py-6 {{ $slide->text_align === 'center' ? 'text-center' : '' }} {{ $slide->text_align === 'right' ? 'text-right' : '' }}">
-                @if($slide->title)<p class="text-primary-100 text-xs sm:text-sm font-semibold uppercase tracking-widest mb-1 sm:mb-2">{{ $slide->title }}</p>@endif
-                @if(filled($slide->headline))
-                <h2 class="text-xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight max-w-4xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->headline }}</h2>
+            <div class="max-w-5xl mx-auto w-full py-3 sm:py-5 {{ $slide->text_align === 'center' ? 'text-center' : '' }} {{ $slide->text_align === 'right' ? 'text-right' : '' }}">
+                @if(filled($slideTitle))<p class="text-primary-100 text-[11px] sm:text-sm font-semibold uppercase tracking-widest mb-1 sm:mb-2">{{ $slideTitle }}</p>@endif
+                @if(filled($slideHeadline))
+                <h2 class="text-lg sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight max-w-4xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slideHeadline }}</h2>
                 @endif
-                @if($slide->description)<p class="mt-2 sm:mt-3 text-md sm:text-xl text-white/90 max-w-4xl {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slide->description }}</p>@endif
-                @if($slide->button_text && $slide->button_url)
-                <a href="{{ $slide->button_url }}" class="inline-flex items-center gap-2 mt-3 sm:mt-4 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-white text-primary-700 text-sm sm:text-base font-semibold shadow-lg hover:bg-primary-50 transition-all duration-200">
-                    {{ $slide->button_text }}
+                @if(filled($slideDescription))<p class="mt-1.5 sm:mt-2.5 text-xs sm:text-sm lg:text-base text-white/90 leading-snug sm:leading-relaxed max-w-4xl line-clamp-3 sm:line-clamp-4 {{ $slide->text_align === 'center' ? 'mx-auto' : ($slide->text_align === 'right' ? 'ml-auto' : '') }}">{{ $slideDescription }}</p>@endif
+                @if($slideButton && $slide->button_url)
+                <a href="{{ $slide->button_url }}" class="inline-flex items-center gap-2 mt-2.5 sm:mt-4 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-white text-primary-700 text-sm sm:text-base font-semibold shadow-lg hover:bg-primary-50 transition-all duration-200">
+                    {{ $slideButton }}
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
                 @endif
@@ -103,7 +108,7 @@
     @endphp
     @if($homeShowcaseHasCategories || $homeShowcaseHasProducts)
     <div class="w-full bg-white border-b border-slate-200 py-8 sm:py-10" aria-label="{{ __('store.index.aria_showcase') }}">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
             <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">
                 @if($homeShowcaseHasCategories && $homeShowcaseHasProducts)
                     {{ __('store.index.hero_showcase_categories_products') }}
@@ -153,7 +158,7 @@
 
 @section('content')
     @if($showHomeProductSection)
-    <div class="max-w-7xl mx-auto w-full">
+    <div class="w-full">
     <div class="mb-6" id="urunler">
         @if($currentCategory)
             <nav class="flex items-center gap-2 text-sm text-slate-500 mb-3">

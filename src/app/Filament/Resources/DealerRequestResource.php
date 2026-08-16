@@ -74,6 +74,27 @@ class DealerRequestResource extends Resource
                     Forms\Components\TextInput::make('city')->label('Şehir')->disabled(),
                     Forms\Components\TextInput::make('postcode')->label('Posta kodu')->disabled(),
                     Forms\Components\TextInput::make('country')->label('Ülke')->disabled(),
+                    Forms\Components\Toggle::make('different_delivery_address')->label('Teslimat adresi farklı')->disabled()->columnSpanFull(),
+                    Forms\Components\TextInput::make('delivery_address_line_1')
+                        ->label('Teslimat adres satırı 1')
+                        ->disabled()
+                        ->visible(fn (DealerRequest $record): bool => (bool) $record->different_delivery_address),
+                    Forms\Components\TextInput::make('delivery_address_line_2')
+                        ->label('Teslimat adres satırı 2')
+                        ->disabled()
+                        ->visible(fn (DealerRequest $record): bool => (bool) $record->different_delivery_address),
+                    Forms\Components\TextInput::make('delivery_city')
+                        ->label('Teslimat şehir')
+                        ->disabled()
+                        ->visible(fn (DealerRequest $record): bool => (bool) $record->different_delivery_address),
+                    Forms\Components\TextInput::make('delivery_postcode')
+                        ->label('Teslimat posta kodu')
+                        ->disabled()
+                        ->visible(fn (DealerRequest $record): bool => (bool) $record->different_delivery_address),
+                    Forms\Components\TextInput::make('delivery_country')
+                        ->label('Teslimat ülke')
+                        ->disabled()
+                        ->visible(fn (DealerRequest $record): bool => (bool) $record->different_delivery_address),
                     Forms\Components\Textarea::make('address')->label('Adres (eski kayıt)')->rows(2)->disabled()->columnSpanFull(),
                 ])->columns(2),
 

@@ -14,6 +14,7 @@ use App\Filament\Resources\InterfaceLabelTypeVariationResource;
 use App\Filament\Resources\InterfaceMoldModelVariationResource;
 use App\Filament\Resources\FooterMenuGroupResource;
 use App\Filament\Resources\FooterSettingResource;
+use App\Filament\Resources\LegalPageResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SizeTableResource;
 use App\Filament\Resources\TaxClassResource;
@@ -213,7 +214,8 @@ class AdminPanelProvider extends PanelProvider
                 ->sort(4)
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*'))
+                    || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs(LegalPageResource::getRouteBaseName($panelId) . '.*'))
                 ->childItems([
                     NavigationItem::make('Banner Slaytlar')
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
@@ -227,6 +229,10 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => FooterSettingResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-cog-6-tooth')
                         ->isActiveWhen(fn (): bool => request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Sayfalar')
+                        ->url(fn (): string => LegalPageResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-document-text')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(LegalPageResource::getRouteBaseName($panelId) . '.*')),
                 ]),
         ];
     }

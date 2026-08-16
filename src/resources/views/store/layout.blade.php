@@ -28,6 +28,8 @@
         html { font-size: 18px; }
         body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
         .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
         /* Slider: 1024×278 banner oranı (~3.68:1); slaytlar üst üste, yalnızca aktif görünür */
@@ -313,10 +315,7 @@
 
     @yield('hero')
 
-    @php
-        $storeMainFullWidth = \Illuminate\Support\Facades\View::hasSection('store_content_full_width');
-    @endphp
-    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12 {{ $storeMainFullWidth ? '' : 'max-w-7xl mx-auto' }}">
+    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         @yield('content')
     </main>
 
@@ -437,15 +436,15 @@
                     @foreach($footerMenuGroups ?? [] as $group)
                         @continue($group->type === \App\Models\FooterMenuGroup::TYPE_CATEGORIES)
                     <div>
-                        <h3 class="text-xs font-semibold text-white uppercase tracking-widest mb-4">{{ $group->title }}</h3>
+                        <h3 class="text-xs font-semibold text-white uppercase tracking-widest mb-4">{{ \App\Support\CatalogLabelTranslator::label($group->title) }}</h3>
                         @if($group->type === \App\Models\FooterMenuGroup::TYPE_MENU)
                             <ul class="space-y-2.5 text-sm">
                                 @foreach($group->items as $item)
                                 <li>
                                     @if($item->url && $item->url !== '#')
-                                        <a href="{{ $item->url }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->label }}</a>
+                                        <a href="{{ $item->url }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</a>
                                     @else
-                                        <span class="text-slate-400">{{ $item->label }}</span>
+                                        <span class="text-slate-400">{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</span>
                                     @endif
                                 </li>
                                 @endforeach

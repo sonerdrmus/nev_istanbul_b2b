@@ -70,6 +70,12 @@ class DealerRequest extends Model
         'city',
         'postcode',
         'country',
+        'different_delivery_address',
+        'delivery_address_line_1',
+        'delivery_address_line_2',
+        'delivery_city',
+        'delivery_postcode',
+        'delivery_country',
         'business_type',
         'limited_company_name',
         'company_registration_number',
@@ -98,6 +104,7 @@ class DealerRequest extends Model
             'approved_at' => 'datetime',
             'interest_areas' => 'array',
             'terms_accepted' => 'boolean',
+            'different_delivery_address' => 'boolean',
         ];
     }
 

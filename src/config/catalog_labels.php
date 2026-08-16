@@ -382,5 +382,16 @@ return [
         'Cep  16x14 cm' => ['en' => 'Pocket 16x14 cm', 'it' => 'Tasca 16x14 cm'],
         'Cep  16x14cm' => ['en' => 'Pocket 16x14 cm', 'it' => 'Tasca 16x14 cm'],
         'kids  OVERSİZE' => ['en' => 'Kids oversize', 'it' => 'Bambini oversize'],
+
+        // Footer legal links
+        'Gizlilik' => ['en' => 'Privacy', 'it' => 'Privacy'],
+        'Gizlilik Politikası' => ['en' => 'Privacy Policy', 'it' => 'Informativa sulla privacy'],
+        'Şirket' => ['en' => 'Company', 'it' => 'Azienda'],
+        'Sözleşmeler' => ['en' => 'Legal', 'it' => 'Documenti legali'],
+        'Kullanım Koşulları' => ['en' => 'Terms & Conditions', 'it' => 'Termini e condizioni'],
+        'İletişim' => ['en' => 'Contact', 'it' => 'Contatti'],
+        'Ralawise worldwide distribution' => ['tr' => 'Dünya Çapında B2B Teslimat', 'en' => 'Worldwide B2B Delivery', 'it' => 'Consegna B2B mondiale'],
+        'Dağıtım ağı' => ['tr' => 'Dünya Çapında B2B Teslimat', 'en' => 'Worldwide B2B Delivery', 'it' => 'Consegna B2B mondiale'],
+        'Worldwide B2B Delivery' => ['tr' => 'Dünya Çapında B2B Teslimat', 'en' => 'Worldwide B2B Delivery', 'it' => 'Consegna B2B mondiale'],
     ],
 ];

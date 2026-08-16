@@ -44,7 +44,7 @@ class FooterMenuSeeder extends Seeder
                     ['label' => 'Teslimat bilgisi ve maliyetler', 'url' => '#', 'sort_order' => 1],
                     ['label' => 'Faturasız ödeme', 'url' => '#', 'sort_order' => 2],
                     ['label' => 'İade', 'url' => '#', 'sort_order' => 3],
-                    ['label' => 'Dağıtım ağı', 'url' => '#', 'sort_order' => 4],
+                    ['label' => 'Worldwide B2B Delivery', 'url' => '#', 'sort_order' => 4],
                 ],
             ],
             [
@@ -52,8 +52,8 @@ class FooterMenuSeeder extends Seeder
                 'type' => FooterMenuGroup::TYPE_MENU,
                 'sort_order' => 30,
                 'items' => [
-                    ['label' => 'Kullanım Koşulları', 'url' => '#', 'sort_order' => 1],
-                    ['label' => 'Gizlilik Politikası', 'url' => '#', 'sort_order' => 2],
+                    ['label' => 'Kullanım Koşulları', 'url' => '/sozlesme/kullanim-kosullari', 'sort_order' => 1],
+                    ['label' => 'Gizlilik Politikası', 'url' => '/sozlesme/gizlilik-politikasi', 'sort_order' => 2],
                     ['label' => 'Mesafeli Satış Sözleşmesi', 'url' => '#', 'sort_order' => 3],
                     ['label' => 'Çerez Politikası', 'url' => '#', 'sort_order' => 4],
                 ],
@@ -63,9 +63,8 @@ class FooterMenuSeeder extends Seeder
                 'type' => FooterMenuGroup::TYPE_MENU,
                 'sort_order' => 40,
                 'items' => [
-                    ['label' => 'İletişim', 'url' => null, 'sort_order' => 1],
-                    ['label' => 'Gizlilik', 'url' => '#', 'sort_order' => 2],
-                    ['label' => 'Kullanım Koşulları', 'url' => '#', 'sort_order' => 3],
+                    ['label' => 'İletişim', 'url' => '/iletisim', 'sort_order' => 1],
+                    ['label' => 'Gizlilik', 'url' => '/sozlesme/gizlilik-politikasi', 'sort_order' => 2],
                 ],
             ],
             [
@@ -81,7 +80,6 @@ class FooterMenuSeeder extends Seeder
             'Sepet' => route('store.cart'),
             'Hesabım' => url('/panel'),
             'Tümünü gör' => route('home'),
-            'İletişim' => route('home') . '#iletisim',
         ];
 
         foreach ($groups as $groupData) {

@@ -23,7 +23,20 @@
 
         $wizardSteps = [
             1 => ['first_name', 'last_name', 'email', 'phone', 'mobile_phone'],
-            2 => ['business_name', 'address_line_1', 'address_line_2', 'city', 'postcode', 'country'],
+            2 => [
+                'business_name',
+                'address_line_1',
+                'address_line_2',
+                'city',
+                'postcode',
+                'country',
+                'different_delivery_address',
+                'delivery_address_line_1',
+                'delivery_address_line_2',
+                'delivery_city',
+                'delivery_postcode',
+                'delivery_country',
+            ],
             3 => [
                 'business_type',
                 'limited_company_name',
@@ -51,7 +64,7 @@
         if ($errors->any()) {
             foreach ($wizardSteps as $num => $keys) {
                 foreach ($keys as $key) {
-                    if ($errors->has($key)) {
+                    if ($errors->has($key) || $errors->has($key.'.*')) {
                         $initialWizardStep = max($initialWizardStep, (int) $num);
                     }
                 }
@@ -62,8 +75,7 @@
         $labelClass = 'block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1';
     @endphp
 
-    {{-- Tam genişlik — sade düzen --}}
-    <div class="w-full px-4 sm:px-6 lg:px-10 xl:px-14 pb-12 pt-6">
+    <div class="w-full">
         <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
             <div class="px-6 sm:px-8 lg:px-12 py-8 border-b border-slate-100">
                 <div class="max-w-3xl lg:max-w-full mx-auto lg:mx-0">
@@ -193,6 +205,46 @@
                                 class="{{ $inputClass }} @error('country') border-red-400 @enderror">
                         </div>
                     </div>
+                    @php $showDelivery = (string) old('different_delivery_address', '') === '1'; @endphp
+                    <label class="flex items-start gap-3 cursor-pointer rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-3 text-[15px] text-slate-800 hover:bg-slate-50 transition-colors">
+                        <input id="different_delivery_address" type="checkbox" name="different_delivery_address" value="1"
+                            class="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 shrink-0"
+                            @checked($showDelivery)>
+                        <span>
+                            <span class="font-medium text-slate-900">{{ __('store.dealer.different_delivery') }}</span>
+                            <span class="mt-0.5 block text-sm font-normal text-slate-500">{{ __('store.dealer.different_delivery_hint') }}</span>
+                        </span>
+                    </label>
+                    <div id="dealer-delivery-fields" class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 space-y-5 {{ $showDelivery ? '' : 'hidden' }}">
+                        <p class="text-sm font-medium text-slate-800">{{ __('store.dealer.delivery_heading') }}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                            <div class="md:col-span-2">
+                                <label for="delivery_address_line_1" class="{{ $labelClass }}">{{ __('store.dealer.delivery_address_1') }} <span class="text-red-500">*</span></label>
+                                <input id="delivery_address_line_1" name="delivery_address_line_1" type="text" value="{{ old('delivery_address_line_1') }}" autocomplete="shipping address-line1"
+                                    class="{{ $inputClass }} @error('delivery_address_line_1') border-red-400 @enderror" @unless($showDelivery) disabled @endunless @if($showDelivery) required @endif>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="delivery_address_line_2" class="{{ $labelClass }}">{{ __('store.dealer.delivery_address_2') }}</label>
+                                <input id="delivery_address_line_2" name="delivery_address_line_2" type="text" value="{{ old('delivery_address_line_2') }}" autocomplete="shipping address-line2"
+                                    class="{{ $inputClass }}" @unless($showDelivery) disabled @endunless>
+                            </div>
+                            <div>
+                                <label for="delivery_city" class="{{ $labelClass }}">{{ __('store.dealer.delivery_city') }} <span class="text-red-500">*</span></label>
+                                <input id="delivery_city" name="delivery_city" type="text" value="{{ old('delivery_city') }}" autocomplete="shipping address-level2"
+                                    class="{{ $inputClass }} @error('delivery_city') border-red-400 @enderror" @unless($showDelivery) disabled @endunless @if($showDelivery) required @endif>
+                            </div>
+                            <div>
+                                <label for="delivery_postcode" class="{{ $labelClass }}">{{ __('store.dealer.delivery_postcode') }} <span class="text-red-500">*</span></label>
+                                <input id="delivery_postcode" name="delivery_postcode" type="text" value="{{ old('delivery_postcode') }}" autocomplete="shipping postal-code"
+                                    class="{{ $inputClass }} @error('delivery_postcode') border-red-400 @enderror" @unless($showDelivery) disabled @endunless @if($showDelivery) required @endif>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="delivery_country" class="{{ $labelClass }}">{{ __('store.dealer.delivery_country') }} <span class="text-red-500">*</span></label>
+                                <input id="delivery_country" name="delivery_country" type="text" value="{{ old('delivery_country') }}" autocomplete="shipping country-name"
+                                    class="{{ $inputClass }} @error('delivery_country') border-red-400 @enderror" @unless($showDelivery) disabled @endunless @if($showDelivery) required @endif>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Adım 3 --}}
@@ -289,10 +341,10 @@
                         <input type="checkbox" name="terms_accepted" value="1" required
                             class="mt-1 h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-slate-400 @error('terms_accepted') border-red-400 @enderror"
                             @checked(old('terms_accepted'))>
-                        <span>{{ __('store.dealer.terms_accept') }} <span class="text-red-500">*</span></span>
+                        <span>{!! __('store.dealer.terms_accept', ['url' => route('store.legal.show', \App\Models\LegalPage::TERMS_SLUG)]) !!} <span class="text-red-500">*</span></span>
                     </label>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        {{ __('store.dealer.terms_note') }}
+                        {!! __('store.dealer.terms_note', ['url' => route('store.legal.show', \App\Models\LegalPage::PRIVACY_SLUG)]) !!}
                     </p>
                 </div>
                 </div>
@@ -483,6 +535,29 @@
 
             form.dataset.currentStep = String(initial);
             showStep(initial);
+
+            var deliveryToggle = document.getElementById('different_delivery_address');
+            var deliveryFields = document.getElementById('dealer-delivery-fields');
+            function syncDeliveryFields() {
+                if (!deliveryToggle || !deliveryFields) return;
+                var on = deliveryToggle.checked;
+                deliveryFields.classList.toggle('hidden', !on);
+                deliveryFields.querySelectorAll('input').forEach(function (el) {
+                    el.disabled = !on;
+                    if (el.id === 'delivery_address_line_2') {
+                        return;
+                    }
+                    if (on) {
+                        el.setAttribute('required', 'required');
+                    } else {
+                        el.removeAttribute('required');
+                    }
+                });
+            }
+            if (deliveryToggle) {
+                deliveryToggle.addEventListener('change', syncDeliveryFields);
+                syncDeliveryFields();
+            }
         })();
     </script>
 @endpush

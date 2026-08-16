@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
             SizeTableSeeder::class,
             HomeContentSeeder::class,
             FooterMenuSeeder::class,
+            LegalPageSeeder::class,
         ]);
     }
 }

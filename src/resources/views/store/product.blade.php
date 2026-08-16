@@ -1,7 +1,5 @@
 @extends('store.layout')
 
-@section('store_content_full_width', '1')
-
 @section('title', $product->localized_meta_title ?: $product->localized_name)
 
 @push('meta')
@@ -1493,9 +1491,9 @@
                         if (!dependsOn) return true;
                         if (isCustomizationDependsOn(dependsOn)) {
                             if (!isCustomizationStepComplete()) return false;
+                            if (isCustomizationSkipSelected()) return true;
                             var custOptionIds = parseDependsOnOptionIdsFromBlock(panel);
                             if (custOptionIds.length === 0) return true;
-                            if (isCustomizationSkipSelected()) return false;
                             var custIds = getSelectedCustomizationRowIds();
                             if (custIds.length === 0) return false;
                             return normalizeOptionIdList(custIds).some(function(id) {
@@ -2696,6 +2694,15 @@
                         return fallbackBaseTry * resolveQuantityPriceMultiplier(qty);
                     }
 
+                    function convertFromTry(tryAmount) {
+                        var n = parseFloat(tryAmount);
+                        if (!isFinite(n)) n = 0;
+                        if (code === 'TRY') return n;
+                        var r = parseFloat(rate);
+                        if (!isFinite(r) || r <= 0) return n;
+                        return n / r;
+                    }
+
                     function formatPrice(num) {
                         if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
                         return symbol + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -2767,10 +2774,10 @@
                         var unitWithVar = unitBase * varMult + packExtra;
                         var garmentLineTry = unitWithVar * pricingWeight;
                         var lineTry = garmentLineTry + printLineTry;
-                        var baseDisp = code === 'TRY' ? fallbackBaseTry : fallbackBaseTry * rate;
-                        var unitDisp = code === 'TRY' ? unitBase : unitBase * rate;
-                        var lineDisp = code === 'TRY' ? lineTry : lineTry * rate;
-                        var garmentDisp = code === 'TRY' ? garmentLineTry : garmentLineTry * rate;
+                        var baseDisp = convertFromTry(fallbackBaseTry);
+                        var unitDisp = convertFromTry(unitBase);
+                        var lineDisp = convertFromTry(lineTry);
+                        var garmentDisp = convertFromTry(garmentLineTry);
 
                         var items = [];
                         if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
@@ -2798,7 +2805,7 @@
                             ));
                         }
                         if (packExtra > 0) {
-                            var packDisp = code === 'TRY' ? packExtra : packExtra * rate;
+                            var packDisp = convertFromTry(packExtra);
                             items.push(summaryKvRowHtml(PU.summary_packaging_extra || 'Ambalaj ek ücreti', formatPrice(packDisp)));
                         }
                         var formulaTpl = PU.summary_price_formula || ':base × :qtymult × :varmult × :weight = :total';
@@ -2811,7 +2818,7 @@
                             .replace(':total', formatPrice(garmentDisp));
                         if (packExtra > 0) {
                             formulaTpl = PU.summary_price_formula_with_pack || '(:base × :qtymult × :varmult + :pack) × :weight = :total';
-                            var packDisp2 = code === 'TRY' ? packExtra : packExtra * rate;
+                            var packDisp2 = convertFromTry(packExtra);
                             formula = formulaTpl
                                 .replace(':base', formatPrice(baseDisp))
                                 .replace(':unit', formatPrice(unitDisp))
@@ -2823,8 +2830,8 @@
                         }
                         items.push(summaryKvRowHtml(PU.summary_price_calc || 'Fiyat hesabı', formatPrice(garmentDisp), formula, { isMuted: true }));
                         if (printUnitTry > 0) {
-                            var printUnitDisp = code === 'TRY' ? printUnitTry : printUnitTry * rate;
-                            var printLineDisp = code === 'TRY' ? printLineTry : printLineTry * rate;
+                            var printUnitDisp = convertFromTry(printUnitTry);
+                            var printLineDisp = convertFromTry(printLineTry);
                             items.push(summaryKvRowHtml(
                                 PU.summary_print_total || PU.customization_section_grand_total || 'Baskı toplamı',
                                 formatPrice(printUnitDisp)
@@ -2843,7 +2850,7 @@
                         }
                         if (qty > 0) {
                             var perPieceTry = lineTry / qty;
-                            var perPieceDisp = code === 'TRY' ? perPieceTry : perPieceTry * rate;
+                            var perPieceDisp = convertFromTry(perPieceTry);
                             var perPieceNoteTpl = PU.summary_unit_from_total_note || ':total ÷ :qty adet';
                             var perPieceNote = perPieceNoteTpl
                                 .replace(':total', formatPrice(lineDisp))
@@ -3031,8 +3038,8 @@
                             ? getCustomizationPrintLineTotalTry(qty)
                             : 0;
                         var lineTry = (unitTry * pricingWeight) + printLineTry;
-                        var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
-                        var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
+                        var baseConverted = convertFromTry(baseTry);
+                        var lineConverted = convertFromTry(lineTry);
                         priceEl.textContent = formatPrice(lineConverted);
                         var basePriceEl = document.getElementById('product-base-price');
                         if (basePriceEl) {
@@ -3043,7 +3050,7 @@
                         if (perPieceEl) {
                             if (qty > 0) {
                                 var perPieceTry = lineTry / qty;
-                                var perPieceConverted = code === 'TRY' ? perPieceTry : perPieceTry * rate;
+                                var perPieceConverted = convertFromTry(perPieceTry);
                                 perPieceEl.textContent = formatPrice(perPieceConverted);
                                 if (perPieceNoteEl) {
                                     var noteTpl = PU.summary_unit_from_total_note || ':total ÷ :qty adet';
@@ -3066,7 +3073,7 @@
                             var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
                             if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
                                 var oldLineTry = (normalTry * mult * pricingWeight) + printLineTry;
-                                var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
+                                var oldConverted = convertFromTry(oldLineTry);
                                 strikeEl.textContent = formatPrice(oldConverted);
                                 strikeEl.classList.remove('hidden');
                             } else {
@@ -6006,26 +6013,31 @@
                         inp.addEventListener('change', updateVariationSummaryAndButton);
                     });
 
+                    function confirmCustomizationStepAndAdvance() {
+                        var custPanel = document.querySelector('[data-customization-panel="1"]');
+                        if (!custPanel) return false;
+                        var hasRow = document.querySelectorAll('#product-customization-table input.customization-row-check:checked').length > 0;
+                        if (!isCustomizationSkipSelected() && !hasRow) return false;
+                        if (!validateCustomizationDimensionsOrWarn()) return false;
+                        custPanel.setAttribute('data-customization-confirmed', '1');
+                        var sumVal = custPanel.querySelector('.variation-step-summary-value');
+                        if (sumVal) setCustomizationStepSummaryValue(sumVal, customizationSummaryHtmlFromInputs());
+                        markVariationStepPanelComplete(custPanel);
+                        applyCustomizationChoiceToVariationInput();
+                        applyDependencyChainNow();
+                        updateSizeTableVisibility();
+                        updateVariationSummaryAndButton();
+                        maybeAdvanceVariationStepAfterSelection(custPanel);
+                        requestAnimationFrame(function() {
+                            if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
+                        });
+                        return true;
+                    }
+
                     var customizationContinueBtn = document.getElementById('customization-continue-btn');
                     if (customizationContinueBtn) {
                         customizationContinueBtn.addEventListener('click', function() {
-                            var custPanel = document.querySelector('[data-customization-panel="1"]');
-                            if (!custPanel) return;
-                            var hasRow = document.querySelectorAll('#product-customization-table input.customization-row-check:checked').length > 0;
-                            if (!isCustomizationSkipSelected() && !hasRow) return;
-                            if (!validateCustomizationDimensionsOrWarn()) return;
-                            custPanel.setAttribute('data-customization-confirmed', '1');
-                            var sumVal = custPanel.querySelector('.variation-step-summary-value');
-                            if (sumVal) setCustomizationStepSummaryValue(sumVal, customizationSummaryHtmlFromInputs());
-                            markVariationStepPanelComplete(custPanel);
-                            applyCustomizationChoiceToVariationInput();
-                            applyDependencyChainNow();
-                            updateSizeTableVisibility();
-                            updateVariationSummaryAndButton();
-                            maybeAdvanceVariationStepAfterSelection();
-                            requestAnimationFrame(function() {
-                                if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
-                            });
+                            confirmCustomizationStepAndAdvance();
                         });
                     }
 
@@ -6054,15 +6066,26 @@
                         var skipCb = document.getElementById('customization-skip-checkbox');
                         if (skipCb) {
                             skipCb.addEventListener('change', function() {
+                                var custPanel = document.querySelector('[data-customization-panel="1"]');
                                 if (skipCb.checked) {
                                     tbl.querySelectorAll('.customization-row-check').forEach(function(cb) { cb.checked = false; });
                                     var ta = document.getElementById('product-customization-notes-field');
                                     if (ta) ta.value = '';
                                 } else {
                                     syncAllCustomizationColorFields();
+                                    if (custPanel && (custPanel.getAttribute('data-customization-confirmed') || '') === '1') {
+                                        custPanel.setAttribute('data-customization-confirmed', '0');
+                                        applyCustomizationChoiceToVariationInput();
+                                        applyDependencyChainNow();
+                                        var custIdx = parseInt(custPanel.getAttribute('data-step-index'), 10);
+                                        if (!isNaN(custIdx)) showVariationStep(custIdx, { forceEdit: true });
+                                    }
                                 }
                                 syncCustomizationFieldsDisabledState();
                                 syncCustUi();
+                                if (skipCb.checked) {
+                                    confirmCustomizationStepAndAdvance();
+                                }
                             });
                         }
                         syncAllCustomizationColorFields();
@@ -6273,6 +6296,15 @@
                         return fallbackBaseTry * resolveQuantityPriceMultiplier(qty);
                     }
 
+                    function convertFromTry(tryAmount) {
+                        var n = parseFloat(tryAmount);
+                        if (!isFinite(n)) n = 0;
+                        if (code === 'TRY') return n;
+                        var r = parseFloat(rate);
+                        if (!isFinite(r) || r <= 0) return n;
+                        return n / r;
+                    }
+
                     function formatPrice(num) {
                         if (code === 'TRY') return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num) + ' ' + symbol;
                         return symbol + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -6282,11 +6314,11 @@
                         var qty = Math.max(0, parseInt(quantityInput.value, 10) || 0);
                         baseTry = resolveUnitBaseTryForQty(qty > 0 ? qty : 1);
                         var lineTry = baseTry * qty;
-                        var lineConverted = code === 'TRY' ? lineTry : lineTry * rate;
+                        var lineConverted = convertFromTry(lineTry);
                         priceEl.textContent = formatPrice(lineConverted);
                         var basePriceEl = document.getElementById('product-base-price');
                         if (basePriceEl) {
-                            var baseConverted = code === 'TRY' ? baseTry : baseTry * rate;
+                            var baseConverted = convertFromTry(baseTry);
                             basePriceEl.textContent = formatPrice(baseConverted);
                         }
                         var strikeEl = document.getElementById('product-price-strike');
@@ -6295,7 +6327,7 @@
                             var normalTry = normalAttr !== null && normalAttr !== '' ? parseFloat(normalAttr) : NaN;
                             if (qty > 0 && !isNaN(normalTry) && normalTry > baseTry) {
                                 var oldLineTry = normalTry * qty;
-                                var oldConverted = code === 'TRY' ? oldLineTry : oldLineTry * rate;
+                                var oldConverted = convertFromTry(oldLineTry);
                                 strikeEl.textContent = formatPrice(oldConverted);
                                 strikeEl.classList.remove('hidden');
                             } else {
