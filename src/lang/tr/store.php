@@ -80,6 +80,12 @@ return [
         'secure_payment' => 'Güvenli ödeme',
         'payment_label' => 'Havale / EFT',
         'bank_empty_note' => 'Banka hesabı eklenmemiş. Admin panelinden Banka Bilgileri’ne ekleyebilirsiniz.',
+        'bank_heading' => 'Banka Bilgileri',
+        'company_name' => 'Nevistanbul Textile & Promotion Industry and Trade Limited Company',
+        'company_address' => '15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / İstanbul, Türkiye',
+        'company_email' => 'info@nevistanbul.com.tr',
+        'company_privacy_email' => 'privacy@nevistanbul.com.tr',
+        'company_tax' => 'Vergi Dairesi: Güneşli — VN: 6310675047',
     ],
 
     'index' => [

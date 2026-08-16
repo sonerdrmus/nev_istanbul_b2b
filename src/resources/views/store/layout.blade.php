@@ -412,14 +412,23 @@
 
     @php
         $footerSetting = $footerSetting ?? \App\Models\FooterSetting::get();
-        $footerCols = (int) ($footerSetting->columns ?? 4);
-        $totalCols = ($footerSetting->show_brand ? 1 : 0) + $footerCols;
+        $footerMenuGroups = $footerMenuGroups ?? collect();
+        $companyFooterGroup = $footerMenuGroups->first(function ($group) {
+            return in_array($group->title, ['Şirket', 'Company', 'Azienda'], true);
+        });
+        $skipFooterGridTitles = ['Şirket', 'Company', 'Azienda'];
+        $gridFooterGroups = $footerMenuGroups->reject(function ($group) use ($skipFooterGridTitles) {
+            return $group->type === \App\Models\FooterMenuGroup::TYPE_CATEGORIES
+                || $group->type === \App\Models\FooterMenuGroup::TYPE_BANK_INFO
+                || in_array($group->title, $skipFooterGridTitles, true);
+        });
+        $totalCols = ($footerSetting->show_brand ? 1 : 0) + $gridFooterGroups->count();
     @endphp
     <style>@media (min-width: 1024px) { .footer-grid { grid-template-columns: repeat(var(--footer-cols, 4), 1fr); } }</style>
     <footer class="mt-auto">
         <div class="bg-slate-900/95 text-slate-300">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-                <div class="footer-grid grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10" style="--footer-cols: {{ min($totalCols, 6) }};">
+            <div class="w-full px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+                <div class="footer-grid grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10" style="--footer-cols: {{ max(1, min($totalCols, 6)) }};">
                     @if($footerSetting->show_brand ?? true)
                     <div>
                         <a href="{{ route('home') }}" class="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-lg">
@@ -433,8 +442,7 @@
                     </div>
                     @endif
 
-                    @foreach($footerMenuGroups ?? [] as $group)
-                        @continue($group->type === \App\Models\FooterMenuGroup::TYPE_CATEGORIES)
+                    @foreach($gridFooterGroups as $group)
                     <div>
                         <h3 class="text-xs font-semibold text-white uppercase tracking-widest mb-4">{{ \App\Support\CatalogLabelTranslator::label($group->title) }}</h3>
                         @if($group->type === \App\Models\FooterMenuGroup::TYPE_MENU)
@@ -449,35 +457,77 @@
                                 </li>
                                 @endforeach
                             </ul>
-                        @elseif($group->type === \App\Models\FooterMenuGroup::TYPE_CATEGORIES)
-                            <ul class="space-y-2.5 text-sm">
-                                @isset($menuCategories)
-                                @foreach($menuCategories as $parent)
-                                    <li><a href="{{ route('home', ['category' => $parent->slug]) }}" class="text-slate-400 hover:text-white transition-colors">{{ $parent->localized_name }}</a></li>
-                                @endforeach
-                                @endisset
-                                <li><a href="{{ route('home') }}" class="text-slate-400 hover:text-primary-300 transition-colors font-medium">{{ __('store.mobile_cats.view_all') }} →</a></li>
-                            </ul>
-                        @elseif($group->type === \App\Models\FooterMenuGroup::TYPE_BANK_INFO)
-                            <div class="space-y-4 text-sm">
-                                @forelse(($bankAccounts ?? []) as $account)
-                                <div class="text-slate-400">
-                                    <p class="font-medium text-slate-300">{{ $account->bank_name }}@if($account->branch) – {{ $account->branch }}@endif</p>
-                                    <p class="mt-1 break-all">{{ $account->iban }}</p>
-                                    <p class="mt-0.5">{{ $account->account_holder }}@if($account->currency) ({{ $account->currency }})@endif</p>
-                                </div>
-                                @empty
-                                <p class="text-slate-500 text-xs">{{ __('store.footer.bank_empty_note') }}</p>
-                                @endforelse
-                            </div>
                         @endif
                     </div>
                     @endforeach
                 </div>
+
+                <div class="mt-10 lg:mt-12">
+                    <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/70 via-slate-800/40 to-slate-900/30 p-5 sm:p-7 lg:p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10">
+                            <section class="xl:col-span-5" aria-labelledby="footer-company-heading">
+                                <h3 id="footer-company-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ \App\Support\CatalogLabelTranslator::label($companyFooterGroup->title ?? 'Şirket') }}</h3>
+                                <p class="mt-3 text-sm font-semibold text-white leading-snug">{{ __('store.footer.company_name') }}</p>
+                                <div class="mt-4 space-y-2.5 text-sm text-slate-400 leading-relaxed">
+                                    <p class="flex gap-2.5">
+                                        <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <span>{{ __('store.footer.company_address') }}</span>
+                                    </p>
+                                    <p class="flex gap-2.5">
+                                        <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        <span>
+                                            <a href="mailto:{{ __('store.footer.company_email') }}" class="hover:text-white transition-colors">{{ __('store.footer.company_email') }}</a>
+                                            <span class="text-slate-600"> · </span>
+                                            <a href="mailto:{{ __('store.footer.company_privacy_email') }}" class="hover:text-white transition-colors">{{ __('store.footer.company_privacy_email') }}</a>
+                                        </span>
+                                    </p>
+                                    <p class="flex gap-2.5">
+                                        <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-7 8h8a2 2 0 002-2V8.5a2 2 0 00-.586-1.414l-4.5-4.5A2 2 0 0012.5 2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                        <span>{{ __('store.footer.company_tax') }}</span>
+                                    </p>
+                                </div>
+                                @if($companyFooterGroup && $companyFooterGroup->items->isNotEmpty())
+                                    <ul class="mt-5 flex flex-wrap gap-2">
+                                        @foreach($companyFooterGroup->items as $item)
+                                            <li>
+                                                @if($item->url && $item->url !== '#')
+                                                    <a href="{{ $item->url }}" class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</a>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </section>
+
+                            <section class="xl:col-span-7 xl:border-l xl:border-white/10 xl:pl-10" aria-labelledby="footer-bank-heading">
+                                <h3 id="footer-bank-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ __('store.footer.bank_heading') }}</h3>
+                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3">
+                                    @forelse(($bankAccounts ?? []) as $account)
+                                        <article class="rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3.5 hover:border-primary-400/30 transition-colors">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <p class="text-sm font-semibold text-white leading-snug">{{ $account->bank_name }}</p>
+                                                @if($account->currency)
+                                                    <span class="shrink-0 rounded-full bg-primary-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-200">{{ $account->currency }}</span>
+                                                @endif
+                                            </div>
+                                            @if($account->branch)
+                                                <p class="mt-1 text-[11px] text-slate-500">{{ $account->branch }}</p>
+                                            @endif
+                                            <p class="mt-2 font-mono text-[11px] sm:text-xs text-slate-300 break-all leading-relaxed">{{ $account->iban }}</p>
+                                            <p class="mt-1.5 text-[11px] text-slate-500">{{ $account->account_holder }}</p>
+                                        </article>
+                                    @empty
+                                        <p class="text-slate-500 text-xs sm:col-span-2">{{ __('store.footer.bank_empty_note') }}</p>
+                                    @endforelse
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="border-t border-slate-800/80">
-                <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                <div class="w-full px-4 sm:px-6 lg:px-8 py-5">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                         <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('store.footer.copyright') }}</p>
                         <div class="flex items-center gap-2 text-slate-500 text-xs">

@@ -80,6 +80,12 @@ return [
         'secure_payment' => 'Pagamento sicuro',
         'payment_label' => 'Bonifico',
         'bank_empty_note' => 'Nessun conto bancario aggiunto.',
+        'bank_heading' => 'Dati bancari',
+        'company_name' => 'Nevistanbul Textile & Promotion Industry and Trade Limited Company',
+        'company_address' => '15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / Istanbul, Türkiye',
+        'company_email' => 'info@nevistanbul.com.tr',
+        'company_privacy_email' => 'privacy@nevistanbul.com.tr',
+        'company_tax' => 'Ufficio fiscale: Güneşli — P. IVA: 6310675047',
     ],
 
     'index' => [

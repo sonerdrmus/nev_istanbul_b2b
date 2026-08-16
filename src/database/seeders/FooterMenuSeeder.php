@@ -37,17 +37,6 @@ class FooterMenuSeeder extends Seeder
                 ],
             ],
             [
-                'title' => 'Teslimat & Ödeme',
-                'type' => FooterMenuGroup::TYPE_MENU,
-                'sort_order' => 20,
-                'items' => [
-                    ['label' => 'Teslimat bilgisi ve maliyetler', 'url' => '#', 'sort_order' => 1],
-                    ['label' => 'Faturasız ödeme', 'url' => '#', 'sort_order' => 2],
-                    ['label' => 'İade', 'url' => '#', 'sort_order' => 3],
-                    ['label' => 'Worldwide B2B Delivery', 'url' => '#', 'sort_order' => 4],
-                ],
-            ],
-            [
                 'title' => 'Sözleşmeler',
                 'type' => FooterMenuGroup::TYPE_MENU,
                 'sort_order' => 30,

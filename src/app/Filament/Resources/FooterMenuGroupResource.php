@@ -43,7 +43,7 @@ class FooterMenuGroupResource extends Resource
                             ->label('Başlık')
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('Teslimat & Ödeme'),
+                            ->placeholder('Sözleşmeler'),
                         Forms\Components\Select::make('type')
                             ->label('Tip')
                             ->options([
