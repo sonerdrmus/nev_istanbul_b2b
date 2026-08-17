@@ -21,6 +21,13 @@ class LegalPageController extends Controller
 
     public function showContact(): View
     {
-        return $this->show(LegalPage::CONTACT_SLUG);
+        $page = LegalPage::query()
+            ->published()
+            ->where('slug', LegalPage::CONTACT_SLUG)
+            ->firstOrFail();
+
+        return view('store.contact', [
+            'page' => $page,
+        ]);
     }
 }

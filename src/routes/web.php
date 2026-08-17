@@ -4,6 +4,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\DealerRequestController;
 use App\Http\Controllers\LegalPageController;
+use App\Http\Controllers\ContactMessageController;
 use App\Models\Currency;
 use App\Services\TcmbExchangeRateService;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,7 @@ Route::get('/urun/{product}', [StoreController::class, 'showProduct'])->name('st
 Route::post('/store-login', [StoreController::class, 'login'])->name('store.login');
 Route::get('/sozlesme/{slug}', [LegalPageController::class, 'show'])->name('store.legal.show');
 Route::get('/iletisim', [LegalPageController::class, 'showContact'])->name('store.contact');
+Route::post('/iletisim', [ContactMessageController::class, 'store'])->middleware('throttle:5,60')->name('store.contact.send');
 Route::get('/bayi-ol', [StoreController::class, 'dealerRegistrationPage'])->name('store.dealer-registration');
 Route::post('/bayilik-talebi', [DealerRequestController::class, 'store'])->name('dealer-requests.store');
 Route::get('/bayilik-talebi', fn () => redirect()->route('store.dealer-registration'))->name('dealer-requests.form');
