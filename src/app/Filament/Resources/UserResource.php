@@ -68,6 +68,10 @@ class UserResource extends Resource
                         Forms\Components\Toggle::make('is_admin')
                             ->label('Admin')
                             ->default(false),
+                        Forms\Components\Toggle::make('is_approved')
+                            ->label('Giriş onayı')
+                            ->default(true)
+                            ->helperText('Kapalıysa bayi mağazadan giriş yapamaz. Bayilik talebi onaylanınca otomatik açılır.'),
                         Forms\Components\Select::make('visible_currency_ids')
                             ->label('Görünecek para birimleri')
                             ->options(fn () => Currency::active()->orderBy('sort_order')->pluck('name', 'id'))
@@ -104,6 +108,9 @@ class UserResource extends Resource
                 Tables\Columns\IconColumn::make('is_admin')
                     ->label('Admin')
                     ->boolean(),
+                Tables\Columns\IconColumn::make('is_approved')
+                    ->label('Onaylı')
+                    ->boolean(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('company_id')
@@ -111,6 +118,8 @@ class UserResource extends Resource
                     ->relationship('company', 'name'),
                 Tables\Filters\TernaryFilter::make('is_admin')
                     ->label('Admin'),
+                Tables\Filters\TernaryFilter::make('is_approved')
+                    ->label('Onaylı'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

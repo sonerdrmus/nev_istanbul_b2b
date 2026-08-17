@@ -3,9 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DealerRequestResource\Pages;
-use App\Models\Company;
 use App\Models\DealerRequest;
-use App\Models\User;
+use App\Services\DealerRequestApprover;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -14,7 +13,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
-use Illuminate\Support\Str;
 
 class DealerRequestResource extends Resource
 {
@@ -45,11 +43,6 @@ class DealerRequestResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'warning';
-    }
-
-    private static function companyNameFromRecord(DealerRequest $record): string
-    {
-        return (string) ($record->business_name ?: $record->full_name);
     }
 
     public static function form(Form $form): Form
@@ -196,51 +189,25 @@ class DealerRequestResource extends Resource
                     ->color('success')
                     ->visible(fn (DealerRequest $record) => $record->status === 'pending')
                     ->requiresConfirmation()
-                    ->action(function (DealerRequest $record): void {
-                        if ($record->status !== 'pending') {
-                            return;
-                        }
-                        if (User::where('email', $record->email)->exists()) {
+                    ->action(function (DealerRequest $record, DealerRequestApprover $approver): void {
+                        try {
+                            $result = $approver->approve($record, auth()->id());
+                        } catch (\RuntimeException $e) {
                             Notification::make()
-                                ->title('Bu e-posta ile kullanıcı zaten var')
+                                ->title($e->getMessage())
                                 ->danger()
                                 ->send();
 
                             return;
                         }
 
-                        $passwordPlain = Str::random(10);
-                        do {
-                            $code = 'BAYI-' . strtoupper(Str::random(6));
-                        } while (Company::where('code', $code)->exists());
-
-                        $companyName = self::companyNameFromRecord($record);
-
-                        $company = Company::create([
-                            'name' => $companyName,
-                            'code' => $code,
-                            'is_active' => true,
-                        ]);
-
-                        $user = User::create([
-                            'company_id' => $company->id,
-                            'name' => $record->applicantDisplayName(),
-                            'email' => $record->email,
-                            'password' => $passwordPlain,
-                            'is_admin' => false,
-                        ]);
-
-                        $record->update([
-                            'status' => 'approved',
-                            'approved_at' => now(),
-                            'approved_by' => auth()->id(),
-                            'created_company_id' => $company->id,
-                            'created_user_id' => $user->id,
-                        ]);
+                        $body = $result['generated_password']
+                            ? 'Kullanıcı oluşturuldu. Şifre: '.$result['generated_password']
+                            : 'Kullanıcı oluşturuldu. Başvuruda belirlediği şifre ile /giriş yapabilir.';
 
                         Notification::make()
                             ->title('Bayilik talebi onaylandı')
-                            ->body("Kullanıcı oluşturuldu. Şifre: {$passwordPlain}")
+                            ->body($body)
                             ->success()
                             ->send();
                     }),

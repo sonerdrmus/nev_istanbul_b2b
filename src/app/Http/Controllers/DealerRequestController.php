@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DealerRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class DealerRequestController extends Controller
 {
@@ -13,7 +15,8 @@ class DealerRequestController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:dealer_requests,email'],
+            'email' => ['required', 'email', 'max:255', 'unique:dealer_requests,email', 'unique:users,email'],
+            'password' => ['required', 'string', Password::min(8), 'confirmed'],
             'phone' => ['required', 'string', 'max:64'],
             'mobile_phone' => ['nullable', 'string', 'max:64'],
             'business_name' => ['required', 'string', 'max:255'],
@@ -54,6 +57,7 @@ class DealerRequestController extends Controller
             'last_name' => $validated['last_name'],
             'tc_no' => null,
             'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'],
             'mobile_phone' => $validated['mobile_phone'] ?? null,
             'address' => null,

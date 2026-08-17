@@ -61,6 +61,7 @@ class DealerRequest extends Model
         'last_name',
         'tc_no',
         'email',
+        'password',
         'phone',
         'mobile_phone',
         'address',
@@ -96,6 +97,10 @@ class DealerRequest extends Model
         'approved_by',
         'created_company_id',
         'created_user_id',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     protected function casts(): array

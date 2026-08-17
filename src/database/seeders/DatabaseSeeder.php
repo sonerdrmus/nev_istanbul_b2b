@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin',
                 'password' => 'password',
                 'is_admin' => true,
+                'is_approved' => true,
             ]
         );
 
@@ -36,6 +37,23 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Demo Müşteri',
                 'password' => 'password',
                 'is_admin' => false,
+                'is_approved' => true,
+            ]
+        );
+
+        $dealerCompany = Company::firstOrCreate(
+            ['code' => 'DEMO-DEALER'],
+            ['name' => 'Demo Bayi', 'is_active' => true]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'dealer@demo.com'],
+            [
+                'company_id' => $dealerCompany->id,
+                'name' => 'Demo Bayi',
+                'password' => 'password',
+                'is_admin' => false,
+                'is_approved' => true,
             ]
         );
 

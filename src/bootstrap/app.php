@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Livewire dosya yüklemede imza 401 önlemi: istek URL'sini APP_URL ile eşleştir
         $middleware->web(prepend: [NormalizeLivewireUploadUrl::class], append: [SetStoreLocale::class]);
         // Mağaza (sepet, ödeme vb.) için giriş yapmamış kullanıcılar müşteri paneli girişine yönlendirilir
-        $middleware->redirectGuestsTo(fn () => url('/panel/login'));
+        $middleware->redirectGuestsTo(fn () => route('store.login.show'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Boş mesajlı HttpException (genelde 419 CSRF / oturum, dosya yükleme) için anlamlı mesaj

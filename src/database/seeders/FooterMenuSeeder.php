@@ -71,7 +71,7 @@ class FooterMenuSeeder extends Seeder
         $defaultUrls = [
             'Tüm Ürünler' => route('home'),
             'Sepet' => route('store.cart'),
-            'Hesabım' => url('/panel'),
+            'Hesabım' => url('/hesabim'),
             'Tümünü gör' => route('home'),
         ];
 

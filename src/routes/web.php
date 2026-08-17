@@ -5,6 +5,7 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\DealerRequestController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\StoreAccountController;
 use App\Models\Currency;
 use App\Services\TcmbExchangeRateService;
 use Illuminate\Support\Facades\Route;
@@ -34,9 +35,12 @@ Route::get('/api/exchange-rates', function (TcmbExchangeRateService $tcmb) {
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
+Route::get('/giris', [StoreAccountController::class, 'showLogin'])->name('store.login.show');
+Route::post('/store-login', [StoreAccountController::class, 'login'])->name('store.login');
+Route::post('/cikis', [StoreAccountController::class, 'logout'])->name('store.logout');
+
 Route::get('/', [StoreController::class, 'index'])->name('home');
 Route::get('/urun/{product}', [StoreController::class, 'showProduct'])->name('store.product.show');
-Route::post('/store-login', [StoreController::class, 'login'])->name('store.login');
 Route::get('/sozlesme/{slug}', [LegalPageController::class, 'show'])->name('store.legal.show');
 Route::get('/iletisim', [LegalPageController::class, 'showContact'])->name('store.contact');
 Route::post('/iletisim', [ContactMessageController::class, 'store'])->middleware('throttle:5,60')->name('store.contact.send');
@@ -44,8 +48,9 @@ Route::get('/bayi-ol', [StoreController::class, 'dealerRegistrationPage'])->name
 Route::post('/bayilik-talebi', [DealerRequestController::class, 'store'])->name('dealer-requests.store');
 Route::get('/bayilik-talebi', fn () => redirect()->route('store.dealer-registration'))->name('dealer-requests.form');
 
-// Sepet, ödeme ve sipariş sadece giriş yapmış müşterilere açık
+// Sepet, ödeme, sipariş ve hesap sayfası giriş yapmış kullanıcılara açık
 Route::middleware('auth')->group(function () {
+    Route::get('/hesabim', [StoreAccountController::class, 'account'])->name('store.account');
     Route::get('/sepet', [StoreController::class, 'cart'])->name('store.cart');
     Route::post('/sepet/ekle', [StoreController::class, 'addToCart'])->name('store.cart.add');
     Route::post('/sepet/guncelle', [StoreController::class, 'updateCart'])->name('store.cart.update');

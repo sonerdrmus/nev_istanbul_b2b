@@ -22,7 +22,6 @@ use App\Support\ProductCustomizationPrintTotal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -652,6 +651,7 @@ class StoreController extends Controller
 
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
+                'user_id' => $request->user()?->id,
                 'customer_name' => $request->customer_name,
                 'customer_email' => $request->customer_email,
                 'customer_phone' => $request->customer_phone,
@@ -719,22 +719,6 @@ class StoreController extends Controller
         }
 
         return view('store.order-confirmation', compact('order', 'selectedCurrency', 'currencies'));
-    }
-
-    /** Mağaza header’daki giriş modalından POST; panel (müşteri) girişi. */
-    public function login(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if (Auth::guard('web')->attempt($request->only('email', 'password'), (bool) $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('home'))->with('success', __('store.flash.login_ok'));
-        }
-
-        return back()->withErrors(['email' => __('store.login_failed')])->withInput($request->only('email'))->with('open_login_modal', true);
     }
 
     /** Bayi başvuru sayfası: Neden Bayi + form. */

@@ -78,7 +78,11 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col pb-20 lg:pb-0">
+<body @class([
+    'bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col',
+    'h-dvh overflow-hidden pb-0' => View::hasSection('compact_chrome'),
+    'pb-20 lg:pb-0' => ! View::hasSection('compact_chrome'),
+])>
     {{-- Topbar: ÜCRETSİZ KARGO + Kurlar + Para birimi seçici --}}
     <div class="bg-primary-600 text-white py-2 px-4 text-sm font-medium">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-between gap-2">
@@ -152,7 +156,7 @@
                     <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 sm:h-12 w-auto object-contain">
                 </a>
 
-                <div class="flex-1 min-w-0 max-w-xl mx-2 sm:mx-4 relative" id="header-search-wrap">
+                <div @class(['flex-1 min-w-0 max-w-xl mx-2 sm:mx-4 relative', 'hidden' => View::hasSection('compact_chrome')]) id="header-search-wrap">
                     <form action="{{ route('home') }}" method="GET" class="relative">
                         @if(request('category'))
                             <input type="hidden" name="category" value="{{ request('category') }}">
@@ -184,10 +188,10 @@
                         @if(auth()->user()->is_admin)
                             <a href="{{ url('/admin') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.admin') }}</a>
                         @else
-                            <a href="{{ url('/panel') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.my_panel') }}</a>
+                            <a href="{{ route('store.account') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.my_panel') }}</a>
                         @endif
                     @else
-                        <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.login') }}</button>
+                        <a href="{{ route('store.login.show') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.login') }}</a>
                         <a href="{{ route('store.dealer-registration') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-semibold bg-primary-600 hover:bg-primary-700 text-white transition-colors">
                             {{ __('store.header.register') }}
                         </a>
@@ -244,8 +248,8 @@
                     <button type="submit" class="flex-1 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-sm hover:shadow transition-all">
                         {{ __('store.login_modal.submit') }}
                     </button>
-                    <a href="{{ url('/panel/login') }}" class="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 text-center transition-colors">
-                        {{ __('store.login_modal.panel_link') }}
+                    <a href="{{ route('store.dealer-registration') }}" class="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 text-center transition-colors">
+                        {{ __('store.login_modal.register_link') }}
                     </a>
                 </div>
             </form>
@@ -293,7 +297,7 @@
     @include('store.partials.welcome-production-info-modal')
 
     {{-- Anasayfa üst kategori şeridi: üst kategoriler + yazılı alt menü --}}
-    @if(isset($topMenuCategories) && $topMenuCategories->isNotEmpty())
+    @if(! View::hasSection('compact_chrome') && isset($topMenuCategories) && $topMenuCategories->isNotEmpty())
         @include('store.partials.home-mega-nav-strip')
     @endif
 
@@ -313,12 +317,19 @@
         </div>
     @endif
 
-    @yield('hero')
+    @hasSection('full_bleed')
+        <div @class(['flex-1 w-full', 'min-h-0 overflow-hidden' => View::hasSection('compact_chrome')])>
+            @yield('full_bleed')
+        </div>
+    @else
+        @yield('hero')
 
-    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        @yield('content')
-    </main>
+        <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            @yield('content')
+        </main>
+    @endif
 
+    @unless(View::hasSection('compact_chrome'))
     {{-- Bottom navbar (sadece mobil) — app menüsü gibi ikonlu --}}
     <nav class="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-slate-200 shadow-[0_-8px_20px_-12px_rgba(0,0,0,0.25)] safe-area-pb">
         <div class="px-4 py-2">
@@ -342,19 +353,20 @@
                 </a>
 
                 @auth
-                    <a href="{{ auth()->user()->is_admin ? url('/admin') : url('/panel') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
+                    <a href="{{ auth()->user()->is_admin ? url('/admin') : route('store.account') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/></svg>
                         <span class="text-[11px] font-medium mt-1">{{ auth()->user()->is_admin ? __('store.header.admin') : __('store.bottom_nav.account') }}</span>
                     </a>
                 @else
-                    <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors w-full">
+                    <a href="{{ route('store.login.show') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors w-full">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1\"/></svg>
                         <span class="text-[11px] font-medium mt-1">{{ __('store.bottom_nav.login') }}</span>
-                    </button>
+                    </a>
                 @endauth
             </div>
         </div>
     </nav>
+    @endunless
 
     {{-- Mobil kategori sheet (bottom sheet) --}}
     <div id="mobile-cats" class="hidden lg:hidden fixed inset-0 z-50" aria-modal="true" role="dialog">
@@ -410,6 +422,7 @@
         </div>
     </div>
 
+    @unless(View::hasSection('compact_chrome'))
     @php
         $footerMenuGroups = $footerMenuGroups ?? collect();
         $companyTitles = ['Şirket', 'Company', 'Azienda'];
@@ -569,6 +582,7 @@
             </div>
         </div>
     </footer>
+    @endunless
 
     {{-- Topbar kurlarını Merkez Bankası güncellemesine göre periyodik güncelle --}}
     @php

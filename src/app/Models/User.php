@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'is_admin',
+        'is_approved',
         'visible_currency_ids',
     ];
 
@@ -49,8 +50,19 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_approved' => 'boolean',
             'visible_currency_ids' => 'array',
         ];
+    }
+
+    public function isApproved(): bool
+    {
+        return (bool) $this->is_approved;
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function company()
@@ -69,7 +81,7 @@ class User extends Authenticatable implements FilamentUser
             return $this->is_admin;
         }
         if ($panel->getId() === 'customer') {
-            return ! $this->is_admin && $this->company_id !== null;
+            return false;
         }
         return false;
     }
