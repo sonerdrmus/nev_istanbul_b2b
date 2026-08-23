@@ -313,6 +313,7 @@ class StoreController extends Controller
         ]);
         $this->filterFabricVariationOptionsForProduct($product);
         $this->filterMoldModelVariationOptionsForProduct($product);
+        $this->filterSizeTableVariationOptionsForProduct($product);
         $product->setRelation('variations', ProductVariationFlowSteps::topologicallySorted($product->variations));
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
@@ -326,7 +327,12 @@ class StoreController extends Controller
             session(['store_currency' => $selectedCurrency->code]);
         }
 
-        $sizeTables = SizeTable::with('columns')->orderBy('sort_order')->get();
+        $sizeTables = SizeTable::query()
+            ->with('columns')
+            ->visibleForProduct((int) $product->getKey())
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
         $productCustomization = ($product->customization_enabled ?? true)
             ? ProductCustomizationCatalog::forStore($product)
             : ['rows' => collect(), 'print_techniques' => [], 'default_print_slug' => 'emprime', 'max_color_count' => 7];
@@ -381,6 +387,31 @@ class StoreController extends Controller
             $filtered = $variation->options->reject(
                 fn ($option): bool => $option->interface_mold_model_variation_id !== null
                     && in_array((int) $option->interface_mold_model_variation_id, $hiddenMoldIds, true)
+            )->values();
+
+            $variation->setRelation('options', $filtered);
+        }
+    }
+
+    /**
+     * "Beden Tablosu" seçeneklerini: global tablolar + bu ürüne atanmış tablolar
+     * kalacak; başka ürüne özel atananlar gizlenecek şekilde filtreler.
+     */
+    private function filterSizeTableVariationOptionsForProduct(Product $product): void
+    {
+        $hiddenSizeTableIds = $product->hiddenSizeTableIds();
+        if ($hiddenSizeTableIds === []) {
+            return;
+        }
+
+        foreach ($product->variations as $variation) {
+            if ((string) $variation->type !== 'size_table') {
+                continue;
+            }
+
+            $filtered = $variation->options->reject(
+                fn ($option): bool => $option->size_table_id !== null
+                    && in_array((int) $option->size_table_id, $hiddenSizeTableIds, true)
             )->values();
 
             $variation->setRelation('options', $filtered);

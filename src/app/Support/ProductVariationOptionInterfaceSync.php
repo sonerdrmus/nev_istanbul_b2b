@@ -57,6 +57,16 @@ class ProductVariationOptionInterfaceSync
     }
 
     /**
+     * Beden tablosu–ürün atamalarını ürünlerin "Beden Tablosu" varyasyon seçenekleriyle eşitler.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileSizeTableProductOptions(?int $productId = null, ?int $presetId = null): array
+    {
+        return ProductResource::reconcileSizeTableOptionsForProducts($productId, $presetId);
+    }
+
+    /**
      * Tek preset kaydını bağlı ürün seçeneklerine yansıtır; pasifse bağlı seçenekleri kaldırır.
      */
     public static function syncPreset(object $preset, ?string $type = null): int
@@ -110,6 +120,10 @@ class ProductVariationOptionInterfaceSync
             $removed += $reconciled['removed'];
         } elseif ($variationType === 'mold_model_type') {
             $reconciled = static::reconcileMoldModelProductOptions();
+            $added = $reconciled['added'];
+            $removed += $reconciled['removed'];
+        } elseif ($variationType === 'size_table') {
+            $reconciled = static::reconcileSizeTableProductOptions();
             $added = $reconciled['added'];
             $removed += $reconciled['removed'];
         } else {

@@ -7,7 +7,9 @@ use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
 use App\Support\CatalogLabelTranslator;
 use App\Support\LocaleContent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class SizeTable extends Model
 {
@@ -69,5 +71,81 @@ class SizeTable extends Model
     public function columns()
     {
         return $this->hasMany(SizeTableColumn::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Bu tablonun atandığı ürünler (opsiyonel).
+     * Boş bırakılırsa beden-tablosu varyasyonu olan tüm ürünlerde kullanılabilir.
+     */
+    public function products()
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'size_table_product',
+            'size_table_id',
+            'product_id',
+        )->withTimestamps();
+    }
+
+    public static function productPivotTableExists(): bool
+    {
+        return Schema::hasTable('size_table_product');
+    }
+
+    /**
+     * Verilen üründe görünecek tablolar:
+     * - hiç ürüne atanmamış (global) tablolar, veya
+     * - açıkça bu ürüne atanmış tablolar.
+     */
+    public function scopeVisibleForProduct(Builder $query, ?int $productId): Builder
+    {
+        if (! static::productPivotTableExists()) {
+            return $query;
+        }
+
+        if ($productId === null) {
+            return $query->whereDoesntHave('products');
+        }
+
+        return $query->where(function (Builder $q) use ($productId): void {
+            $q->whereDoesntHave('products')
+                ->orWhereHas('products', fn (Builder $p) => $p->whereKey($productId));
+        });
+    }
+
+    /**
+     * Bu üründe GİZLENECEK tablo id'leri: ürün ataması olan ama bu ürüne atanmamış tablolar.
+     *
+     * @return array<int, int>
+     */
+    public static function hiddenIdsForProduct(?int $productId): array
+    {
+        if (! static::productPivotTableExists() || $productId === null) {
+            return [];
+        }
+
+        return static::query()
+            ->whereHas('products')
+            ->whereDoesntHave('products', fn (Builder $p) => $p->whereKey($productId))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    public function isVisibleForProduct(?int $productId): bool
+    {
+        if (! static::productPivotTableExists()) {
+            return true;
+        }
+
+        if (! $this->products()->exists()) {
+            return true;
+        }
+
+        if ($productId === null) {
+            return false;
+        }
+
+        return $this->products()->whereKey($productId)->exists();
     }
 }

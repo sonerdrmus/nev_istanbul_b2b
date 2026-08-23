@@ -610,7 +610,7 @@ class ProductResource extends Resource
                                                         'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
                                                         'packaging_type' => 'Seçenekler, Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından otomatik doldurulur; malzeme ve özelleştirme mağazada alt adımlarda sorulur.',
                                                         'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
-                                                        'size_table' => 'Seçenekler, Beden tabloları kayıtlarından otomatik doldurulur. İstemediğiniz tabloları silebilir veya her satırda farklı tablo seçebilirsiniz.',
+                                                        'size_table' => 'Seçenekler, Beden tabloları kayıtlarından otomatik doldurulur (global tablolar + bu ürüne atanmış tablolar). İstemediğiniz satırları silebilirsiniz.',
                                                         default => null,
                                                     })
                                                     ->columnSpan(1),
@@ -1197,12 +1197,14 @@ class ProductResource extends Resource
      */
     /**
      * Ürün varyasyonu tipi "Beden Tablosu" olduğunda seçenek satırları — Arayüz beden tabloları.
+     * $productId verildiğinde global + o ürüne atanmış tablolar döner.
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function sizeTableVariationOptionsFromPresets(): array
+    public static function sizeTableVariationOptionsFromPresets(?int $productId = null): array
     {
         return SizeTable::query()
+            ->visibleForProduct($productId)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -1304,6 +1306,39 @@ class ProductResource extends Resource
     }
 
     /**
+     * Kayıt öncesi: başka ürünlere özel atanmış beden tablosu seçenek satırlarını bu üründen düşürür.
+     */
+    public static function dropForeignSizeTableOptionsFromProductFormData(array $data, ?int $productId): array
+    {
+        if (empty($data['variations']) || ! is_array($data['variations'])) {
+            return $data;
+        }
+
+        $hiddenSizeTableIds = SizeTable::hiddenIdsForProduct($productId);
+        if ($hiddenSizeTableIds === []) {
+            return $data;
+        }
+
+        foreach ($data['variations'] as &$variation) {
+            if ((string) ($variation['type'] ?? '') !== 'size_table' || ! is_array($variation['options'] ?? null)) {
+                continue;
+            }
+
+            $variation['options'] = array_values(array_filter(
+                $variation['options'],
+                function ($option) use ($hiddenSizeTableIds): bool {
+                    $presetId = is_array($option) ? ($option['size_table_id'] ?? null) : null;
+
+                    return $presetId === null || ! in_array((int) $presetId, $hiddenSizeTableIds, true);
+                },
+            ));
+        }
+        unset($variation);
+
+        return $data;
+    }
+
+    /**
      * Form içinde düzenlenen ürünün id'si (oluşturma ekranında henüz kayıt olmadığı için null).
      */
     public static function currentProductIdFromLivewire(?object $livewire): ?int
@@ -1327,7 +1362,7 @@ class ProductResource extends Resource
             'mold_model_type' => static::moldModelVariationOptionsFromInterfacePresets($productId),
             'delivery_type' => static::deliveryVariationOptionsFromInterfacePresets(),
             'packaging_type' => static::packagingVariationOptionsFromInterfacePresets(),
-            'size_table' => static::sizeTableVariationOptionsFromPresets(),
+            'size_table' => static::sizeTableVariationOptionsFromPresets($productId),
             default => null,
         };
     }
@@ -1753,17 +1788,74 @@ class ProductResource extends Resource
     }
 
     /**
+     * Ürünlerin "Beden Tablosu" varyasyon seçeneklerini tablo–ürün atamalarıyla eşitler:
+     * global (atanmamış) + o ürüne atanmış tablolar eklenir; başka ürüne özel olanlar kaldırılır.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileSizeTableOptionsForProducts(?int $productId = null, ?int $presetId = null): array
+    {
+        $fkField = 'size_table_id';
+        $added = 0;
+        $removed = 0;
+
+        $visibleRowsByProduct = [];
+
+        ProductVariation::query()
+            ->where('type', 'size_table')
+            ->when($productId !== null, fn (Builder $q) => $q->where('product_id', $productId))
+            ->each(function (ProductVariation $variation) use (&$added, &$removed, &$visibleRowsByProduct, $fkField, $presetId): void {
+                $variationProductId = $variation->product_id !== null ? (int) $variation->product_id : null;
+                $cacheKey = $variationProductId ?? 0;
+
+                $visibleRows = $visibleRowsByProduct[$cacheKey]
+                    ??= static::sizeTableVariationOptionsFromPresets($variationProductId);
+
+                $visibleIds = array_map(fn (array $row): int => (int) $row[$fkField], $visibleRows);
+
+                $removeQuery = $variation->options()->whereNotNull($fkField);
+                if ($visibleIds !== []) {
+                    $removeQuery->whereNotIn($fkField, $visibleIds);
+                }
+                if ($presetId !== null) {
+                    $removeQuery->where($fkField, $presetId);
+                }
+                $removed += $removeQuery->delete();
+
+                foreach ($visibleRows as $row) {
+                    $rowPresetId = (int) $row[$fkField];
+                    if ($presetId !== null && $rowPresetId !== $presetId) {
+                        continue;
+                    }
+
+                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                        continue;
+                    }
+
+                    static::createVariationOptionFromPresetRow($variation, $row, 'size_table');
+                    $added++;
+                }
+            });
+
+        return ['added' => $added, 'removed' => $removed];
+    }
+
+    /**
      * Varyasyon yönetimi preset'lerinden eksik ürün seçeneklerini ekler (mevcut satırları silmez).
      */
     public static function appendMissingInterfacePresetOptions(string $variationType, ?int $onlyPresetId = null): int
     {
-        // Kumaş / kalıp seçenekleri ürün bazlıdır; ekleme/kaldırma işini ürüne duyarlı mutabakat yapar.
+        // Kumaş / kalıp / beden tablosu seçenekleri ürün bazlıdır; ekleme/kaldırma işini ürüne duyarlı mutabakat yapar.
         if ($variationType === 'fabric') {
             return static::reconcileFabricOptionsForProducts(presetId: $onlyPresetId)['added'];
         }
 
         if ($variationType === 'mold_model_type') {
             return static::reconcileMoldModelOptionsForProducts(presetId: $onlyPresetId)['added'];
+        }
+
+        if ($variationType === 'size_table') {
+            return static::reconcileSizeTableOptionsForProducts(presetId: $onlyPresetId)['added'];
         }
 
         $rows = static::interfacePresetOptionRowsForType($variationType);
@@ -1917,6 +2009,7 @@ class ProductResource extends Resource
         $data = static::ensureInterfacePresetOptionsInProductFormData($data, $productId);
         $data = static::dropForeignFabricOptionsFromProductFormData($data, $productId);
         $data = static::dropForeignMoldModelOptionsFromProductFormData($data, $productId);
+        $data = static::dropForeignSizeTableOptionsFromProductFormData($data, $productId);
 
         if (empty($data['variations']) || ! is_array($data['variations'])) {
             return $data;

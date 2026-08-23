@@ -263,6 +263,17 @@ class Product extends Model
         )->withTimestamps();
     }
 
+    /** Bu ürüne atanmış (veya global) beden tabloları ilişkisi — pivot atamaları. */
+    public function sizeTables()
+    {
+        return $this->belongsToMany(
+            SizeTable::class,
+            'size_table_product',
+            'product_id',
+            'size_table_id',
+        )->withTimestamps();
+    }
+
     /** Bu ürüne atanmış ürün özelleştirme konum satırları. */
     public function customizationRows()
     {
@@ -308,6 +319,17 @@ class Product extends Model
     public function hiddenMoldModelVariationIds(): array
     {
         return InterfaceMoldModelVariation::hiddenIdsForProduct((int) $this->getKey());
+    }
+
+    /**
+     * Bu üründe GİZLENECEK beden tablosu id'leri: ürün ataması olan ama bu ürüne
+     * atanmamış tablolar. Ataması olmayan (global) tablolar gizlenmez.
+     *
+     * @return array<int, int>
+     */
+    public function hiddenSizeTableIds(): array
+    {
+        return SizeTable::hiddenIdsForProduct((int) $this->getKey());
     }
 
     /**

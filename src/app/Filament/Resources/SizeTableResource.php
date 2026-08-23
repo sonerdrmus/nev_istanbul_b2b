@@ -2,15 +2,18 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\SizeTableResource\Pages;
 use App\Models\ProductVariation;
 use App\Models\SizeTable;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SizeTableResource extends Resource
 {
@@ -22,7 +25,7 @@ class SizeTableResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $modelLabel = 'Sipariş Adeti';
+    protected static ?string $modelLabel = 'Beden tablosu';
 
     protected static ?string $pluralModelLabel = 'Beden tabloları';
 
@@ -34,11 +37,27 @@ class SizeTableResource extends Resource
      * Varyasyon adları + alt seçenekler (Varyasyon → Seçenek) için seçenek listesi.
      * Değer: "VaryasyonAdı" veya "VaryasyonAdı|SeçenekDeğeri"
      *
+     * @param  array<int, int|string>|null  $productIds  Verilirse yalnızca bu ürünlerin varyasyonları listelenir.
      * @return array<string, string>
      */
-    public static function getTriggerVariationOptions(): array
+    public static function getTriggerVariationOptions(?array $productIds = null): array
     {
-        $variations = ProductVariation::query()->with('options')->orderBy('name')->get();
+        $productIds = $productIds === null
+            ? null
+            : array_values(array_unique(array_filter(array_map(
+                static fn ($id): int => (int) $id,
+                $productIds,
+            ), static fn (int $id): bool => $id > 0)));
+
+        $variations = ProductVariation::query()
+            ->with('options')
+            ->when(
+                $productIds !== null && $productIds !== [],
+                fn (Builder $q) => $q->whereIn('product_id', $productIds),
+            )
+            ->orderBy('name')
+            ->get();
+
         $grouped = [];
         foreach ($variations as $v) {
             $name = trim((string) $v->name);
@@ -55,14 +74,38 @@ class SizeTableResource extends Resource
                 }
             }
         }
+
         $options = [];
         foreach ($grouped as $varName => $optValues) {
-            $options[$varName . ' (herhangi)'] = $varName;
+            $options[$varName] = $varName.' (herhangi)';
             foreach (array_keys($optValues) as $optVal) {
-                $options[$varName . ' → ' . $optVal] = $varName . '|' . $optVal;
+                $options[$varName.'|'.$optVal] = $varName.' → '.$optVal;
             }
         }
+
         return $options;
+    }
+
+    /**
+     * @param  mixed  $productsState
+     * @return array<int, int>
+     */
+    public static function productIdsFromFormState(mixed $productsState): array
+    {
+        if (! is_array($productsState) || $productsState === []) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static function ($value): int {
+                if (is_numeric($value)) {
+                    return (int) $value;
+                }
+
+                return 0;
+            },
+            $productsState,
+        ), static fn (int $id): bool => $id > 0)));
     }
 
     public static function form(Form $form): Form
@@ -83,9 +126,21 @@ class SizeTableResource extends Resource
                             ->placeholder('Örn: BEDEN TABLOSU (ERKEK)')
                             ->maxLength(255),
                         ...LocaleNameInputs::make('title', 'Başlık (EN)', 'Başlık (IT)'),
+                        Forms\Components\TextInput::make('sort_order')
+                            ->label('Sıra')
+                            ->numeric()
+                            ->default(0)
+                            ->helperText('Listede önce gelmesi için küçük sayı.'),
+                        ProductMultiSelect::relationship('products')
+                            ->live()
+                            ->helperText('Opsiyonel. Boş bırakılırsa beden tablosu varyasyonu olan tüm ürünlerde kullanılabilir. Ürün seçilirse yalnızca o ürünlerde seçenek olur ve aşağıdaki tetikleyici o ürünlerin varyasyonlarından listelenir.'),
                         Forms\Components\Select::make('trigger_combined')
                             ->label('Hangi varyasyon seçildiğinde bu tablo açılsın?')
-                            ->options(fn (): array => self::getTriggerVariationOptions())
+                            ->options(function (Get $get): array {
+                                $productIds = static::productIdsFromFormState($get('products'));
+
+                                return static::getTriggerVariationOptions($productIds !== [] ? $productIds : null);
+                            })
                             ->searchable()
                             ->preload()
                             ->getOptionLabelUsing(function (?string $value): ?string {
@@ -94,14 +149,23 @@ class SizeTableResource extends Resource
                                 }
                                 if (str_contains($value, '|')) {
                                     $parts = explode('|', $value, 2);
-                                    return $parts[0] . ' → ' . $parts[1];
+
+                                    return $parts[0].' → '.$parts[1];
                                 }
-                                return $value . ' (herhangi)';
+
+                                return $value.' (herhangi)';
                             })
                             ->placeholder('Varyasyon veya seçenek seçin')
-                            ->helperText('Varyasyon adı veya "Varyasyon → Seçenek" ile sadece o seçenekte tabloyu açabilirsiniz. Liste boşsa önce ürünlere varyasyon ekleyin.')
+                            ->helperText(function (Get $get): string {
+                                $productIds = static::productIdsFromFormState($get('products'));
+                                if ($productIds !== []) {
+                                    return 'Seçili ürünlerin varyasyonlarından seçin. «Varyasyon → Seçenek» ile yalnızca o seçenekte tablo açılır.';
+                                }
+
+                                return 'Ürün seçilmediyse tüm ürünlerin varyasyonları listelenir. İsterseniz önce ürün seçerek listeyi daraltın.';
+                            })
                             ->default(fn (?SizeTable $record): ?string => $record
-                                ? ($record->trigger_variation_name . ($record->trigger_option_value ? '|' . $record->trigger_option_value : ''))
+                                ? ($record->trigger_variation_name.($record->trigger_option_value ? '|'.$record->trigger_option_value : ''))
                                 : null)
                             ->dehydrated(false),
                     ])
@@ -141,6 +205,11 @@ class SizeTableResource extends Resource
             ]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount(['columns', 'products']);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -152,10 +221,17 @@ class SizeTableResource extends Resource
                     ->label('Başlık')
                     ->limit(40)
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->label('Ürün')
+                    ->counts('products')
+                    ->formatStateUsing(fn ($state): string => (int) $state === 0 ? 'Tümü' : (string) $state)
+                    ->badge()
+                    ->color(fn ($state): string => (int) $state === 0 ? 'gray' : 'success')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('trigger_variation_name')
                     ->label('Varyasyon')
                     ->formatStateUsing(fn (?string $state, SizeTable $record): string => $record->trigger_option_value
-                        ? $state . ' → ' . $record->trigger_option_value
+                        ? $state.' → '.$record->trigger_option_value
                         : ($state ?? '—'))
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('columns_count')
@@ -165,7 +241,11 @@ class SizeTableResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
             ->defaultSort('sort_order');
     }
 
@@ -173,6 +253,7 @@ class SizeTableResource extends Resource
     {
         return [
             'index' => Pages\ListSizeTables::route('/'),
+            'create' => Pages\CreateSizeTable::route('/create'),
             'edit' => Pages\EditSizeTable::route('/{record}/edit'),
         ];
     }
@@ -182,8 +263,30 @@ class SizeTableResource extends Resource
         return 15;
     }
 
-    public static function canCreate(): bool
+    /**
+     * Form state'teki trigger_combined değerini DB alanlarına böler.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function applyTriggerCombinedToFormData(array $data, mixed $combined): array
     {
-        return false;
+        if (is_string($combined) && $combined !== '') {
+            if (str_contains($combined, '|')) {
+                $parts = explode('|', $combined, 2);
+                $data['trigger_variation_name'] = trim($parts[0]);
+                $data['trigger_option_value'] = trim($parts[1]) ?: null;
+            } else {
+                $data['trigger_variation_name'] = trim($combined);
+                $data['trigger_option_value'] = null;
+            }
+        } else {
+            $data['trigger_variation_name'] = null;
+            $data['trigger_option_value'] = null;
+        }
+
+        unset($data['trigger_combined']);
+
+        return $data;
     }
 }
