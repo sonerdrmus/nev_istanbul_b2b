@@ -76,16 +76,18 @@
                     <ul class="mt-5 divide-y divide-slate-100">
                         @foreach($orders as $order)
                             <li class="py-4 first:pt-0 last:pb-0">
-                                <a href="{{ route('store.order-confirmation', $order) }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl px-3 py-2 -mx-3 hover:bg-slate-50 transition-colors">
-                                    <div>
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl px-3 py-2 -mx-3">
+                                    <a href="{{ route('store.order-confirmation', $order) }}" class="min-w-0 flex-1 hover:opacity-80 transition-opacity">
                                         <p class="text-sm font-semibold text-slate-900">{{ $order->order_number }}</p>
                                         <p class="mt-1 text-xs text-slate-500">{{ $order->created_at?->format('d.m.Y H:i') }} · {{ __('store.account.items_count', ['count' => $order->items_count]) }}</p>
-                                    </div>
-                                    <div class="flex items-center gap-3">
+                                    </a>
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold {{ $statusClass($order->status) }}">{{ $statusLabel($order->status) }}</span>
                                         <span class="text-sm font-semibold text-slate-900">{{ number_format((float) $order->total, 2, ',', '.') }} ₺</span>
+                                        <a href="{{ route('store.proforma.pdf', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_pdf') }}</a>
+                                        <a href="{{ route('store.proforma.excel', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_excel') }}</a>
                                     </div>
-                                </a>
+                                </div>
                             </li>
                         @endforeach
                     </ul>

@@ -47,6 +47,16 @@ class ProductVariationOptionInterfaceSync
     }
 
     /**
+     * Kalıp–ürün atamalarını ürünlerin "Kalıp Modeli" varyasyon seçenekleriyle eşitler.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileMoldModelProductOptions(?int $productId = null, ?int $presetId = null): array
+    {
+        return ProductResource::reconcileMoldModelOptionsForProducts($productId, $presetId);
+    }
+
+    /**
      * Tek preset kaydını bağlı ürün seçeneklerine yansıtır; pasifse bağlı seçenekleri kaldırır.
      */
     public static function syncPreset(object $preset, ?string $type = null): int
@@ -96,6 +106,10 @@ class ProductVariationOptionInterfaceSync
 
         if ($variationType === 'fabric') {
             $reconciled = static::reconcileFabricProductOptions();
+            $added = $reconciled['added'];
+            $removed += $reconciled['removed'];
+        } elseif ($variationType === 'mold_model_type') {
+            $reconciled = static::reconcileMoldModelProductOptions();
             $added = $reconciled['added'];
             $removed += $reconciled['removed'];
         } else {

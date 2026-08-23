@@ -55,6 +55,25 @@ class Order extends Model
         return 'order_number';
     }
 
+    public function isAccessibleBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->is_admin) {
+            return true;
+        }
+
+        if ($this->user_id && (int) $this->user_id === (int) $user->id) {
+            return true;
+        }
+
+        return filled($this->customer_email)
+            && filled($user->email)
+            && strcasecmp((string) $this->customer_email, (string) $user->email) === 0;
+    }
+
     public static function generateOrderNumber(): string
     {
         $prefix = 'SIP-' . date('Ymd');

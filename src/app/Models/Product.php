@@ -252,6 +252,17 @@ class Product extends Model
         )->withTimestamps();
     }
 
+    /** Bu ürüne atanmış kalıp modeli varyasyonları (çoklu; pivot). */
+    public function moldModelVariations()
+    {
+        return $this->belongsToMany(
+            InterfaceMoldModelVariation::class,
+            'interface_mold_model_variation_product',
+            'product_id',
+            'interface_mold_model_variation_id',
+        )->withTimestamps();
+    }
+
     /** Bu ürüne atanmış ürün özelleştirme konum satırları. */
     public function customizationRows()
     {
@@ -287,6 +298,16 @@ class Product extends Model
     public function hiddenFabricTypeVariationIds(): array
     {
         return InterfaceFabricTypeVariation::hiddenIdsForProduct((int) $this->getKey());
+    }
+
+    /**
+     * Bu üründe GİZLENECEK kalıp model preset id'leri: bu ürüne atanmamış tüm kalıplar.
+     *
+     * @return array<int, int>
+     */
+    public function hiddenMoldModelVariationIds(): array
+    {
+        return InterfaceMoldModelVariation::hiddenIdsForProduct((int) $this->getKey());
     }
 
     /**

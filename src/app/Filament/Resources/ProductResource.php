@@ -585,7 +585,7 @@ class ProductResource extends Resource
                                                                     'color' => ['Renk kaydı bulunamadı', 'Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.'],
                                                                     'label_type' => ['Etiket türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Etiket Türü Yönetimi bölümünden kayıt ekleyin.'],
                                                                     'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
-                                                                    'mold_model_type' => ['Kalıp modeli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünden kayıt ekleyin.'],
+                                                                    'mold_model_type' => ['Bu ürüne ait kalıp modeli bulunamadı', 'Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
                                                                     'delivery_type' => ['Teslim şekli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Teslim Şeklini Yönet bölümünden kayıt ekleyin.'],
                                                                     'packaging_type' => ['Ambalaj tercihi kaydı bulunamadı', 'Önce Varyasyon yönetimi → Ambalaj Tercih Yönetimi → Ambalaj seç bölümünden kayıt ekleyin.'],
                                                                     'size_table' => ['Beden tablosu bulunamadı', 'Önce Varyasyon yönetimi → Beden tabloları bölümünden en az bir tablo tanımlayın.'],
@@ -606,7 +606,7 @@ class ProductResource extends Resource
                                                         'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                                                         'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
                                                         'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
-                                                        'mold_model_type' => 'Seçenekler, Kalıp Modeli Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
+                                                        'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                                                         'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
                                                         'packaging_type' => 'Seçenekler, Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından otomatik doldurulur; malzeme ve özelleştirme mağazada alt adımlarda sorulur.',
                                                         'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
@@ -1271,6 +1271,39 @@ class ProductResource extends Resource
     }
 
     /**
+     * Kayıt öncesi: başka ürünlere özel atanmış kalıp seçenek satırlarını bu üründen düşürür.
+     */
+    public static function dropForeignMoldModelOptionsFromProductFormData(array $data, ?int $productId): array
+    {
+        if (empty($data['variations']) || ! is_array($data['variations'])) {
+            return $data;
+        }
+
+        $hiddenMoldIds = InterfaceMoldModelVariation::hiddenIdsForProduct($productId);
+        if ($hiddenMoldIds === []) {
+            return $data;
+        }
+
+        foreach ($data['variations'] as &$variation) {
+            if ((string) ($variation['type'] ?? '') !== 'mold_model_type' || ! is_array($variation['options'] ?? null)) {
+                continue;
+            }
+
+            $variation['options'] = array_values(array_filter(
+                $variation['options'],
+                function ($option) use ($hiddenMoldIds): bool {
+                    $presetId = is_array($option) ? ($option['interface_mold_model_variation_id'] ?? null) : null;
+
+                    return $presetId === null || ! in_array((int) $presetId, $hiddenMoldIds, true);
+                },
+            ));
+        }
+        unset($variation);
+
+        return $data;
+    }
+
+    /**
      * Form içinde düzenlenen ürünün id'si (oluşturma ekranında henüz kayıt olmadığı için null).
      */
     public static function currentProductIdFromLivewire(?object $livewire): ?int
@@ -1291,7 +1324,7 @@ class ProductResource extends Resource
             'color' => static::colorVariationOptionsFromInterfacePresets(),
             'label_type' => static::labelVariationOptionsFromInterfacePresets(),
             'certificate_type' => static::certificateVariationOptionsFromInterfacePresets(),
-            'mold_model_type' => static::moldModelVariationOptionsFromInterfacePresets(),
+            'mold_model_type' => static::moldModelVariationOptionsFromInterfacePresets($productId),
             'delivery_type' => static::deliveryVariationOptionsFromInterfacePresets(),
             'packaging_type' => static::packagingVariationOptionsFromInterfacePresets(),
             'size_table' => static::sizeTableVariationOptionsFromPresets(),
@@ -1405,13 +1438,15 @@ class ProductResource extends Resource
 
     /**
      * Ürün varyasyonu tipi "Kalıp Modeli" olduğunda seçenek satırları — Kalıp Modeli Yönetimi kayıtları.
+     * $productId verildiğinde yalnızca o ürüne açıkça atanmış kalıplar döner.
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function moldModelVariationOptionsFromInterfacePresets(): array
+    public static function moldModelVariationOptionsFromInterfacePresets(?int $productId = null): array
     {
         return InterfaceMoldModelVariation::query()
             ->where('is_active', true)
+            ->visibleForProduct($productId)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -1663,13 +1698,72 @@ class ProductResource extends Resource
     }
 
     /**
+     * Ürünlerin "Kalıp Modeli" varyasyon seçeneklerini kalıp–ürün atamalarıyla eşitler:
+     * yalnızca o ürüne atanmış kalıplar eklenir, atanmamış olanlar kaldırılır.
+     *
+     * @param  int|null  $productId  Yalnızca bu ürün için çalıştır (null: tüm ürünler).
+     * @param  int|null  $presetId  Yalnızca bu kalıp için çalıştır (null: tüm kalıplar).
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileMoldModelOptionsForProducts(?int $productId = null, ?int $presetId = null): array
+    {
+        $fkField = 'interface_mold_model_variation_id';
+        $added = 0;
+        $removed = 0;
+
+        $visibleRowsByProduct = [];
+
+        ProductVariation::query()
+            ->where('type', 'mold_model_type')
+            ->when($productId !== null, fn (Builder $q) => $q->where('product_id', $productId))
+            ->each(function (ProductVariation $variation) use (&$added, &$removed, &$visibleRowsByProduct, $fkField, $presetId): void {
+                $variationProductId = $variation->product_id !== null ? (int) $variation->product_id : null;
+                $cacheKey = $variationProductId ?? 0;
+
+                $visibleRows = $visibleRowsByProduct[$cacheKey]
+                    ??= static::moldModelVariationOptionsFromInterfacePresets($variationProductId);
+
+                $visibleIds = array_map(fn (array $row): int => (int) $row[$fkField], $visibleRows);
+
+                $removeQuery = $variation->options()->whereNotNull($fkField);
+                if ($visibleIds !== []) {
+                    $removeQuery->whereNotIn($fkField, $visibleIds);
+                }
+                if ($presetId !== null) {
+                    $removeQuery->where($fkField, $presetId);
+                }
+                $removed += $removeQuery->delete();
+
+                foreach ($visibleRows as $row) {
+                    $rowPresetId = (int) $row[$fkField];
+                    if ($presetId !== null && $rowPresetId !== $presetId) {
+                        continue;
+                    }
+
+                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                        continue;
+                    }
+
+                    static::createVariationOptionFromPresetRow($variation, $row, 'mold_model_type');
+                    $added++;
+                }
+            });
+
+        return ['added' => $added, 'removed' => $removed];
+    }
+
+    /**
      * Varyasyon yönetimi preset'lerinden eksik ürün seçeneklerini ekler (mevcut satırları silmez).
      */
     public static function appendMissingInterfacePresetOptions(string $variationType, ?int $onlyPresetId = null): int
     {
-        // Kumaş seçenekleri ürün bazlıdır; ekleme/kaldırma işini ürüne duyarlı mutabakat yapar.
+        // Kumaş / kalıp seçenekleri ürün bazlıdır; ekleme/kaldırma işini ürüne duyarlı mutabakat yapar.
         if ($variationType === 'fabric') {
             return static::reconcileFabricOptionsForProducts(presetId: $onlyPresetId)['added'];
+        }
+
+        if ($variationType === 'mold_model_type') {
+            return static::reconcileMoldModelOptionsForProducts(presetId: $onlyPresetId)['added'];
         }
 
         $rows = static::interfacePresetOptionRowsForType($variationType);
@@ -1822,6 +1916,7 @@ class ProductResource extends Resource
 
         $data = static::ensureInterfacePresetOptionsInProductFormData($data, $productId);
         $data = static::dropForeignFabricOptionsFromProductFormData($data, $productId);
+        $data = static::dropForeignMoldModelOptionsFromProductFormData($data, $productId);
 
         if (empty($data['variations']) || ! is_array($data['variations'])) {
             return $data;

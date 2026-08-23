@@ -5,6 +5,7 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\DealerRequestController;
 use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\ProformaInvoiceController;
 use App\Http\Controllers\StoreAccountController;
 use App\Models\Currency;
 use App\Services\TcmbExchangeRateService;
@@ -58,4 +59,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/odeme', [StoreController::class, 'checkout'])->name('store.checkout');
     Route::post('/siparis-olustur', [StoreController::class, 'placeOrder'])->name('store.place-order');
     Route::get('/siparis/{order}', [StoreController::class, 'orderConfirmation'])->name('store.order-confirmation');
+    Route::get('/siparis/{order}/proforma.pdf', [ProformaInvoiceController::class, 'pdf'])->name('store.proforma.pdf');
+    Route::get('/siparis/{order}/proforma.xlsx', [ProformaInvoiceController::class, 'excel'])->name('store.proforma.excel');
 });

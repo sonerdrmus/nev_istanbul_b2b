@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfaceMoldModelVariationResource\Pages;
 use App\Models\InterfaceMoldModelVariation;
@@ -10,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Ana menü bağlantısı {@see \App\Providers\Filament\AdminPanelProvider} içinde özelleştirilir.
@@ -68,6 +70,8 @@ class InterfaceMoldModelVariationResource extends Resource
                             ->step(0.001)
                             ->required()
                             ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar).'),
+                        ProductMultiSelect::relationship('products')
+                            ->helperText('Bu kalıp yalnızca seçili ürünlerin Kalıp Modeli varyasyonunda seçenek olarak görünür. En az bir ürün seçilmelidir; boş bırakılırsa hiçbir üründe görünmez.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -79,6 +83,11 @@ class InterfaceMoldModelVariationResource extends Resource
                     ])
                     ->columns(1),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount(['products']);
     }
 
     public static function table(Table $table): Table
@@ -101,6 +110,13 @@ class InterfaceMoldModelVariationResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Kalıp model adı')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->label('Ürün')
+                    ->counts('products')
+                    ->formatStateUsing(fn ($state): string => (int) $state === 0 ? 'Atanmamış' : (string) $state)
+                    ->badge()
+                    ->color(fn ($state): string => (int) $state === 0 ? 'warning' : 'success')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')

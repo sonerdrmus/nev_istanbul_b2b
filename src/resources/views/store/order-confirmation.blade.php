@@ -142,6 +142,14 @@
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{{ route('store.proforma.pdf', ['order' => $order, 'currency' => $selectedCurrency?->code]) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {{ __('store.order_confirmation.download_pdf') }}
+                    </a>
+                    <a href="{{ route('store.proforma.excel', ['order' => $order, 'currency' => $selectedCurrency?->code]) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 font-medium text-sm hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        {{ __('store.order_confirmation.download_excel') }}
+                    </a>
                     <a href="{{ route('home') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm transition-colors">{{ __('store.order_confirmation.continue_shopping') }}</a>
                     <a href="{{ route('store.cart') }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors">{{ __('store.order_confirmation.go_cart') }}</a>
                 </div>

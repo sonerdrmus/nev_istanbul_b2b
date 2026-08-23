@@ -30,7 +30,20 @@ return [
         'iban' => env('STORE_BANK_IBAN', ''),
         'account_holder' => env('STORE_BANK_ACCOUNT_HOLDER', ''),
         'branch' => env('STORE_BANK_BRANCH', ''),
+        'swift' => env('STORE_BANK_SWIFT', 'KTEFTRISXXX'),
         'description' => env('STORE_BANK_DESCRIPTION', 'Sipariş numarası açıklama kısmına yazılmalıdır.'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Proforma fatura
+    |--------------------------------------------------------------------------
+    */
+    'proforma' => [
+        'address_line_1' => env('STORE_PROFORMA_ADDRESS_1', '15 Temmuz mahallesi 1432 sokak no:26-30 34212'),
+        'address_line_2' => env('STORE_PROFORMA_ADDRESS_2', '34212 - Bağcılar - İstanbul'),
+        'accounting_email' => env('STORE_PROFORMA_EMAIL', 'accounting@nevistanbul.com.tr'),
+        'swift' => env('STORE_BANK_SWIFT', 'KTEFTRISXXX'),
     ],
 
 ];

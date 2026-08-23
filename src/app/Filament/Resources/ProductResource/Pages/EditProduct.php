@@ -23,8 +23,9 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Kumaş seçenekleri her açılışta güncel: yeni kumaşlar eklenir, başka ürüne özel olanlar düşer.
+        // Kumaş / kalıp seçenekleri her açılışta güncel: yeni kayıtlar eklenir, başka ürüne özel olanlar düşer.
         ProductVariationOptionInterfaceSync::reconcileFabricProductOptions((int) $this->record->getKey());
+        ProductVariationOptionInterfaceSync::reconcileMoldModelProductOptions((int) $this->record->getKey());
 
         // Mutabakat sonrası taze veri gerektiği için loadMissing değil load kullanılır.
         $this->record->load([

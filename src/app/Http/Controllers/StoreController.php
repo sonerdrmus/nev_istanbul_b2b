@@ -312,6 +312,7 @@ class StoreController extends Controller
             ]),
         ]);
         $this->filterFabricVariationOptionsForProduct($product);
+        $this->filterMoldModelVariationOptionsForProduct($product);
         $product->setRelation('variations', ProductVariationFlowSteps::topologicallySorted($product->variations));
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
@@ -355,6 +356,31 @@ class StoreController extends Controller
             $filtered = $variation->options->reject(
                 fn ($option): bool => $option->interface_fabric_type_variation_id !== null
                     && in_array((int) $option->interface_fabric_type_variation_id, $hiddenFabricIds, true)
+            )->values();
+
+            $variation->setRelation('options', $filtered);
+        }
+    }
+
+    /**
+     * "Kalıp Modeli" varyasyonu seçeneklerini yalnızca Varyasyon yönetiminde bu ürüne
+     * atanmış kalıpları gösterecek şekilde filtreler.
+     */
+    private function filterMoldModelVariationOptionsForProduct(Product $product): void
+    {
+        $hiddenMoldIds = $product->hiddenMoldModelVariationIds();
+        if ($hiddenMoldIds === []) {
+            return;
+        }
+
+        foreach ($product->variations as $variation) {
+            if ((string) $variation->type !== 'mold_model_type') {
+                continue;
+            }
+
+            $filtered = $variation->options->reject(
+                fn ($option): bool => $option->interface_mold_model_variation_id !== null
+                    && in_array((int) $option->interface_mold_model_variation_id, $hiddenMoldIds, true)
             )->values();
 
             $variation->setRelation('options', $filtered);
@@ -709,6 +735,8 @@ class StoreController extends Controller
 
     public function orderConfirmation(Order $order): View
     {
+        abort_unless($order->isAccessibleBy(auth()->user()), 403);
+
         $order->load(['items', 'shippingMethod', 'bankAccount']);
 
         $currencies = $this->getCurrenciesForCurrentUser();
