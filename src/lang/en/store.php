@@ -134,7 +134,7 @@ return [
         'empty_hint_or' => 'or',
         'empty_hint_click' => 'click here',
         'coming_soon_badge' => 'Coming soon',
-        'coming_soon_cta' => 'Coming soon',
+        'coming_soon_cta' => 'Coming very soon',
         'choose_variation' => 'Choose options',
         'out_of_stock' => 'Out of stock',
         'login_for_prices' => 'Sign in to see prices.',

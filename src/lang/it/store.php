@@ -134,7 +134,7 @@ return [
         'empty_hint_or' => 'oppure',
         'empty_hint_click' => 'clicca qui',
         'coming_soon_badge' => 'In arrivo',
-        'coming_soon_cta' => 'In arrivo',
+        'coming_soon_cta' => 'Presto disponibile',
         'choose_variation' => 'Scegli le opzioni',
         'out_of_stock' => 'Esaurito',
         'login_for_prices' => 'Accedi per vedere i prezzi.',

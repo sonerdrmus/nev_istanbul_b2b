@@ -134,7 +134,7 @@ return [
         'empty_hint_or' => 'veya',
         'empty_hint_click' => 'buraya tıklayın',
         'coming_soon_badge' => 'Yakında gelecek',
-        'coming_soon_cta' => 'Yakında satışta',
+        'coming_soon_cta' => 'Çok yakında',
         'choose_variation' => 'Varyasyon Belirle',
         'out_of_stock' => 'Stokta yok',
         'login_for_prices' => 'Fiyatları görmek için giriş yapın.',
