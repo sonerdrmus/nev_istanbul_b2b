@@ -89,12 +89,7 @@ final class ProductDimensionMultiplierSync
             return $query->whereNull('product_id');
         }
 
-        $modelClass = $query->getModel()::class;
-        $hasOwn = $modelClass::query()->where('product_id', $productId)->exists();
-
-        return $hasOwn
-            ? $query->where('product_id', $productId)
-            : $query->whereNull('product_id');
+        return $query->whereNull('product_id');
     }
 
     /** @return list<array<string, mixed>> */

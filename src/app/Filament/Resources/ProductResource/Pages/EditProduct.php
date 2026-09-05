@@ -36,10 +36,7 @@ class EditProduct extends EditRecord
         ]);
 
         $data['_product_id'] = $this->record->getKey();
-        $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadGroupedForForm(
-            (int) $this->record->getKey(),
-            fallbackToTemplate: true,
-        );
+        $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
 
         $data = ProductResource::ensureInterfacePresetOptionsInProductFormData($data, (int) $this->record->getKey());
 
@@ -82,11 +79,5 @@ class EditProduct extends EditRecord
         $state = $this->form->getState();
         ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $state);
 
-        if (isset($state['dimension_multipliers']) && is_array($state['dimension_multipliers'])) {
-            ProductDimensionMultiplierSync::persistGrouped(
-                (int) $this->record->getKey(),
-                $state['dimension_multipliers'],
-            );
-        }
     }
 }

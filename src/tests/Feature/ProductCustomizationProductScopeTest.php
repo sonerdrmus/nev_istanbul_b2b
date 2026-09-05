@@ -145,7 +145,7 @@ class ProductCustomizationProductScopeTest extends TestCase
         $this->assertCount(0, $catalogB['rows']);
     }
 
-    public function test_product_multipliers_override_template(): void
+    public function test_template_multipliers_are_used_even_when_product_copy_exists(): void
     {
         $product = Product::withoutEvents(fn () => Product::create(['name' => 'P', 'customization_enabled' => true]));
 
@@ -172,7 +172,7 @@ class ProductCustomizationProductScopeTest extends TestCase
         $grouped = DimensionMultiplierCatalog::groupedForStore($product);
         $labels = collect($grouped['emprime']['size'] ?? [])->pluck('size_label')->all();
 
-        $this->assertSame(['ProductOnly'], $labels);
+        $this->assertSame(['Template'], $labels);
     }
 
     public function test_template_used_when_product_has_no_multipliers(): void

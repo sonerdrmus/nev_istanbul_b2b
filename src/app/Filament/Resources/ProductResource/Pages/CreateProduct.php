@@ -41,12 +41,6 @@ class CreateProduct extends CreateRecord
 
         ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
 
-        $multipliers = $state['dimension_multipliers'] ?? null;
-        if (! is_array($multipliers) || $multipliers === []) {
-            $multipliers = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
-        }
-
-        ProductDimensionMultiplierSync::persistGrouped((int) $this->record->getKey(), $multipliers);
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
