@@ -1628,8 +1628,6 @@ class ProductResource extends Resource
     {
         $presets = InterfaceColorVariation::query()
             ->where('is_active', true)
-            ->whereNotNull('image_path')
-            ->where('image_path', '!=', '')
             ->with('fabricTypeVariation')
             ->get();
 
@@ -1669,6 +1667,7 @@ class ProductResource extends Resource
                     'interface_delivery_method_variation_id' => null,
                     'interface_packaging_preference_variation_id' => null,
             'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
+                    'option_color' => filled($preset->hex_color) ? (string) $preset->hex_color : null,
             'sort_order' => (int) ($preset->sort_order ?? $fallbackSortOrder ?? 0),
             'price_delta' => 0,
             'stock_quantity' => null,
@@ -1907,7 +1906,7 @@ class ProductResource extends Resource
      */
     public static function appendColorVariationOptionFromInterfacePreset(InterfaceColorVariation $preset): int
     {
-        if (! $preset->is_active || ! filled($preset->image_path)) {
+        if (! $preset->is_active) {
             return 0;
         }
 

@@ -101,7 +101,7 @@
                                 @else
                                     <span class="opacity-90">{{ $curr->symbol }}</span>
                                     <span>{{ $curr->code }}</span>
-                                    <span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>
+                                    <!--<span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>-->
                                 @endif
                             </span>
                         @else
@@ -119,7 +119,7 @@
                                     @else
                                         <span class="opacity-90">{{ $curr->symbol }}</span>
                                         <span>{{ $curr->code }}</span>
-                                        <span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>
+                                        <!--<span class="topbar-rate" data-currency="{{ $curr->code }}">{{ $rateFormatted }}</span>-->
                                     @endif
                                 </a>
                             @endforeach

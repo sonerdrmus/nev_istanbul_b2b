@@ -29,7 +29,7 @@
     </nav>
 
     @php
-        $labelArtworkNoticeEmail = 'info@sonerdurmus.com';
+        $labelArtworkNoticeEmail = 'art.support@nevistanbul.com.tr';
         $hasVariations = $product->variations->isNotEmpty();
         $showPurchasePanel = $product->isOnSale();
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
@@ -268,7 +268,7 @@
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.per_piece_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-per-piece-price" class="text-sm font-semibold text-primary-800">—</span>
-                            <p id="product-per-piece-price-note" class="mt-0.5 hidden text-[11px] font-normal text-slate-500 tabular-nums"></p>
+                            <p id="product-per-piece-price-note hidden" class="mt-0.5 hidden text-[11px] font-normal text-slate-500 tabular-nums"></p>
                         </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
@@ -2222,10 +2222,10 @@
                             : '';
                         var totalFooter = '';
                         if (cfg.canSeePrices && row.total_price_display) {
-                            totalFooter = '<footer class="border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
+                            totalFooter = '<footer class="hidden border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
                                 '<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">' +
                                 (row.total_price_formula_display
-                                    ? '<p class="text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
+                                    ? '<p class="hidden text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
                                     : '<span></span>') +
                                 '<p class="shrink-0 text-right">' +
                                 '<span class="block text-[10px] font-semibold uppercase tracking-wider text-primary-700 sm:inline">' + escapeHtml(totalLbl) + '</span>' +
@@ -2243,7 +2243,7 @@
                             '</div></div>' +
                             '<span class="shrink-0 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-800">' + escapeHtml(print) + '</span>' +
                             '</header>' +
-                            '<div class="grid grid-cols-2 divide-x divide-y divide-slate-100 ' + gridCols + ' sm:divide-y-0">' +
+                            '<div class="hidden grid grid-cols-2 divide-x divide-y divide-slate-100' + gridCols + ' sm:divide-y-0">' +
                             customizationSummaryMetricDim(dimLbl, dim) +
                             customizationSummaryMetric(areaLbl, area) +
                             customizationSummaryMetric(ebatLbl, ebat) +
@@ -2413,7 +2413,7 @@
                                 '<p class="mt-2 text-xs font-medium text-emerald-900 tabular-nums">' + escapeHtml(formula) + '</p>' +
                                 (hint ? '<p class="mt-0.5 text-[11px] text-slate-500">' + escapeHtml(hint) + '</p>' : '');
                         }
-                        return '<div class="border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
+                        return '<div class="bg-red-500 hidden border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
                             '<div class="rounded-xl border border-primary-200/80 bg-gradient-to-r from-primary-50 to-emerald-50/70 px-4 py-3.5 shadow-sm">' +
                             '<div class="flex items-center justify-between gap-3">' +
                             '<span class="text-sm font-semibold text-slate-800">' + escapeHtml(label) + '</span>' +
@@ -2741,7 +2741,7 @@
                             ? 'text-right text-base font-bold tabular-nums text-emerald-900'
                             : 'text-right text-sm font-semibold tabular-nums text-slate-900';
                         var noteHtml = note
-                            ? '<p class="mt-0.5 text-[11px] font-normal leading-snug text-slate-500 tabular-nums">' + escapeHtml(note) + '</p>'
+                            ? '<p class="mt-0.5 text-[11px] font-normal leading-snug text-slate-500 tabular-nums hidden">' + escapeHtml(note) + '</p>'
                             : '';
                         return '<div class="' + rowClass + '">' +
                             '<div class="min-w-0 flex-1 pr-2"><p class="' + labelClass + '">' + escapeHtml(label) + '</p>' + noteHtml + '</div>' +
@@ -2864,7 +2864,7 @@
                         items.push(summaryKvRowHtml(PU.summary_line_total || 'Satır toplamı', formatPrice(lineDisp), null, { isTotal: true }));
 
                         var title = PU.summary_section_pricing || 'Fiyat özeti';
-                        return '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                        return '<section class="hidden bg-red-500 overflow-hidden rounded-xl border border-slate-200/90 shadow-sm">' +
                             '<header class="border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
                             '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' + escapeHtml(title) + '</h3>' +
                             '</header>' +
@@ -3524,8 +3524,8 @@
                                     if (!isFinite(mult) || mult <= 0) mult = 1;
                                     var showMult = Math.abs(mult - 1) > 0.0001;
                                     var multBadge = showMult
-                                        ? '<span class="mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
-                                            escapeHtml(formatVariationMultiplier(mult)) + '</span>'
+                                        ? '<span class="hidden mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
+                                            escapeHtml(formatVariationMultiplier(mult)) + ' asdasdsadsa</span>'
                                         : '';
                                     return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
                                         '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(catalogLabel(item.name)) + '</span>' +

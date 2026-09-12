@@ -299,7 +299,7 @@ return [
         'order_mode_tabs' => 'Order mode',
         'order_mode_detailed' => 'Detailed order',
         'order_mode_quick' => 'Quick order',
-        'quick_order_intro' => 'You can send your order with a short description and an image without choosing variations.',
+        'quick_order_intro' => 'You can send your order with a short description and an image without choosing variations. If you lack sufficient textile knowledge, you can order from here. Write down your brief requirements. If you have size and quantity information related to your request, include it. Describe your work environment or the intended use of the product, and send sample photos. Or, draw the model you want by hand on a piece of paper and send it to us. Well do the rest for you.',
         'quick_order_notes_label' => 'Order description',
         'quick_order_notes_placeholder' => 'Describe your order in at least 250 characters…',
         'quick_order_image_label' => 'Upload an image',
