@@ -167,5 +167,4 @@
                         </form>
                 </div>
             </div>
-        @foreach($cartItems as $item)
 @endsection
