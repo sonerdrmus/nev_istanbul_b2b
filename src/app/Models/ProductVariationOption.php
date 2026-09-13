@@ -190,7 +190,7 @@ class ProductVariationOption extends Model
 
             if (is_array($optionValue)) {
                 foreach ($optionValue as $v) {
-                    if ($v === null || trim((string) $v) === '') {
+                    if (is_array($v) || $v === null || trim((string) $v) === '') {
                         continue;
                     }
                     $option = $variation->options->firstWhere('option_value', (string) $v);
@@ -218,7 +218,11 @@ class ProductVariationOption extends Model
     private static function resolveSelectionOptionLabel(mixed $optionValue): string
     {
         if (is_array($optionValue) && array_key_exists('option', $optionValue)) {
-            return trim((string) $optionValue['option']);
+            return self::resolveSelectionOptionLabel($optionValue['option']);
+        }
+
+        if (is_array($optionValue)) {
+            return '';
         }
 
         return trim((string) $optionValue);
