@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FillsLocalizedNameFromCatalog;
 use App\Support\LocaleContent;
+use App\Support\PackagingTypeVariationDisplay;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariationOption extends Model
