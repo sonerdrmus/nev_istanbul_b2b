@@ -159,6 +159,7 @@ return [
         'subtitle' => 'Continue to checkout to complete your order.',
         'empty' => 'Your cart is empty.',
         'go_products' => 'Browse products',
+        'selected_variations' => 'Selected variations',
         'size_breakdown' => 'Size breakdown:',
         'remove' => 'Remove',
         'remove_confirm' => 'Remove this item from the cart?',

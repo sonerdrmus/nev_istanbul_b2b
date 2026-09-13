@@ -159,6 +159,7 @@ return [
         'subtitle' => 'Procedi al checkout per completare l\'ordine.',
         'empty' => 'Il carrello è vuoto.',
         'go_products' => 'Sfoglia prodotti',
+        'selected_variations' => 'Variazioni selezionate',
         'size_breakdown' => 'Riepilogo taglie:',
         'remove' => 'Rimuovi',
         'remove_confirm' => 'Rimuovere questo articolo dal carrello?',

@@ -104,15 +104,13 @@ class StoreController extends Controller
                 ? (int) auth()->user()->company->customer_group_id
                 : 1;
 
-            $discountUnitTry = $product->getDiscountUnitPriceInTRY($qty, $customerGroupId);
-            $unitTry = $discountUnitTry !== null
-                ? $discountUnitTry
-                : $product->resolveListUnitPriceInTRY($qty);
-
             $discountPercent = $this->getCustomerDiscountPercent();
-            if ($discountPercent !== null && $discountPercent > 0) {
-                $unitTry = $unitTry * (1 - $discountPercent / 100);
-            }
+            $discountUnitTry = $product->getDiscountUnitPriceInTRY(1, $customerGroupId);
+            $normalUnitTry = $product->getPriceInTRY($discountPercent);
+            $baseUnitTry = $discountUnitTry !== null && $discountUnitTry < $normalUnitTry
+                ? $discountUnitTry * (1 - (($discountPercent ?? 0) / 100))
+                : $normalUnitTry;
+            $unitTry = $baseUnitTry * $product->resolveQuantityPriceMultiplier($qty);
 
             $variationData = $item['variation_data'] ?? null;
             if (is_array($variationData) && $variationData !== []) {

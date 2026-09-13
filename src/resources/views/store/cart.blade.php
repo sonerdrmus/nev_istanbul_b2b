@@ -39,17 +39,22 @@
                                         <p class="text-xs text-primary-600 font-medium">{{ $p->company?->name }}</p>
                                         <h2 class="font-semibold text-slate-900 truncate">{{ $p->localized_name }}</h2>
                                         @if(!empty($item->variation_data) && is_array($item->variation_data))
-                                            <ul class="mt-1.5 text-sm text-slate-600 space-y-0.5">
+                                            <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                                                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('store.cart.selected_variations') }}</p>
+                                                <ul class="mt-2 grid gap-2 sm:grid-cols-2">
                                                 @foreach($item->variation_data as $optName => $optValue)
+                                                    @if($optName === 'quick_order')
+                                                        @continue
+                                                    @endif
                                                     @if($optName === 'product_customization')
                                                         @if($optValue === 'skipped')
-                                                            <li><span class="font-medium text-slate-700">{{ __('store.product.customization_summary_section_label') }}:</span> {{ __('store.product.skip_customization') }}</li>
+                                                            <li class="rounded-lg bg-white px-2.5 py-2 text-sm text-slate-700"><span class="font-medium">{{ __('store.product.customization_summary_section_label') }}:</span> {{ __('store.product.skip_customization') }}</li>
                                                         @endif
                                                         @continue
                                                     @endif
                                                     @if($optName === 'product_customization_notes')
                                                         @if(is_string($optValue) && trim($optValue) !== '')
-                                                            <li><span class="font-medium text-slate-700">{{ __('store.product.customization_panel_title') }}:</span> {{ $optValue }}</li>
+                                                            <li class="rounded-lg bg-white px-2.5 py-2 text-sm text-slate-700"><span class="font-medium">{{ __('store.product.customization_panel_title') }}:</span> {{ $optValue }}</li>
                                                         @endif
                                                         @continue
                                                     @endif
@@ -58,8 +63,8 @@
                                                             $custRows = $optValue['rows'] ?? (isset($optValue['row_id']) ? [$optValue] : []);
                                                         @endphp
                                                         @if(count($custRows) > 0)
-                                                            <li>
-                                                                <span class="font-medium text-slate-700">{{ __('store.product.customization_summary_section_label') }}</span>
+                                                            <li class="rounded-lg bg-white px-2.5 py-2 text-sm text-slate-700 sm:col-span-2">
+                                                                <span class="font-medium">{{ __('store.product.customization_summary_section_label') }}</span>
                                                                 <ul class="mt-0.5 ml-3 list-disc space-y-0.5 text-slate-600">
                                                                     @foreach($custRows as $crow)
                                                                         <li>
@@ -87,11 +92,12 @@
                                                             $showVar = $varDisp !== null && $varDisp !== '';
                                                         @endphp
                                                         @if($showVar)
-                                                            <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $varDisp }}</li>
+                                                            <li class="rounded-lg bg-white px-2.5 py-2 text-sm text-slate-700"><span class="font-medium">{{ $optName }}</span><span class="mx-1 text-slate-400">:</span>{{ $varDisp }}</li>
                                                         @endif
                                                     @endif
                                                 @endforeach
-                                            </ul>
+                                                </ul>
+                                            </div>
                                         @endif
                                         @if(!empty($item->size_quantities) && is_array($item->size_quantities))
                                             @php $sizeParts = array_filter($item->size_quantities, fn($q) => (int)$q > 0); @endphp

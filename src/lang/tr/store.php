@@ -159,6 +159,7 @@ return [
         'subtitle' => 'Siparişi tamamlamak için ödemeye geçin.',
         'empty' => 'Sepetiniz boş.',
         'go_products' => 'Ürünlere Git',
+        'selected_variations' => 'Seçilen varyasyonlar',
         'size_breakdown' => 'Beden dağılımı:',
         'remove' => 'Kaldır',
         'remove_confirm' => 'Ürünü sepetten çıkarmak istiyor musunuz?',
