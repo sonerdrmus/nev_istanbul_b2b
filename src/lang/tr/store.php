@@ -164,6 +164,8 @@ return [
         'units' => 'adet',
         'remove' => 'Kaldır',
         'remove_confirm' => 'Ürünü sepetten çıkarmak istiyor musunuz?',
+        'clear' => 'Sepeti Boşalt',
+        'clear_confirm' => 'Sepetteki tüm ürünleri kaldırmak istiyor musunuz?',
         'update' => 'Sepeti Güncelle',
         'continue_shopping' => 'Alışverişe Devam',
         'order_summary' => 'Sipariş Özeti',

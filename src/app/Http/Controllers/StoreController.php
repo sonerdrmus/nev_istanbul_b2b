@@ -638,6 +638,13 @@ class StoreController extends Controller
         return redirect()->route('store.cart')->with('success', __('store.flash.cart_removed'));
     }
 
+    public function clearCart(Request $request): RedirectResponse
+    {
+        session()->forget('cart');
+
+        return redirect()->route('store.cart')->with('success', __('store.flash.cart_cleared'));
+    }
+
     public function checkout(): View|\Illuminate\Http\RedirectResponse
     {
         $cartItems = $this->getCartItems();

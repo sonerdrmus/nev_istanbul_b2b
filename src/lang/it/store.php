@@ -164,6 +164,8 @@ return [
         'units' => 'pz',
         'remove' => 'Rimuovi',
         'remove_confirm' => 'Rimuovere questo articolo dal carrello?',
+        'clear' => 'Svuota carrello',
+        'clear_confirm' => 'Rimuovere tutti gli articoli dal carrello?',
         'update' => 'Aggiorna carrello',
         'continue_shopping' => 'Continua gli acquisti',
         'order_summary' => 'Riepilogo ordine',

@@ -164,6 +164,8 @@ return [
         'units' => 'pcs',
         'remove' => 'Remove',
         'remove_confirm' => 'Remove this item from the cart?',
+        'clear' => 'Clear cart',
+        'clear_confirm' => 'Remove all items from the cart?',
         'update' => 'Update cart',
         'continue_shopping' => 'Continue shopping',
         'order_summary' => 'Order summary',

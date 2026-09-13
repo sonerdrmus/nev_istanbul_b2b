@@ -124,7 +124,10 @@
     $convertedSubtotal = $selectedCurrency->convertFromTRY($item->subtotal);
 @endphp
 <p class="font-bold text-slate-900 whitespace-nowrap">{{ $selectedCurrency->format($convertedSubtotal) }}</p>
-                                        <button type="button" onclick="if(confirm(@json(__('store.cart.remove_confirm')))) { document.getElementById('remove-{{ $item->cart_key }}').submit(); }" class="text-sm text-red-600 hover:text-red-700 font-medium">{{ __('store.cart.remove') }}</button>
+                                        <form action="{{ route('store.cart.remove', $item->cart_key) }}" method="POST" onsubmit="return confirm(@js(__('store.cart.remove_confirm')));">
+                                            @csrf
+                                            <button type="submit" class="text-sm text-red-600 hover:text-red-700 font-medium">{{ __('store.cart.remove') }}</button>
+                                        </form>
                                     </div>
                                 </li>
                             @endforeach
@@ -158,12 +161,11 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                     </div>
+                        <form action="{{ route('store.cart.clear') }}" method="POST" class="mt-3" onsubmit="return confirm(@js(__('store.cart.clear_confirm')));">
+                            @csrf
+                            <button type="submit" class="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">{{ __('store.cart.clear') }}</button>
+                        </form>
                 </div>
             </div>
         @foreach($cartItems as $item)
-            <form id="remove-{{ $item->cart_key }}" action="{{ route('store.cart.remove', $item->cart_key) }}" method="POST" class="hidden">
-                @csrf
-            </form>
-        @endforeach
-    @endif
 @endsection

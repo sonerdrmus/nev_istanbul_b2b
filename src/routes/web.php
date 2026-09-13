@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/sepet/ekle', [StoreController::class, 'addToCart'])->name('store.cart.add');
     Route::post('/sepet/guncelle', [StoreController::class, 'updateCart'])->name('store.cart.update');
     Route::post('/sepet/kaldir/{cartKey}', [StoreController::class, 'removeFromCart'])->name('store.cart.remove');
+    Route::post('/sepet/temizle', [StoreController::class, 'clearCart'])->name('store.cart.clear');
     Route::get('/odeme', [StoreController::class, 'checkout'])->name('store.checkout');
     Route::post('/siparis-olustur', [StoreController::class, 'placeOrder'])->name('store.place-order');
     Route::get('/siparis/{order}', [StoreController::class, 'orderConfirmation'])->name('store.order-confirmation');
