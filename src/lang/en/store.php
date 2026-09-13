@@ -161,6 +161,7 @@ return [
         'go_products' => 'Browse products',
         'selected_variations' => 'Selected variations',
         'size_breakdown' => 'Size breakdown:',
+        'units' => 'pcs',
         'remove' => 'Remove',
         'remove_confirm' => 'Remove this item from the cart?',
         'update' => 'Update cart',

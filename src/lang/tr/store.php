@@ -161,6 +161,7 @@ return [
         'go_products' => 'Ürünlere Git',
         'selected_variations' => 'Seçilen varyasyonlar',
         'size_breakdown' => 'Beden dağılımı:',
+        'units' => 'adet',
         'remove' => 'Kaldır',
         'remove_confirm' => 'Ürünü sepetten çıkarmak istiyor musunuz?',
         'update' => 'Sepeti Güncelle',

@@ -19,8 +19,6 @@
             <a href="{{ route('home') }}" class="inline-flex mt-4 px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm transition-colors">{{ __('store.cart.go_products') }}</a>
         </div>
     @else
-        <form action="{{ route('store.cart.update') }}" method="POST">
-            @csrf
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
                 <div class="lg:col-span-8">
                     <div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
@@ -117,9 +115,8 @@
     $unitConverted = $selectedCurrency->convertFromTRY($unitTry);
 @endphp
                                         <p class="text-slate-500 text-sm mt-0.5 whitespace-nowrap">
-                                            {{ $selectedCurrency->format($unitConverted) }} × <input type="number" name="items[{{ $loop->index }}][quantity]" value="{{ $item->quantity }}" min="{{ $p->getMinimumOrderQuantity() }}" class="w-16 rounded border border-slate-300 px-2 py-1 text-sm inline-block" />
+                                            {{ $selectedCurrency->format($unitConverted) }} × {{ $item->quantity }} {{ __('store.cart.units') }}
                                         </p>
-                                        <input type="hidden" name="items[{{ $loop->index }}][cart_key]" value="{{ $item->cart_key }}">
                                     </div>
                                     <div class="flex flex-col items-end gap-2">
                                         @php
@@ -134,7 +131,6 @@
                         </ul>
                     </div>
                     <div class="mt-4 flex flex-wrap gap-3">
-                        <button type="submit" class="px-4 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm transition-colors">{{ __('store.cart.update') }}</button>
                         <a href="{{ route('home') }}" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors">{{ __('store.cart.continue_shopping') }}</a>
                     </div>
                 </div>
@@ -164,8 +160,6 @@
                     </div>
                 </div>
             </div>
-        </form>
-
         @foreach($cartItems as $item)
             <form id="remove-{{ $item->cart_key }}" action="{{ route('store.cart.remove', $item->cart_key) }}" method="POST" class="hidden">
                 @csrf

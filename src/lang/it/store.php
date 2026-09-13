@@ -161,6 +161,7 @@ return [
         'go_products' => 'Sfoglia prodotti',
         'selected_variations' => 'Variazioni selezionate',
         'size_breakdown' => 'Riepilogo taglie:',
+        'units' => 'pz',
         'remove' => 'Rimuovi',
         'remove_confirm' => 'Rimuovere questo articolo dal carrello?',
         'update' => 'Aggiorna carrello',
