@@ -221,7 +221,7 @@
                         #variation-summary-body .customization-summary-metric { background: transparent; }
                     }
                 </style>
-                <div id="variation-label-artwork-notice" class="mt-3 hidden rounded-xl border-2 border-amber-400/90 bg-gradient-to-br from-amber-50 to-amber-100/80 px-4 py-3.5 shadow-sm ring-1 ring-amber-300/50" role="status" aria-live="polite">
+                <div id="variation-label-artwork-notice" class="mt-3 rounded-xl border-2 border-amber-400/90 bg-gradient-to-br from-amber-50 to-amber-100/80 px-4 py-3.5 shadow-sm ring-1 ring-amber-300/50" role="status" aria-live="polite">
                     <div class="flex gap-3">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm" aria-hidden="true">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -234,7 +234,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="variation-delivery-estimate-notice" class="mt-3 hidden rounded-xl border-2 border-sky-400/90 bg-gradient-to-br from-sky-50 via-sky-50/95 to-blue-50 px-4 py-3.5 shadow-md ring-2 ring-sky-200/70" role="status" aria-live="polite">
+                <div id="variation-delivery-estimate-notice" class="mt-3 rounded-xl border-2 border-sky-400/90 bg-gradient-to-br from-sky-50 via-sky-50/95 to-blue-50 px-4 py-3.5 shadow-md ring-2 ring-sky-200/70" role="status" aria-live="polite">
                     <div class="flex gap-3 sm:gap-4">
                         <span class="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm" aria-hidden="true">
                             <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -259,16 +259,10 @@
                 @if($canSeePrices && $baseTry !== null && $selectedCurrency)
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
                     <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5">
-                        <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
-                        <div class="text-right">
-                            <span id="product-base-price" class="text-sm font-semibold text-slate-700">
-                                {{ $selectedCurrency->format($baseConverted) }}
-                            </span>
-                        </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.per_piece_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-per-piece-price" class="text-sm font-semibold text-primary-800">—</span>
-                            <p id="product-per-piece-price-note hidden" class="mt-0.5 hidden text-[11px] font-normal text-slate-500 tabular-nums"></p>
+                            <p id="product-per-piece-price-note" class="mt-0.5 text-[11px] font-normal text-slate-500 tabular-nums"></p>
                         </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
@@ -276,7 +270,7 @@
                                 {{ $selectedCurrency->format($selectedCurrency->convertFromTRY(0)) }}
                             </span>
                             @if($hasProductDiscount)
-                                <div id="product-price-strike" class="hidden mt-0.5 text-right text-xs text-slate-400 line-through"></div>
+                                <div id="product-price-strike" class="mt-0.5 text-right text-xs text-slate-400 line-through"></div>
                             @endif
                         </div>
                     </div>
@@ -737,6 +731,8 @@
                             transform-origin: center center;
                             will-change: transform;
                             transition: transform 0.12s ease-out;
+                            user-select: none;
+                            -webkit-user-drag: none;
                         }
                         #mold-model-size-table-zoom-viewport.is-dragging #mold-model-size-table-modal-image {
                             transition: none;
@@ -810,9 +806,9 @@
                                                         <span class="variation-step-option-count inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">0 {{ __('store.product.customization_colors_unit') }}</span>
                                                     @endif
                                                 </span>
-                                                <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
+                                                <span class="variation-step-check shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                             </button>
-                                            <div class="variation-step-summary hidden flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
+                                            <div class="variation-step-summary flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
                                                 <div class="flex items-center gap-2 min-w-0">
                                                     <span class="text-slate-500 text-sm">{{ $variation->display_name }}:</span>
                                                     <span class="variation-step-summary-value font-medium text-slate-800">—</span>
@@ -856,13 +852,13 @@
                                     <div class="variation-step-card flex-1 min-w-0 rounded-xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-300 -ml-px shadow-sm">
                                         <button type="button" class="variation-step-dot w-full flex flex-row items-center gap-2.5 text-left py-3 sm:py-3.5 px-4 sm:px-5 bg-slate-50/90 hover:bg-slate-100/80 border-b border-slate-100/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-inset" data-step="{{ $customizationPanelStepIndex }}" aria-label="{{ __('store.product.customize_product') }}">
                                             <span class="variation-step-name text-sm sm:text-base font-semibold text-slate-800">{{ __('store.product.customize_product') }}</span>
-                                            <span class="variation-step-check hidden shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
+                                            <span class="variation-step-check shrink-0 text-emerald-600 ml-auto" aria-hidden="true"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></span>
                                         </button>
-                                        <div class="variation-step-summary hidden flex items-start justify-between gap-3 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
+                                        <div class="variation-step-summary flex items-start justify-between gap-3 px-4 sm:px-5 py-2.5 sm:py-3 bg-slate-50/70 border-b border-slate-100/90">
                                             <div class="variation-step-summary-value min-w-0 flex-1 text-sm text-slate-700">—</div>
                                             <button type="button" class="variation-step-change-btn shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.change') }}</button>
                                         </div>
-                                        <div class="variation-step-full customization-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4 hidden">
+                                        <div class="variation-step-full customization-step-full p-3.5 sm:p-4 lg:px-5 lg:py-4">
                                             <p class="text-sm text-slate-600 leading-snug mb-4">{{ __('store.product.customization_step_intro') }}</p>
                                             <div id="customization-fields-wrap" class="transition-opacity duration-200">
                                             <p class="text-sm font-semibold text-slate-800 mb-2">{{ __('store.product.customization_table_caption') }}</p>
@@ -930,7 +926,7 @@
                                                                             </span>
                                                                             <span class="min-w-0 flex-1">
                                                                                 <span class="customization-konum-text block truncate text-sm font-semibold leading-snug text-slate-800 transition-colors group-hover:text-slate-900">{{ $clKonumLabel }}</span>
-                                                                                <span class="mt-0.5 hidden text-[11px] font-medium text-slate-500 sm:block">{{ __('store.product.customization_position_inspect') }}</span>
+                                                                                <span class="mt-0.5 text-[11px] font-medium text-slate-500 sm:block">{{ __('store.product.customization_position_inspect') }}</span>
                                                                             </span>
                                                                         </button>
                                                                     @else
@@ -984,7 +980,7 @@
                             </div>
                             </div>
                             </div>
-                            <div id="order-mode-quick-panel" class="order-mode-panel hidden px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
+                            <div id="order-mode-quick-panel" class="order-mode-panel px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5">
                                 <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                     <p class="text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_summary') }}</p>
                                     <p class="mt-2 text-sm text-slate-600">{{ __('store.product.quick_order_intro') }}</p>
@@ -1135,7 +1131,7 @@
                             </div>
                         </div>
                         <div id="mold-model-size-table-zoom-viewport" class="relative overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50 max-h-[min(70vh,36rem)]">
-                            <img id="mold-model-size-table-modal-image" src="" alt="" class="mx-auto block max-h-[min(70vh,36rem)] w-auto max-w-full select-none object-contain">
+                            <img id="mold-model-size-table-modal-image" src="" alt="" draggable="false" class="mx-auto block max-h-[min(70vh,36rem)] w-auto max-w-full select-none object-contain">
                         </div>
                     </div>
                     <div class="px-5 pb-5 sm:px-6 sm:pb-6">
@@ -2222,10 +2218,10 @@
                             : '';
                         var totalFooter = '';
                         if (cfg.canSeePrices && row.total_price_display) {
-                            totalFooter = '<footer class="hidden border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
+                            totalFooter = '<footer class="border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
                                 '<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">' +
                                 (row.total_price_formula_display
-                                    ? '<p class="hidden text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
+                                    ? '<p class="text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
                                     : '<span></span>') +
                                 '<p class="shrink-0 text-right">' +
                                 '<span class="block text-[10px] font-semibold uppercase tracking-wider text-primary-700 sm:inline">' + escapeHtml(totalLbl) + '</span>' +
@@ -2243,7 +2239,7 @@
                             '</div></div>' +
                             '<span class="shrink-0 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-800">' + escapeHtml(print) + '</span>' +
                             '</header>' +
-                            '<div class="hidden grid grid-cols-2 divide-x divide-y divide-slate-100' + gridCols + ' sm:divide-y-0">' +
+                            '<div class="grid grid-cols-2 divide-x divide-y divide-slate-100' + gridCols + ' sm:divide-y-0">' +
                             customizationSummaryMetricDim(dimLbl, dim) +
                             customizationSummaryMetric(areaLbl, area) +
                             customizationSummaryMetric(ebatLbl, ebat) +
@@ -2413,7 +2409,7 @@
                                 '<p class="mt-2 text-xs font-medium text-emerald-900 tabular-nums">' + escapeHtml(formula) + '</p>' +
                                 (hint ? '<p class="mt-0.5 text-[11px] text-slate-500">' + escapeHtml(hint) + '</p>' : '');
                         }
-                        return '<div class="bg-red-500 hidden border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
+                        return '<div class="border-t border-slate-200/90 px-3.5 py-3 sm:px-4">' +
                             '<div class="rounded-xl border border-primary-200/80 bg-gradient-to-r from-primary-50 to-emerald-50/70 px-4 py-3.5 shadow-sm">' +
                             '<div class="flex items-center justify-between gap-3">' +
                             '<span class="text-sm font-semibold text-slate-800">' + escapeHtml(label) + '</span>' +
@@ -3524,8 +3520,8 @@
                                     if (!isFinite(mult) || mult <= 0) mult = 1;
                                     var showMult = Math.abs(mult - 1) > 0.0001;
                                     var multBadge = showMult
-                                        ? '<span class="hidden mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
-                                            escapeHtml(formatVariationMultiplier(mult)) + ' asdasdsadsa</span>'
+                                        ? '<span class="mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
+                                            escapeHtml(formatVariationMultiplier(mult)) + '</span>'
                                         : '';
                                     return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
                                         '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(catalogLabel(item.name)) + '</span>' +
@@ -4093,33 +4089,32 @@
                             var picked = wrap.querySelector('.label-type-position-btn:not(.hidden)[data-selected="1"]');
                             if (!picked) return false;
                         }
-                        if (labelOptionAskDescription(sel)) {
-                            var descInput = wrap.querySelector('.label-type-description-input');
-                            if (!descInput || !String(descInput.value || '').trim()) return false;
-                        }
                         return true;
                     }
 
                     function updateLabelTypeSuboptionsHeading(block, sel, wrap) {
                         if (!wrap || !sel) return;
                         var heading = wrap.querySelector('.label-type-suboptions-heading');
-                        if (!heading) return;
+                        var hint = wrap.querySelector('.label-type-suboptions-hint');
                         var optionName = optionDisplayLabel(sel);
                         if (!optionName || !labelOptionNeedsSubOptions(sel)) {
-                            heading.textContent = '';
+                            if (heading) heading.textContent = '';
+                            if (hint) hint.textContent = '';
                             return;
                         }
+                        var hintTpl = PU.label_suboptions_panel_hint || 'Answer the questions below for your selected ":name" label, then press Continue.';
+                        if (hint) hint.textContent = hintTpl.replace(':name', optionName);
                         if (isLabelTypeMulti(block) && (block.getAttribute('data-label-sub-flow-active') || '') === '1') {
                             var queue = getLabelTypeSubFlowQueue(block);
                             var idx = parseInt(block.getAttribute('data-label-queue-index') || '0', 10);
                             var tpl = PU.label_subflow_heading || ':name (:current/:total)';
-                            heading.textContent = tpl
+                            if (heading) heading.textContent = tpl
                                 .replace(':name', optionName)
                                 .replace(':current', String(idx + 1))
                                 .replace(':total', String(queue.length));
                             return;
                         }
-                        heading.textContent = optionName;
+                        if (heading) heading.textContent = optionName;
                     }
 
                     function scrollLabelSuboptionsIntoView(wrap) {
@@ -4830,6 +4825,11 @@
                             syncSizeTableVariationBlock(activePanel);
                         }
                         scheduleApplyDependencyChain();
+                        if (opts.scrollIntoView && activePanel) {
+                            requestAnimationFrame(function() {
+                                activePanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            });
+                        }
                     }
 
                     function invalidateDownstreamStepsAfterVariationEdit(editedBlock) {
@@ -4943,7 +4943,7 @@
                         }
                         var nextIdx = findNextVariationStepIndexAfter(currentVariationStep);
                         if (nextIdx >= 0) {
-                            showVariationStep(nextIdx);
+                            showVariationStep(nextIdx, { scrollIntoView: true });
                         } else if (allVisibleVariationsSelected()) {
                             showVariationSelectionCompleteState();
                         } else {
@@ -5427,6 +5427,10 @@
                             return;
                         }
 
+                        img.addEventListener('dragstart', function (e) {
+                            e.preventDefault();
+                        });
+
                         var state = { scale: 1, tx: 0, ty: 0, min: 1, max: 4, step: 0.25 };
                         var dragging = false;
                         var lastX = 0;
@@ -5508,6 +5512,7 @@
                             if (state.scale <= 1 || e.button !== 0) {
                                 return;
                             }
+                            e.preventDefault();
                             dragging = true;
                             lastX = e.clientX;
                             lastY = e.clientY;
@@ -5519,6 +5524,7 @@
                             if (!dragging) {
                                 return;
                             }
+                            e.preventDefault();
                             state.tx += e.clientX - lastX;
                             state.ty += e.clientY - lastY;
                             lastX = e.clientX;

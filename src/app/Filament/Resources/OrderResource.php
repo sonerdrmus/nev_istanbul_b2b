@@ -4,11 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class OrderResource extends Resource
 {
@@ -126,6 +131,122 @@ class OrderResource extends Resource
                     ])
                     ->collapsed(fn ($record) => $record && $record->items->isEmpty()),
             ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make('Sipariş Detayı')
+                    ->schema([
+                        TextEntry::make('order_number')->label('Sipariş No')->copyable(),
+                        TextEntry::make('status')->label('Durum')->badge(),
+                        TextEntry::make('created_at')->label('Sipariş Tarihi')->dateTime('d.m.Y H:i'),
+                        TextEntry::make('payment_method')
+                            ->label('Ödeme Yöntemi')
+                            ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                'havale' => 'Havale / EFT',
+                                default => $state ?: '—',
+                            }),
+                        TextEntry::make('total')->label('Sipariş Toplamı')->money('TRY')->weight('bold'),
+                    ])
+                    ->columns(3),
+                \Filament\Infolists\Components\Section::make('Müşteri Bilgileri')
+                    ->schema([
+                        TextEntry::make('customer_name')->label('Müşteri'),
+                        TextEntry::make('customer_email')->label('E-posta')->copyable(),
+                        TextEntry::make('customer_phone')->label('Telefon')->visible(fn ($record): bool => filled($record->customer_phone)),
+                        TextEntry::make('customer_address')->label('Adres / Teslimat Notu')->columnSpanFull()->visible(fn ($record): bool => filled($record->customer_address)),
+                    ])
+                    ->columns(2),
+                \Filament\Infolists\Components\Section::make('Teslimat ve Ödeme')
+                    ->schema([
+                        TextEntry::make('shipping_method.name')->label('Kargo Yöntemi')->visible(fn ($record): bool => filled($record->shipping_method_id)),
+                        TextEntry::make('shipping_cost')->label('Kargo Ücreti')->money('TRY')->visible(fn ($record): bool => (float) $record->shipping_cost > 0),
+                        TextEntry::make('bankAccount.bank_name')->label('Havale Bankası')->visible(fn ($record): bool => filled($record->bank_account_id)),
+                        TextEntry::make('notes')->label('Sipariş Notu')->columnSpanFull()->visible(fn ($record): bool => filled($record->notes)),
+                    ])
+                    ->columns(2)
+                    ->visible(fn ($record): bool => filled($record->shipping_method_id) || (float) $record->shipping_cost > 0 || filled($record->bank_account_id) || filled($record->notes)),
+                \Filament\Infolists\Components\Section::make('Sipariş Kalemleri')
+                    ->schema([
+                        RepeatableEntry::make('items')
+                            ->label('')
+                            ->schema([
+                                TextEntry::make('product_name')
+                                    ->label('Ürün')
+                                    ->weight('bold')
+                                    ->size('lg')
+                                    ->columnSpan(4),
+                                TextEntry::make('quantity')
+                                    ->label('Adet')
+                                    ->badge()
+                                    ->color('gray'),
+                                TextEntry::make('price')
+                                    ->label('Birim Fiyat')
+                                    ->money('TRY'),
+                                TextEntry::make('subtotal')
+                                    ->label('Ara Toplam')
+                                    ->money('TRY')
+                                    ->weight('bold'),
+                                TextEntry::make('variation_data')
+                                    ->label('Seçilen varyasyonlar ve alt seçimler')
+                                    ->state(fn (OrderItem $record): string => self::formatVariationDataForPanel($record->variation_data))
+                                    ->html()
+                                    ->columnSpan(4),
+                            ])
+                            ->columns(4)
+                            ->columnSpanFull(),
+                    ]),
+            ]);
+    }
+
+    private static function formatVariationDataForPanel(mixed $value): string
+    {
+        if (! is_array($value) || $value === []) {
+            return '<span class="text-gray-500">—</span>';
+        }
+
+        $render = function (mixed $current, ?string $label = null) use (&$render): string {
+            if (is_array($current)) {
+                $items = [];
+                foreach ($current as $key => $child) {
+                    if (in_array((string) $key, ['extra_price_try', 'price_multiplier'], true)) {
+                        continue;
+                    }
+                    $childLabel = is_int($key) ? null : Str::of((string) $key)->replace('_', ' ')->headline()->toString();
+                    $items[] = $render($child, $childLabel);
+                }
+                if ($items === []) {
+                    return '';
+                }
+                $heading = $label !== null
+                    ? '<p class="border-b border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-800 dark:border-gray-700 dark:text-gray-100">'.e($label).'</p>'
+                    : '';
+                return '<div class="overflow-hidden rounded-lg border border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-900">'.$heading.'<div class="space-y-1 px-3 py-2">'.implode('', $items).'</div></div>';
+            }
+
+            if ($current === null || $current === '') {
+                return '';
+            }
+
+            $display = is_bool($current)
+                ? ($current ? 'Evet' : 'Hayır')
+                : (string) $current;
+            $labelHtml = $label !== null ? '<span class="font-semibold text-gray-700 dark:text-gray-300">'.e($label).'</span>' : '';
+
+            return '<div class="grid grid-cols-[minmax(8rem,auto)_minmax(0,1fr)] gap-x-3 border-b border-gray-100 py-1.5 text-sm last:border-b-0 dark:border-gray-700/70">'.$labelHtml.'<span class="break-words font-medium text-gray-950 dark:text-white">'.e($display).'</span></div>';
+        };
+
+        $rendered = [];
+        foreach ($value as $key => $item) {
+            if (in_array((string) $key, ['quick_order', 'product_customization'], true) && $item === null) {
+                continue;
+            }
+            $rendered[] = $render($item, Str::of((string) $key)->replace('_', ' ')->headline()->toString());
+        }
+
+        return '<div class="space-y-2 text-left">'.implode('', array_filter($rendered)).'</div>';
     }
 
     public static function table(Table $table): Table
