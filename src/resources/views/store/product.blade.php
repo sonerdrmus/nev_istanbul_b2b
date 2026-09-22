@@ -303,19 +303,12 @@
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $product->localized_name }}</h1>
 
             @php $productStatus = $product->status ?? 'satista'; @endphp
-            @if($productStatus !== 'satista')
+            @if($productStatus === 'yakinda_gelecek')
                 <div class="mt-3">
-                    @if($productStatus === 'stokta_yok')
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-red-100 text-red-800 border border-red-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ __('store.index.out_of_stock') }}
-                        </span>
-                    @elseif($productStatus === 'yakinda_gelecek')
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {{ __('store.index.coming_soon_badge') }}
-                        </span>
-                    @endif
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ __('store.index.coming_soon_badge') }}
+                    </span>
                 </div>
             @endif
 
@@ -5779,19 +5772,11 @@
                                 openProductWarningDialog(PU.warn_min_title, PU.warn_min_desc.replace(':min', String(minOrder)).replace(':total', String(info.total)));
                                 return false;
                             }
-                            if (info.total > availableStock) {
-                                openProductWarningDialog(PU.warn_stock_title, PU.warn_stock_desc_breakdown.replace(':max', String(availableStock)).replace(':total', String(info.total)));
-                                return false;
-                            }
                             return true;
                         }
                         var qty = quantityInput ? parseInt(quantityInput.value, 10) || 0 : 0;
                         if (qty < minOrder) {
                             openProductWarningDialog(PU.warn_min_title, PU.warn_min_desc.replace(':min', String(minOrder)).replace(':total', String(qty)));
-                            return false;
-                        }
-                        if (qty > availableStock) {
-                            openProductWarningDialog(PU.warn_stock_title, PU.warn_stock_desc_simple.replace(':max', String(availableStock)).replace(':qty', String(qty)));
                             return false;
                         }
                         return true;
@@ -6168,20 +6153,6 @@
                                     }
                                     return;
                                 }
-                                if (total > availableStock) {
-                                    e.preventDefault();
-                                    var dialog = document.getElementById('product-warning-dialog');
-                                    var descEl = document.getElementById('product-warning-dialog-desc');
-                                    var titleEl = document.getElementById('product-warning-dialog-title');
-                                    if (dialog && descEl) {
-                                        if (titleEl) titleEl.textContent = PU.warn_stock_title;
-                                        descEl.textContent = PU.warn_stock_desc_breakdown.replace(':max', String(availableStock)).replace(':total', String(total));
-                                        dialog.classList.remove('hidden');
-                                        dialog.classList.add('flex');
-                                        document.body.style.overflow = 'hidden';
-                                    }
-                                    return;
-                                }
                                 if (sizeInput) sizeInput.value = JSON.stringify(sizeQuantities);
                                 if (quantityInput) {
                                     quantityInput.setAttribute('name', 'quantity');
@@ -6189,23 +6160,6 @@
                                 }
                             } else {
                                 if (sizeInput) sizeInput.value = '';
-                                var formEl = document.getElementById('add-to-cart-form');
-                                var availableStock = formEl ? parseInt(formEl.getAttribute('data-available-stock'), 10) || 999999 : 999999;
-                                var qty = quantityInput ? parseInt(quantityInput.value, 10) || 0 : 0;
-                                if (qty > availableStock) {
-                                    e.preventDefault();
-                                    var dialog = document.getElementById('product-warning-dialog');
-                                    var descEl = document.getElementById('product-warning-dialog-desc');
-                                    var titleEl = document.getElementById('product-warning-dialog-title');
-                                    if (dialog && descEl) {
-                                        if (titleEl) titleEl.textContent = PU.warn_stock_title;
-                                        descEl.textContent = PU.warn_stock_desc_simple.replace(':max', String(availableStock)).replace(':qty', String(qty));
-                                        dialog.classList.remove('hidden');
-                                        dialog.classList.add('flex');
-                                        document.body.style.overflow = 'hidden';
-                                    }
-                                    return;
-                                }
                             }
                         });
                     }

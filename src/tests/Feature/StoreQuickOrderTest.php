@@ -92,4 +92,41 @@ class StoreQuickOrderTest extends TestCase
         $this->assertArrayHasKey((string) $product->id, $cart);
         $this->assertNotEmpty($cart[(string) $product->id]['quick_order'] ?? null);
     }
+
+    public function test_products_without_stock_can_still_be_added_to_cart(): void
+    {
+        $company = Company::create([
+            'name' => 'Stockless Company',
+            'code' => 'STOCKLESS',
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'company_id' => $company->id,
+            'email' => 'stockless@example.com',
+        ]);
+
+        $product = Product::create([
+            'company_id' => $company->id,
+            'name' => 'Stockless Product',
+            'slug' => 'stockless-product',
+            'price' => 100,
+            'status' => 'stokta_yok',
+            'is_active' => true,
+            'minimum_order_quantity' => 1,
+            'stock_quantity' => 0,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->post(route('store.cart.add'), [
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response->assertRedirect(route('store.cart'));
+        $response->assertSessionHas('success');
+
+        $this->assertArrayHasKey((string) $product->id, session('cart', []));
+    }
 }

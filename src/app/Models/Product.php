@@ -412,16 +412,16 @@ class Product extends Model
         return null;
     }
 
-    /** Stok adedi. Stok takibi yoksa (null) sınırsız kabul edilir. */
+    /** Stok takibi kapatıldı; ürünlerde stok kontrolü uygulanmaz. */
     public function getAvailableStock(): int
     {
-        return $this->stock_quantity === null ? PHP_INT_MAX : (int) $this->stock_quantity;
+        return PHP_INT_MAX;
     }
 
-    /** Stokta var mı (en az 1 adet). */
+    /** Stok takibi kapatıldı; tüm ürünler sipariş edilebilir kabul edilir. */
     public function hasStock(): bool
     {
-        return $this->getAvailableStock() > 0;
+        return true;
     }
 
     /** Sipariş edilebilir minimum miktar (varsayılan 1). */
@@ -442,10 +442,10 @@ class Product extends Model
         return $query->where('status', 'satista');
     }
 
-    /** Mağaza listesinde görünen ürünler: Satışta + Yakında gelecek (Stokta yok hariç). */
+    /** Mağaza listesinde görünen ürünler: stok takibi yok, tüm aktif ürünler görünür. */
     public function scopeVisibleInStore($query)
     {
-        return $query->whereIn('status', ['satista', 'yakinda_gelecek']);
+        return $query->where('is_active', true);
     }
 
     /** Ürün durumu etiketi. */
@@ -458,9 +458,9 @@ class Product extends Model
         };
     }
 
-    /** Satışa uygun mu (sepete eklenebilir). */
+    /** Satışa uygun mu (sepete eklenebilir). Stok takibi kapatıldığı için durum filtresi uygulanmaz. */
     public function isOnSale(): bool
     {
-        return ($this->status ?? 'satista') === 'satista';
+        return (bool) $this->is_active;
     }
 }

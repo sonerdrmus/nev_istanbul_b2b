@@ -372,14 +372,6 @@ class ProductResource extends Resource
                                             ])
                                             ->columns(2)
                                             ->columnSpanFull(),
-                                        Forms\Components\TextInput::make('stock_quantity')
-                                            ->label('Stok miktarı')
-                                            ->helperText('Boş = stok takibi yok (sınırsız). 0 = stokta yok.')
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->integer()
-                                            ->nullable()
-                                            ->columnSpan(1),
                                         Forms\Components\TextInput::make('minimum_order_quantity')
                                             ->label('Minimum sipariş miktarı')
                                             ->helperText('Boş = 1 adet. Müşteri en az bu kadar adet sipariş edebilir.')
@@ -1131,10 +1123,6 @@ class ProductResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('primary'),
-                Tables\Columns\TextColumn::make('stock_quantity')
-                    ->label('Stok')
-                    ->sortable()
-                    ->formatStateUsing(fn ($state) => $state === null ? '—' : (int) $state),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Durum')
                     ->formatStateUsing(fn (?string $state): string => match ($state) {

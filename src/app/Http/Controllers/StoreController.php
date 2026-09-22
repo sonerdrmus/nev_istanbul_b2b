@@ -193,11 +193,6 @@ class StoreController extends Controller
         if ($companyId !== null && $companyId !== '') {
             $baseQuery->where('company_id', (int) $companyId);
         }
-        if (request('in_stock') === '1') {
-            $baseQuery->where(function ($q) {
-                $q->whereNull('stock_quantity')->orWhere('stock_quantity', '>', 0);
-            });
-        }
         $statusSatista = request('status_satista');
         $statusYakinda = request('status_yakinda');
         if ($statusSatista === '1' && $statusYakinda !== '1') {
@@ -476,10 +471,6 @@ class StoreController extends Controller
         if (! $product->isOnSale()) {
             return redirect()->back()->with('error', __('store.flash.product_not_for_sale'));
         }
-        $availableStock = $product->getAvailableStock();
-        if ($availableStock < 1) {
-            return redirect()->back()->with('error', __('store.flash.out_of_stock'));
-        }
         $minOrder = $product->getMinimumOrderQuantity();
         $sizeQuantities = null;
         if (! empty($request->size_quantities)) {
@@ -498,9 +489,6 @@ class StoreController extends Controller
         }
         if ($qty < $minOrder) {
             return redirect()->back()->with('error', __('store.flash.min_qty', ['min' => $minOrder]));
-        }
-        if ($qty > $availableStock) {
-            return redirect()->back()->with('error', __('store.flash.max_stock', ['max' => $availableStock]));
         }
         $variationData = null;
         if (! empty($request->variation_data)) {
