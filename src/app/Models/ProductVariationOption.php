@@ -25,6 +25,8 @@ class ProductVariationOption extends Model
         'option_value_en',
         'option_value_it',
         'info_text',
+        'info_text_en',
+        'info_text_it',
         'option_color',
         'option_image',
         'option_image_size',
@@ -51,6 +53,11 @@ class ProductVariationOption extends Model
     public function getDisplayValueAttribute(): string
     {
         return LocaleContent::display($this->option_value, $this->option_value_en, $this->option_value_it);
+    }
+
+    public function getLocalizedInfoTextAttribute(): string
+    {
+        return LocaleContent::display($this->info_text, $this->info_text_en, $this->info_text_it);
     }
 
     protected static function booted(): void

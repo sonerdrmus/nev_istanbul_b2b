@@ -13,7 +13,7 @@
                                                                 @php
                                                                     $linkedSizeTable = $option->sizeTable ?? $sizeTablesById->get($option->size_table_id);
                                                                     $sizeTableSlug = $linkedSizeTable?->slug ?? '';
-                                                                    $optionDetailText = trim((string) ($option->info_text ?? ''));
+                                                                    $optionDetailText = trim((string) ($option->localized_info_text ?? ''));
                                                                     $optionDetailTitle = $displayOptionValue($option);
                                                                     $hasOptionDetail = $optionDetailText !== '';
                                                                 @endphp
@@ -81,7 +81,7 @@
                                         @php $optionClasses = 'product-option border-2 border-slate-300 hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all rounded-xl'; @endphp
                                         @php $parentIdsList = $option->getParentOptionIdsList(); @endphp
                                         @php
-                                            $optionDetailText = trim((string) ($option->info_text ?? ''));
+                                            $optionDetailText = trim((string) ($option->localized_info_text ?? ''));
                                             $optionDetailTitle = $displayOptionValue($option);
                                             $hasOptionDetail = $optionDetailText !== '';
                                             $colorFabricGroupIds = ($variation->type === 'color' && $option->interfaceColorVariation)

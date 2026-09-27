@@ -447,7 +447,7 @@
                 <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800/70 via-slate-800/40 to-slate-900/30 p-5 sm:p-7 lg:p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-8 xl:gap-10">
                             <section class="xl:col-span-4" aria-labelledby="footer-company-heading">
-                                <h3 id="footer-company-heading" class="sr-only">{{ \App\Support\CatalogLabelTranslator::label($companyFooterGroup->title ?? 'Şirket') }}</h3>
+                                <h3 id="footer-company-heading" class="sr-only">{{ $companyFooterGroup?->localized_title ?? \App\Support\CatalogLabelTranslator::label('Şirket') }}</h3>
                                 <a href="{{ route('home') }}" class="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-lg">
                                     <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 sm:h-11 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
                                 </a>
@@ -475,7 +475,7 @@
                                         @foreach($companyFooterGroup->items as $item)
                                             <li>
                                                 @if($item->url && $item->url !== '#')
-                                                    <a href="{{ $item->url }}" class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</a>
+                                                    <a href="{{ $item->url }}" class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                                 @endif
                                             </li>
                                         @endforeach
@@ -485,17 +485,17 @@
 
                             @if($customerFooterGroup && $customerFooterGroup->items->isNotEmpty())
                             <section class="xl:col-span-3 xl:border-l xl:border-white/10 xl:pl-8" aria-labelledby="footer-customer-heading">
-                                <h3 id="footer-customer-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ \App\Support\CatalogLabelTranslator::label($customerFooterGroup->title) }}</h3>
+                                <h3 id="footer-customer-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ $customerFooterGroup->localized_title }}</h3>
                                 <ul class="mt-4 space-y-1">
                                     @foreach($customerFooterGroup->items as $item)
                                         <li>
                                             @if($item->url && $item->url !== '#')
                                                 <a href="{{ $item->url }}" class="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>
-                                                    <span>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</span>
+                                                    <span>{{ $item->localized_label }}</span>
                                                     <svg class="w-4 h-4 shrink-0 text-slate-600 group-hover:text-primary-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                                 </a>
                                             @else
-                                                <span class="flex items-center px-3 py-2 text-sm text-slate-400">{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</span>
+                                                <span class="flex items-center px-3 py-2 text-sm text-slate-400">{{ $item->localized_label }}</span>
                                             @endif
                                         </li>
                                     @endforeach
@@ -505,16 +505,16 @@
 
                             @if($legalFooterGroup && $legalFooterGroup->items->isNotEmpty())
                             <section class="md:col-span-2 xl:col-span-5 xl:border-l xl:border-white/10 xl:pl-8" aria-labelledby="footer-legal-heading">
-                                <h3 id="footer-legal-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ \App\Support\CatalogLabelTranslator::label($legalFooterGroup->title) }}</h3>
+                                <h3 id="footer-legal-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ $legalFooterGroup->localized_title }}</h3>
                                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     @foreach($legalFooterChunks as $chunk)
                                         <ul class="rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3.5 space-y-2.5">
                                             @foreach($chunk as $item)
                                                 <li>
                                                     @if($item->url && $item->url !== '#')
-                                                        <a href="{{ $item->url }}" class="text-sm text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</a>
+                                                        <a href="{{ $item->url }}" class="text-sm text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                                     @else
-                                                        <span class="text-sm text-slate-400">{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</span>
+                                                        <span class="text-sm text-slate-400">{{ $item->localized_label }}</span>
                                                     @endif
                                                 </li>
                                             @endforeach
@@ -526,15 +526,15 @@
 
                             @foreach($gridFooterGroups as $group)
                             <section class="xl:col-span-3 xl:border-l xl:border-white/10 xl:pl-8">
-                                <h3 class="text-xs font-semibold text-white uppercase tracking-widest">{{ \App\Support\CatalogLabelTranslator::label($group->title) }}</h3>
+                                <h3 class="text-xs font-semibold text-white uppercase tracking-widest">{{ $group->localized_title }}</h3>
                                 @if($group->type === \App\Models\FooterMenuGroup::TYPE_MENU)
                                     <ul class="mt-4 space-y-2.5 text-sm">
                                         @foreach($group->items as $item)
                                         <li>
                                             @if($item->url && $item->url !== '#')
-                                                <a href="{{ $item->url }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</a>
+                                                <a href="{{ $item->url }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                             @else
-                                                <span class="text-slate-400">{{ \App\Support\CatalogLabelTranslator::label($item->label) }}</span>
+                                                <span class="text-slate-400">{{ $item->localized_label }}</span>
                                             @endif
                                         </li>
                                         @endforeach

@@ -208,6 +208,9 @@ class ProductResource extends Resource
                                             ->label('Description (EN)')
                                             ->helperText('Boş bırakılırsa kaydedince Türkçe açıklamadan otomatik İngilizceye çevrilir.')
                                             ->columnSpanFull(),
+                                        Forms\Components\RichEditor::make('description_it')
+                                            ->label('Descrizione (IT)')
+                                            ->columnSpanFull(),
                                     ])
                                     ->columns(2),
                                 Forms\Components\Section::make('Anasayfa vitrin (kategoriler bölümü)')
@@ -265,6 +268,10 @@ class ProductResource extends Resource
                                             ->label('Meta Tag Title (EN)')
                                             ->maxLength(255)
                                             ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('meta_title_it')
+                                            ->label('Meta Tag Title (IT)')
+                                            ->maxLength(255)
+                                            ->columnSpanFull(),
                                         Forms\Components\Textarea::make('meta_description')
                                             ->label('Meta Tag Description (TR)')
                                             ->rows(3)
@@ -272,6 +279,11 @@ class ProductResource extends Resource
                                             ->columnSpanFull(),
                                         Forms\Components\Textarea::make('meta_description_en')
                                             ->label('Meta Tag Description (EN)')
+                                            ->rows(3)
+                                            ->maxLength(512)
+                                            ->columnSpanFull(),
+                                        Forms\Components\Textarea::make('meta_description_it')
+                                            ->label('Meta Tag Description (IT)')
                                             ->rows(3)
                                             ->maxLength(512)
                                             ->columnSpanFull(),
@@ -643,6 +655,18 @@ class ProductResource extends Resource
                                                     ->maxLength(2000)
                                                     ->nullable()
                                                     ->columnSpanFull(),
+                                                Forms\Components\Textarea::make('info_text_en')
+                                                    ->label('Store description (EN)')
+                                                    ->rows(3)
+                                                    ->maxLength(2000)
+                                                    ->nullable()
+                                                    ->columnSpanFull(),
+                                                Forms\Components\Textarea::make('info_text_it')
+                                                    ->label('Descrizione negozio (IT)')
+                                                    ->rows(3)
+                                                    ->maxLength(2000)
+                                                    ->nullable()
+                                                    ->columnSpanFull(),
                                                 Forms\Components\Toggle::make('replace_main_gallery_image')
                                                     ->label('Seçilen seçeneğin görseli sol ürün görselinde gösterilsin')
                                                     ->helperText('Açıksa, müşteri bu varyasyonda seçim yaptığında seçeneğin görseli (varsa) mağazada sol taraftaki ana ürün galerisinin ilk görselinin yerine geçer. Birden fazla varyasyonda işaretliyse küçük sıra numarası önceliklidir.')
@@ -757,6 +781,18 @@ class ProductResource extends Resource
                                                         Forms\Components\Textarea::make('info_text')
                                                             ->label('Mağaza açıklama metni (seçenek)')
                                                             ->helperText('Opsiyonel. Bu seçenek seçildiğinde mağazada gösterilir; metin varsa müşteri Devam et ile ilerler.')
+                                                            ->rows(2)
+                                                            ->maxLength(2000)
+                                                            ->nullable()
+                                                            ->columnSpanFull(),
+                                                        Forms\Components\Textarea::make('info_text_en')
+                                                            ->label('Store option description (EN)')
+                                                            ->rows(2)
+                                                            ->maxLength(2000)
+                                                            ->nullable()
+                                                            ->columnSpanFull(),
+                                                        Forms\Components\Textarea::make('info_text_it')
+                                                            ->label('Descrizione opzione negozio (IT)')
                                                             ->rows(2)
                                                             ->maxLength(2000)
                                                             ->nullable()

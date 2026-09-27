@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Model;
 
 class FooterMenuGroup extends Model
@@ -12,6 +13,8 @@ class FooterMenuGroup extends Model
 
     protected $fillable = [
         'title',
+        'title_en',
+        'title_it',
         'type',
         'sort_order',
     ];
@@ -23,5 +26,10 @@ class FooterMenuGroup extends Model
     public function items()
     {
         return $this->hasMany(FooterMenuItem::class)->orderBy('sort_order');
+    }
+
+    public function getLocalizedTitleAttribute(): string
+    {
+        return LocaleContent::display($this->title, $this->title_en, $this->title_it);
     }
 }

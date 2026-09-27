@@ -3,8 +3,8 @@
 @section('title', $product->localized_meta_title ?: $product->localized_name)
 
 @push('meta')
-    @if($product->meta_description)
-        <meta name="description" content="{{ $product->meta_description }}">
+    @if($product->localized_meta_description)
+        <meta name="description" content="{{ $product->localized_meta_description }}">
     @endif
     @if($product->meta_keywords)
         <meta name="keywords" content="{{ $product->meta_keywords }}">
@@ -316,7 +316,7 @@
                 <p class="mt-4 text-slate-500 text-sm">{{ __('store.product.login_for_order') }}</p>
             @endif
 
-            @if($product->description)
+            @if($product->localized_description)
                 <div class="mt-6 prose prose-slate max-w-none text-slate-600 text-sm sm:text-base prose-img:rounded-lg">
                     {!! $product->localized_description !!}
                 </div>
@@ -772,10 +772,11 @@
                                         $dependsOnName = trim((string) ($variation->depends_on ?? ''));
                                         $isDependent = $dependsOnName !== '';
                                         $panelStepIndex = $variationPanelStepIndexByFlowKey[$stepIndex] ?? $stepIndex;
-                                        $hasVariationInfoText = filled($variation->info_text);
+                                        $hasVariationInfoText = filled($variation->localized_info_text);
                                     @endphp
                                     <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-3 lg:mt-4' }} {{ $isDependent ? 'dependent-variation-block variation-step-locked' : '' }}"
                                          data-variation-name="{{ $variation->name }}"
+                                         data-variation-label="{{ $variation->display_name }}"
                                          data-variation-type="{{ $variation->type }}"
                                          data-depends-on="{{ $dependsOnName }}"
                                          data-depends-on-option-ids="{{ json_encode($variation->getDependsOnOptionIdsList()) }}"
@@ -813,7 +814,7 @@
                                                     <div class="mb-3 flex justify-end">
                                                         @include('store.partials.variation-detail-info-btn', [
                                                             'title' => $variation->display_name,
-                                                            'text' => $variation->info_text,
+                                                            'text' => $variation->localized_info_text,
                                                             'inline' => true,
                                                         ])
                                                     </div>
@@ -1300,6 +1301,12 @@
                         var key = String(text).toLocaleLowerCase('tr-TR');
                         if (Object.prototype.hasOwnProperty.call(map, key)) return map[key];
                         return text;
+                    }
+
+                    function variationDisplayLabel(name) {
+                        var panel = getVariationPanelByName(name);
+                        var label = panel ? (panel.getAttribute('data-variation-label') || '').trim() : '';
+                        return label || catalogLabel(name);
                     }
 
                     var variationInput = document.getElementById('variation-data-input');
@@ -2983,19 +2990,19 @@
                                     if (labelPayload) {
                                         var labelDisplay = Array.isArray(labelPayload)
                                             ? formatLabelTypeMultiSummary(panel)
-                                            : formatLabelTypeSelectionDisplay(labelPayload);
+                                            : formatLabelTypeSelectionDisplay(labelPayload, sel ? optionDisplayLabel(sel) : '');
                                         list.push({ name: name, value: labelDisplay, payload: labelPayload, priceDelta: delta, isMulti: Array.isArray(labelPayload) });
                                     }
                                 } else if ((panel.getAttribute('data-variation-type') || '') === 'packaging_type') {
                                     var packagingPayload = buildPackagingTypeVariationPayload(panel);
                                     if (packagingPayload) {
-                                        var packagingDisplay = formatPackagingTypeSelectionDisplay(packagingPayload);
+                                        var packagingDisplay = formatPackagingTypeSelectionDisplay(packagingPayload, sel ? optionDisplayLabel(sel) : '');
                                         list.push({ name: name, value: packagingDisplay, payload: packagingPayload, priceDelta: delta, isMulti: false });
                                     }
                                 } else if ((panel.getAttribute('data-variation-type') || '') === 'delivery_type') {
                                     var deliveryPayload = buildDeliveryTypeVariationPayload(panel);
                                     if (deliveryPayload) {
-                                        var deliveryDisplay = formatDeliveryTypeSelectionDisplay(deliveryPayload);
+                                        var deliveryDisplay = formatDeliveryTypeSelectionDisplay(deliveryPayload, sel ? optionDisplayLabel(sel) : '');
                                         list.push({ name: name, value: deliveryDisplay, payload: deliveryPayload, priceDelta: delta, isMulti: false });
                                     }
                                 } else if (summary && summaryVal && !summary.classList.contains('hidden')) {
@@ -3347,7 +3354,7 @@
                         var vals = [];
                         container.querySelectorAll('.product-option.option-selected').forEach(function(b) {
                             if (b.style.display === 'none') return;
-                            vals.push((b.getAttribute('data-option') || '').trim());
+                            vals.push(optionDisplayLabel(b));
                         });
                         updatePanelSummary(container, vals.join(', ') || '—');
                         updateMultiContinueUi(container);
@@ -3517,7 +3524,7 @@
                                             escapeHtml(formatVariationMultiplier(mult)) + '</span>'
                                         : '';
                                     return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
-                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(catalogLabel(item.name)) + '</span>' +
+                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(variationDisplayLabel(item.name)) + '</span>' +
                                         '<div class="max-w-[62%] shrink-0 text-right sm:max-w-[70%]">' +
                                         '<p class="text-sm font-semibold leading-snug text-slate-900 break-words">' + escapeHtml(item.value) + '</p>' +
                                         multBadge +
@@ -3966,10 +3973,11 @@
                         if (cont) cont.disabled = true;
                     }
 
-                    function formatLabelTypeSelectionDisplay(payload) {
-                        if (!payload || typeof payload !== 'object') return '';
-                        if (typeof payload === 'string') return payload;
-                        var parts = [String(payload.option || '').trim()];
+                    function formatLabelTypeSelectionDisplay(payload, optionLabel) {
+                        if (!payload) return '';
+                        if (typeof payload === 'string') return optionLabel || catalogLabel(payload);
+                        if (typeof payload !== 'object') return '';
+                        var parts = [optionLabel || catalogLabel(String(payload.option || '').trim())];
                         if (payload.custom_print === true) {
                             parts.push(PU.label_custom_print_summary_yes || 'Özel baskı: Evet');
                             if (payload.custom_print_artwork) {
@@ -4039,7 +4047,7 @@
                             var key = getLabelSubPayloadKey(opt);
                             if (!key || payloads[key] === undefined) return;
                             var p = payloads[key];
-                            parts.push(typeof p === 'string' ? p : formatLabelTypeSelectionDisplay(p));
+                            parts.push(typeof p === 'string' ? optionDisplayLabel(opt) : formatLabelTypeSelectionDisplay(p, optionDisplayLabel(opt)));
                         });
                         return parts.filter(Boolean).join(' · ');
                     }
@@ -4124,9 +4132,7 @@
                                 updatePanelSummary(block, formatLabelTypeMultiSummary(block) || '—');
                                 return;
                             }
-                            var names = getLabelTypeSelectedOptions(block).map(function(opt) {
-                                return (opt.getAttribute('data-option') || '').trim();
-                            }).filter(Boolean);
+                            var names = getLabelTypeSelectedOptions(block).map(optionDisplayLabel).filter(Boolean);
                             updatePanelSummary(block, names.join(', ') || '—');
                             return;
                         }
@@ -4137,11 +4143,11 @@
                         }
                         var optionVal = (sel.getAttribute('data-option') || '').trim();
                         if (!labelOptionNeedsSubOptions(sel) || (block.getAttribute('data-label-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionVal);
+                            updatePanelSummary(block, optionDisplayLabel(sel));
                             return;
                         }
                         var payload = buildLabelTypeVariationPayload(block);
-                        updatePanelSummary(block, formatLabelTypeSelectionDisplay(payload) || optionVal);
+                        updatePanelSummary(block, formatLabelTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
                     }
 
                     function syncLabelTypeSubOptionsPanel(block) {
@@ -4150,6 +4156,11 @@
                         var sel = getLabelTypeActiveSubFlowOption(block);
                         if (!sel) {
                             resetLabelTypeSubOptions(block);
+                            return;
+                        }
+                        if (!isLabelTypeMulti(block) && (block.getAttribute('data-label-options-confirmed') || '') === '1') {
+                            wrap.classList.add('hidden');
+                            updateLabelTypePanelSummary(block);
                             return;
                         }
                         if (!labelOptionNeedsSubOptions(sel)) {
@@ -4400,10 +4411,11 @@
                         return payload;
                     }
 
-                    function formatPackagingTypeSelectionDisplay(payload) {
-                        if (!payload || typeof payload !== 'object') return '';
-                        if (typeof payload === 'string') return payload;
-                        var parts = [String(payload.option || '').trim()];
+                    function formatPackagingTypeSelectionDisplay(payload, optionLabel) {
+                        if (!payload) return '';
+                        if (typeof payload === 'string') return optionLabel || catalogLabel(payload);
+                        if (typeof payload !== 'object') return '';
+                        var parts = [optionLabel || catalogLabel(String(payload.option || '').trim())];
                         if (payload.material) {
                             var matTpl = PU.packaging_material_summary || 'Malzeme: :material';
                             parts.push(matTpl.replace(':material', payload.material));
@@ -4429,11 +4441,11 @@
                         }
                         var optionVal = (sel.getAttribute('data-option') || '').trim();
                         if ((block.getAttribute('data-packaging-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionVal);
+                            updatePanelSummary(block, optionDisplayLabel(sel));
                             return;
                         }
                         var payload = buildPackagingTypeVariationPayload(block);
-                        updatePanelSummary(block, formatPackagingTypeSelectionDisplay(payload) || optionVal);
+                        updatePanelSummary(block, formatPackagingTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
                     }
 
                     function getDeliverySubOptionsForPreset(presetId) {
@@ -4587,10 +4599,11 @@
                         return payload;
                     }
 
-                    function formatDeliveryTypeSelectionDisplay(payload) {
-                        if (!payload || typeof payload !== 'object') return '';
-                        if (typeof payload === 'string') return payload;
-                        var parts = [String(payload.option || '').trim()];
+                    function formatDeliveryTypeSelectionDisplay(payload, optionLabel) {
+                        if (!payload) return '';
+                        if (typeof payload === 'string') return optionLabel || catalogLabel(payload);
+                        if (typeof payload !== 'object') return '';
+                        var parts = [optionLabel || catalogLabel(String(payload.option || '').trim())];
                         if (payload.sub_option) {
                             var tpl = PU.delivery_suboption_summary || 'Alt teslim: :suboption';
                             parts.push(tpl.replace(':suboption', payload.sub_option));
@@ -4610,11 +4623,11 @@
                         }
                         var optionVal = (sel.getAttribute('data-option') || '').trim();
                         if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionVal);
+                            updatePanelSummary(block, optionDisplayLabel(sel));
                             return;
                         }
                         var payload = buildDeliveryTypeVariationPayload(block);
-                        updatePanelSummary(block, formatDeliveryTypeSelectionDisplay(payload) || optionVal);
+                        updatePanelSummary(block, formatDeliveryTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
                     }
 
                     function clampVariationStepIndex(requested) {
@@ -5023,12 +5036,13 @@
                         container.querySelectorAll('.product-option').forEach(function(b) {
                             setProductOptionVisual(b, b === btn);
                         });
-                        updatePanelSummary(container, optionValue);
+                        updatePanelSummary(container, optionDisplayLabel(btn));
                         if ((container.getAttribute('data-variation-type') || '') === 'size_table') {
                             container.setAttribute('data-size-table-confirmed', '0');
                             syncSizeTableVariationBlock(container);
                         }
                         if ((container.getAttribute('data-variation-type') || '') === 'label_type') {
+                            container.setAttribute('data-label-options-confirmed', '0');
                             syncLabelTypeSubOptionsPanel(container);
                             updateLabelTypePanelSummary(container);
                             var labelNeedsSub = labelOptionNeedsSubOptions(btn);
@@ -5947,7 +5961,7 @@
                             block.setAttribute('data-size-table-confirmed', '0');
                         }
                         if (hasTarget && selected) {
-                            updatePanelSummary(block, optionVal || slug || '—');
+                            updatePanelSummary(block, selected ? optionDisplayLabel(selected) : (catalogLabel(optionVal || slug) || '—'));
                         }
                     }
 

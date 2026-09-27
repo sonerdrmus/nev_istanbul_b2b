@@ -22,10 +22,13 @@ class Product extends Model
         'slug',
         'description',
         'description_en',
+        'description_it',
         'meta_title',
         'meta_title_en',
+        'meta_title_it',
         'meta_description',
         'meta_description_en',
+        'meta_description_it',
         'meta_keywords',
         'price',
         'stock_quantity',
@@ -119,17 +122,17 @@ class Product extends Model
 
     public function getLocalizedDescriptionAttribute(): ?string
     {
-        return LocaleContent::display($this->description, $this->description_en, null);
+        return LocaleContent::display($this->description, $this->description_en, $this->description_it);
     }
 
     public function getLocalizedMetaTitleAttribute(): ?string
     {
-        return LocaleContent::display($this->meta_title, $this->meta_title_en, null) ?: null;
+        return LocaleContent::display($this->meta_title, $this->meta_title_en, $this->meta_title_it) ?: null;
     }
 
     public function getLocalizedMetaDescriptionAttribute(): ?string
     {
-        return LocaleContent::display($this->meta_description, $this->meta_description_en, null) ?: null;
+        return LocaleContent::display($this->meta_description, $this->meta_description_en, $this->meta_description_it) ?: null;
     }
 
     public function company()

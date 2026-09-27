@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FillsLocalizedNameFromCatalog;
 use App\Models\Concerns\HasLocalizedName;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductVariation extends Model
@@ -24,6 +25,8 @@ class ProductVariation extends Model
         'allows_multiple',
         'solo_option_value',
         'info_text',
+        'info_text_en',
+        'info_text_it',
     ];
 
     protected function casts(): array
@@ -38,6 +41,11 @@ class ProductVariation extends Model
     public function getDisplayNameAttribute(): string
     {
         return $this->localized_name;
+    }
+
+    public function getLocalizedInfoTextAttribute(): string
+    {
+        return LocaleContent::display($this->info_text, $this->info_text_en, $this->info_text_it);
     }
 
     /** Bağlı varyasyondaki hangi seçeneklerde bu adım görünsün (boş = üst varyasyonda herhangi bir seçim). */

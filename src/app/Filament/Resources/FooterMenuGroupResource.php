@@ -44,6 +44,12 @@ class FooterMenuGroupResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Sözleşmeler'),
+                        Forms\Components\TextInput::make('title_en')
+                            ->label('Title (EN)')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('title_it')
+                            ->label('Titolo (IT)')
+                            ->maxLength(255),
                         Forms\Components\Select::make('type')
                             ->label('Tip')
                             ->options([
@@ -71,6 +77,12 @@ class FooterMenuGroupResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->placeholder('Teslimat bilgisi ve maliyetler'),
+                                Forms\Components\TextInput::make('label_en')
+                                    ->label('Label (EN)')
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('label_it')
+                                    ->label('Etichetta (IT)')
+                                    ->maxLength(255),
                                 Forms\Components\TextInput::make('url')
                                     ->label('URL')
                                     ->maxLength(500)
