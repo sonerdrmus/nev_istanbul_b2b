@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
                     ->orderBy('sort_order')
                     ->orderBy('name')
                     ->limit(15)
-                    ->get(['id', 'name', 'slug']);
+                    ->get(['id', 'name', 'name_en', 'name_it', 'slug']);
             }
             $view->with('topMenuCategories', $topMenuCategories);
             $view->with('topMenuCategoryProducts', $topMenuCategoryProducts);
