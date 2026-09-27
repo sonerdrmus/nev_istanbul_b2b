@@ -429,7 +429,7 @@ class StoreController extends Controller
             })
             ->orderBy('name')
             ->limit(10)
-            ->get(['id', 'name', 'name_en', 'slug', 'image']);
+            ->get(['id', 'name', 'name_en', 'name_it', 'slug', 'image']);
         $items = $products->map(function ($p) {
             return [
                 'id' => $p->id,
