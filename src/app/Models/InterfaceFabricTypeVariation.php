@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\FillsLocalizedNameFromCatalog;
 use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,8 @@ class InterfaceFabricTypeVariation extends Model
         'name_it',
         'image_path',
         'detail_text',
+        'detail_text_en',
+        'detail_text_it',
         'price_multiplier',
         'sort_order',
         'is_active',
@@ -36,6 +39,11 @@ class InterfaceFabricTypeVariation extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function getLocalizedDetailTextAttribute(): string
+    {
+        return LocaleContent::display($this->detail_text, $this->detail_text_en ?? null, $this->detail_text_it ?? null);
     }
 
     protected static function linkedProductVariationType(): string

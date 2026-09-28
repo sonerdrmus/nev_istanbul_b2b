@@ -45,11 +45,12 @@ class InterfaceCertificateVariationResource extends Resource
                             ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
                         ...LocaleNameInputs::make(),
                         Forms\Components\Textarea::make('description')
-                            ->label('Açıklama')
+                            ->label('Açıklama (TR)')
                             ->rows(4)
                             ->maxLength(2000)
                             ->nullable()
                             ->helperText('Opsiyonel. Mağazada sertifika seçeneğinin yanında «detaylı bilgi» ile modalda gösterilir.'),
+                        ...LocaleNameInputs::textAreas('description', 'Açıklama (EN)', 'Açıklama (IT)', 4, 2000),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_certificate_variations')

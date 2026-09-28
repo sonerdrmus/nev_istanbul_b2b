@@ -98,9 +98,12 @@
                                             @php
                                                 $fabricParts = \App\Support\FabricOptionDisplay::parse($option->display_value);
                                                 $fabricImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
-                                                if ($optionDetailText === '') {
-                                                    $optionDetailText = trim((string) ($option->interfaceFabricTypeVariation?->detail_text ?? ''));
-                                                }
+                                                $fabricPreset = $option->interfaceFabricTypeVariation;
+                                                $optionDetailText = trim($option->storeInfoText(
+                                                    $fabricPreset?->detail_text,
+                                                    $fabricPreset?->detail_text_en,
+                                                    $fabricPreset?->detail_text_it,
+                                                ));
                                                 $hasOptionDetail = $optionDetailText !== '';
                                                 $optionDetailTitle = $fabricParts['name'];
                                             @endphp
@@ -186,9 +189,12 @@
                                         @elseif($variation->type === 'certificate_type')
                                             @php
                                                 $certificateImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
-                                                if ($optionDetailText === '') {
-                                                    $optionDetailText = trim((string) ($option->interfaceCertificateVariation?->description ?? ''));
-                                                }
+                                                $certificatePreset = $option->interfaceCertificateVariation;
+                                                $optionDetailText = trim($option->storeInfoText(
+                                                    $certificatePreset?->description,
+                                                    $certificatePreset?->description_en,
+                                                    $certificatePreset?->description_it,
+                                                ));
                                                 $hasOptionDetail = $optionDetailText !== '';
                                             @endphp
                                             <div class="variation-option-wrap fabric-option-card-wrap relative w-full min-w-0 overflow-visible">
@@ -228,10 +234,13 @@
                                         @elseif($variation->type === 'delivery_type')
                                             @php
                                                 $deliveryImageUrl = $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : null;
-                                                $deliveryEstimatedTime = trim((string) ($option->interfaceDeliveryMethodVariation?->estimated_delivery_time ?? ''));
-                                                if ($optionDetailText === '') {
-                                                    $optionDetailText = trim((string) ($option->interfaceDeliveryMethodVariation?->description ?? ''));
-                                                }
+                                                $deliveryPreset = $option->interfaceDeliveryMethodVariation;
+                                                $deliveryEstimatedTime = trim((string) ($deliveryPreset?->localized_estimated_delivery_time ?? ''));
+                                                $optionDetailText = trim($option->storeInfoText(
+                                                    $deliveryPreset?->description,
+                                                    $deliveryPreset?->description_en,
+                                                    $deliveryPreset?->description_it,
+                                                ));
                                                 $hasOptionDetail = $optionDetailText !== '';
                                             @endphp
                                             <div class="variation-option-wrap fabric-option-card-wrap relative w-full min-w-0 overflow-visible">
@@ -290,7 +299,7 @@
                                                 data-label-position-front="{{ ($labelPreset?->position_front ?? false) ? '1' : '0' }}"
                                                 data-label-position-back="{{ ($labelPreset?->position_back ?? false) ? '1' : '0' }}"
                                                 data-label-ask-description="{{ ($labelPreset?->ask_description ?? false) ? '1' : '0' }}"
-                                                data-label-description-title="{{ e($labelPreset?->description_title ?? '') }}"
+                                                data-label-description-title="{{ e($labelPreset?->localized_description_title ?? '') }}"
                                                 title="{{ $displayOptionValue($option) }}">
                                                 <span class="label-option-accent w-1 shrink-0 bg-slate-200 transition-colors" aria-hidden="true"></span>
                                                 <span class="flex flex-1 items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0">

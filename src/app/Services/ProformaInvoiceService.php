@@ -6,7 +6,8 @@ use App\Models\BankAccount;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Support\LabelTypeVariationDisplay;
+use App\Support\CatalogLabelTranslator;
+use App\Support\VariationSelectionDisplay;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -38,7 +39,7 @@ class ProformaInvoiceService
         $banks = $this->banks($order);
 
         return [
-            'title' => 'PROFORMA INVOICE',
+            'title' => __('store.proforma.title'),
             'invoice_number' => 'PF-'.$order->order_number,
             'order_number' => $order->order_number,
             'project_number' => '',
@@ -74,7 +75,7 @@ class ProformaInvoiceService
                 return [
                     'qty' => (int) $item->quantity,
                     'qty_formatted' => number_format((int) $item->quantity, 2, ',', '.'),
-                    'description' => $this->itemDescription($item),
+                    'description' => CatalogLabelTranslator::label((string) $item->product_name),
                     'unit_price' => $unit,
                     'unit_price_formatted' => $this->number($unit, $currency),
                     'amount' => $amount,
@@ -105,26 +106,42 @@ class ProformaInvoiceService
 
     public function downloadPdf(Order $order, Currency $currency)
     {
-        $data = $this->payload($order, $currency);
+        return $this->withOrderLocale($order, function () use ($order, $currency) {
+            $data = $this->payload($order, $currency);
 
-        return Pdf::loadView('store.proforma.pdf', ['data' => $data])
-            ->setPaper('a4', 'portrait')
-            ->setOption('isRemoteEnabled', true)
-            ->download('Proforma-'.$order->order_number.'.pdf');
+            return Pdf::loadView('store.proforma.pdf', ['data' => $data])
+                ->setPaper('a4', 'portrait')
+                ->setOption('isRemoteEnabled', true)
+                ->download('Proforma-'.$order->order_number.'.pdf');
+        });
     }
 
     public function downloadExcel(Order $order, Currency $currency): StreamedResponse
     {
-        $data = $this->payload($order, $currency);
-        $spreadsheet = $this->spreadsheet($data);
-        $filename = 'Proforma-'.$order->order_number.'.xlsx';
+        return $this->withOrderLocale($order, function () use ($order, $currency) {
+            $data = $this->payload($order, $currency);
+            $spreadsheet = $this->spreadsheet($data);
+            $filename = 'Proforma-'.$order->order_number.'.xlsx';
 
-        return response()->streamDownload(function () use ($spreadsheet) {
-            $writer = new Xlsx($spreadsheet);
-            $writer->save('php://output');
-        }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+            return response()->streamDownload(function () use ($spreadsheet) {
+                $writer = new Xlsx($spreadsheet);
+                $writer->save('php://output');
+            }, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]);
+        });
+    }
+
+    public function downloadOrderFormPdf(Order $order, Currency $currency)
+    {
+        return $this->withOrderLocale($order, function () use ($order, $currency) {
+            $data = $this->orderFormPayload($order, $currency);
+
+            return Pdf::loadView('store.proforma.order-form', ['data' => $data])
+                ->setPaper('a4', 'portrait')
+                ->setOption('isRemoteEnabled', true)
+                ->download('Siparis-Formu-'.$order->order_number.'.pdf');
+        });
     }
 
     private function billToText(Order $order): string
@@ -134,44 +151,165 @@ class ProformaInvoiceService
             $order->customer_name,
             $order->customer_address,
             $order->customer_email,
-            $order->customer_phone ? 'Phone: '.$order->customer_phone : null,
+            $order->customer_phone ? __('store.proforma.phone').': '.$order->customer_phone : null,
         ]);
 
         return implode("\n", $parts);
     }
 
-    private function itemDescription(OrderItem $item): string
+    /**
+     * @return list<array{title: string, lines: list<string>}>
+     */
+    private function selectionGroups(OrderItem $item): array
     {
-        $parts = [(string) $item->product_name];
         $variation = is_array($item->variation_data) ? $item->variation_data : [];
-
-        if (! empty($variation['size_quantities']) && is_array($variation['size_quantities'])) {
-            $sizes = [];
-            foreach ($variation['size_quantities'] as $size => $qty) {
-                if ((int) $qty > 0) {
-                    $sizes[] = $size.': '.$qty;
-                }
-            }
-            if ($sizes !== []) {
-                $parts[] = __('store.order_confirmation.size_breakdown').' '.implode(', ', $sizes);
-            }
-        }
+        $groups = [];
 
         foreach ($variation as $name => $value) {
-            if (in_array($name, ['size_quantities', 'product_customization', 'product_customization_table', 'product_customization_notes', 'quick_order'], true)) {
+            if ($name === 'size_quantities' && is_array($value)) {
+                $parts = [];
+                foreach ($value as $size => $qty) {
+                    if ((int) $qty > 0) {
+                        $parts[] = $size.': '.$qty;
+                    }
+                }
+                if ($parts !== []) {
+                    $groups[] = [
+                        'title' => __('store.order_confirmation.size_breakdown'),
+                        'lines' => [implode(', ', $parts)],
+                    ];
+                }
+
                 continue;
             }
-            $display = LabelTypeVariationDisplay::formatVariationValue($value);
-            if ($display) {
-                $parts[] = $name.': '.$display;
+
+            if ($name === 'product_customization') {
+                if ($value === 'skipped') {
+                    $groups[] = [
+                        'title' => __('store.product.customization_summary_section_label'),
+                        'lines' => [__('store.product.skip_customization')],
+                    ];
+                }
+
+                continue;
+            }
+
+            if ($name === 'product_customization_notes') {
+                $notes = is_string($value) ? trim($value) : '';
+                if ($notes !== '') {
+                    $groups[] = [
+                        'title' => __('store.product.customization_panel_title'),
+                        'lines' => [$notes],
+                    ];
+                }
+
+                continue;
+            }
+
+            if ($name === 'product_customization_table' && is_array($value)) {
+                $custRows = $value['rows'] ?? (isset($value['row_id']) ? [$value] : []);
+                $lines = [];
+                foreach ($custRows as $row) {
+                    if (! is_array($row)) {
+                        continue;
+                    }
+                    $position = trim((string) ($row['konum_label'] ?? ''));
+                    if ($position === '') {
+                        $position = CatalogLabelTranslator::label((string) ($row['konum'] ?? ''));
+                    }
+                    $bits = array_filter([
+                        $position,
+                        (string) ($row['en_boy_cm'] ?? ''),
+                        ! empty($row['renk_sayisi']) ? $row['renk_sayisi'].' '.__('store.product.customization_colors_unit') : '',
+                        CatalogLabelTranslator::label((string) ($row['baski_teknigi'] ?? '')),
+                    ], static fn ($bit) => trim((string) $bit) !== '');
+                    if ($bits !== []) {
+                        $lines[] = implode(' — ', $bits);
+                    }
+                }
+                if ($lines !== []) {
+                    $groups[] = [
+                        'title' => __('store.product.customization_summary_section_label'),
+                        'lines' => $lines,
+                    ];
+                }
+
+                continue;
+            }
+
+            if ($name === 'quick_order' && is_array($value)) {
+                $notes = trim((string) ($value['notes'] ?? ''));
+                if ($notes !== '') {
+                    $groups[] = [
+                        'title' => __('store.product.quick_order_summary'),
+                        'lines' => [$notes],
+                    ];
+                }
+
+                continue;
+            }
+
+            $rows = VariationSelectionDisplay::rows($value);
+            $lines = [];
+            foreach ($rows as $row) {
+                if (! empty($row['divider'])) {
+                    continue;
+                }
+                if (($row['value'] ?? '') === '') {
+                    continue;
+                }
+                $lines[] = ($row['label'] ?? '') !== ''
+                    ? $row['label'].': '.$row['value']
+                    : (string) $row['value'];
+            }
+            if ($lines !== []) {
+                $groups[] = [
+                    'title' => CatalogLabelTranslator::label((string) $name),
+                    'lines' => $lines,
+                ];
             }
         }
 
-        if (! empty($variation['quick_order']['notes'])) {
-            $parts[] = (string) $variation['quick_order']['notes'];
-        }
+        return $groups;
+    }
 
-        return implode(' — ', $parts);
+    /**
+     * @return array<string, mixed>
+     */
+    private function orderFormPayload(Order $order, Currency $currency): array
+    {
+        $data = $this->payload($order, $currency);
+        $data['title'] = __('store.order_form.title');
+        $data['items'] = $order->items->map(function (OrderItem $item) use ($currency) {
+            $unit = $this->money((float) $item->price, $currency);
+            $amount = $this->money((float) $item->subtotal, $currency);
+
+            return [
+                'qty' => (int) $item->quantity,
+                'qty_formatted' => number_format((int) $item->quantity, 2, ',', '.'),
+                'description' => CatalogLabelTranslator::label((string) $item->product_name),
+                'unit_price_formatted' => $this->number($unit, $currency),
+                'amount_formatted' => $this->number($amount, $currency),
+                'groups' => $this->selectionGroups($item),
+            ];
+        })->all();
+
+        return $data;
+    }
+
+    private function withOrderLocale(Order $order, callable $callback): mixed
+    {
+        $locale = in_array((string) $order->locale, \App\Http\Middleware\SetStoreLocale::SUPPORTED, true)
+            ? (string) $order->locale
+            : (in_array(app()->getLocale(), \App\Http\Middleware\SetStoreLocale::SUPPORTED, true) ? app()->getLocale() : 'tr');
+        $previous = app()->getLocale();
+        app()->setLocale($locale);
+
+        try {
+            return $callback();
+        } finally {
+            app()->setLocale($previous);
+        }
     }
 
     /**
@@ -269,9 +407,11 @@ class ProformaInvoiceService
             default => $currency->code,
         };
 
-        $words = $locale === 'tr'
-            ? $this->turkishIntegerWords($whole)
-            : $this->englishIntegerWords($whole);
+        $words = match ($locale) {
+            'tr' => $this->turkishIntegerWords($whole),
+            'it' => $this->italianIntegerWords($whole),
+            default => $this->englishIntegerWords($whole),
+        };
 
         $and = $locale === 'tr' ? 've' : ($locale === 'it' ? 'e' : 'and');
         $denom = str_pad('1', $decimals + 1, '0');
@@ -307,6 +447,43 @@ class ProformaInvoiceService
             }
 
             return trim($chunk(intdiv($n, 1000000)).' Million'.($n % 1000000 ? ' '.$chunk($n % 1000000) : ''));
+        };
+
+        return $chunk($number);
+    }
+
+    private function italianIntegerWords(int $number): string
+    {
+        if ($number === 0) {
+            return 'Zero';
+        }
+
+        $ones = ['', 'Uno', 'Due', 'Tre', 'Quattro', 'Cinque', 'Sei', 'Sette', 'Otto', 'Nove', 'Dieci', 'Undici', 'Dodici', 'Tredici', 'Quattordici', 'Quindici', 'Sedici', 'Diciassette', 'Diciotto', 'Diciannove'];
+        $tens = ['', '', 'Venti', 'Trenta', 'Quaranta', 'Cinquanta', 'Sessanta', 'Settanta', 'Ottanta', 'Novanta'];
+
+        $chunk = function (int $n) use (&$chunk, $ones, $tens): string {
+            if ($n < 20) {
+                return $ones[$n];
+            }
+            if ($n < 100) {
+                return trim($tens[intdiv($n, 10)].' '.$ones[$n % 10]);
+            }
+            if ($n < 1000) {
+                $h = intdiv($n, 100);
+                $prefix = $h === 1 ? 'Cento' : $ones[$h].'cento';
+
+                return trim($prefix.($n % 100 ? ' '.$chunk($n % 100) : ''));
+            }
+            if ($n < 1000000) {
+                $t = intdiv($n, 1000);
+                $prefix = $t === 1 ? 'Mille' : $chunk($t).'mila';
+
+                return trim($prefix.($n % 1000 ? ' '.$chunk($n % 1000) : ''));
+            }
+
+            $m = intdiv($n, 1000000);
+
+            return trim(($m === 1 ? 'Un milione' : $chunk($m).' milioni').($n % 1000000 ? ' '.$chunk($n % 1000000) : ''));
         };
 
         return $chunk($number);
@@ -390,7 +567,7 @@ class ProformaInvoiceService
         $sheet->getStyle('E1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('E1:F1')->getBorders()->getAllBorders()->setBorderStyle($medium);
 
-        $sheet->setCellValue('E2', 'Date');
+        $sheet->setCellValue('E2', __('store.proforma.date'));
         $sheet->getStyle('E2')->getFont()->setBold(true)->setSize(12);
         $sheet->setCellValue('F2', $data['date']);
         $sheet->getStyle('F2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -399,22 +576,22 @@ class ProformaInvoiceService
         $sheet->setCellValue('A3', $data['address_line_1']);
         $sheet->getStyle('A3')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
 
-        $sheet->setCellValue('E3', 'Invoice NR');
+        $sheet->setCellValue('E3', __('store.proforma.invoice_nr'));
         $sheet->getStyle('E3')->getFont()->setBold(true)->setSize(12);
         $sheet->setCellValue('F3', $data['invoice_number']);
         $sheet->getStyle('F3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $sheet->setCellValue('E4', 'Order Nr.');
+        $sheet->setCellValue('E4', __('store.proforma.order_nr'));
         $sheet->getStyle('E4')->getFont()->setBold(true)->setSize(12);
         $sheet->setCellValue('F4', $data['order_number']);
         $sheet->getStyle('F4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $sheet->setCellValue('A5', $data['address_line_2']);
-        $sheet->setCellValue('E5', 'Project Nr.');
+        $sheet->setCellValue('E5', __('store.proforma.project_nr'));
         $sheet->getStyle('E5')->getFont()->setBold(true)->setSize(12);
         $sheet->setCellValue('F5', $data['project_number']);
 
-        $sheet->setCellValue('A9', 'Bill To');
+        $sheet->setCellValue('A9', __('store.proforma.bill_to'));
         $sheet->getStyle('A9')->getFill()->applyFromArray($greyFill);
         $sheet->getStyle('A9')->getFont()->setBold(true)->setSize(12)->getColor()->setRGB('FFFFFF');
         $sheet->getStyle('A9')->getBorders()->getOutline()->setBorderStyle($medium);
@@ -424,13 +601,13 @@ class ProformaInvoiceService
         $sheet->getStyle('A10')->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
         $sheet->getStyle('A10:C13')->getBorders()->getOutline()->setBorderStyle($thin);
 
-        $sheet->setCellValue('E11', 'PRODUCTION TIMES');
+        $sheet->setCellValue('E11', __('store.proforma.production_times'));
         $sheet->setCellValue('F11', $data['production_times']);
-        $sheet->setCellValue('E12', 'Delivery Type:');
+        $sheet->setCellValue('E12', __('store.proforma.delivery_type'));
         $sheet->setCellValue('F12', $data['delivery_type']);
 
         $sheet->mergeCells('A14:C14');
-        $sheet->setCellValue('A14', 'ITEMS');
+        $sheet->setCellValue('A14', __('store.proforma.items'));
         $sheet->mergeCells('D14:F14');
         $sheet->setCellValue('D14', $data['items_header_right']);
         $sheet->getStyle('A14:F14')->getFill()->applyFromArray($greyFill);
@@ -466,7 +643,7 @@ class ProformaInvoiceService
             $row++;
         }
 
-        $sheet->setCellValue('D'.$row, 'FOB - PRICE');
+        $sheet->setCellValue('D'.$row, __('store.proforma.subtotal'));
         $sheet->getStyle('D'.$row)->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('D'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->setCellValue('F'.$row, $data['goods_formatted']);
@@ -475,11 +652,11 @@ class ProformaInvoiceService
         $fobRow = $row;
         $row++;
 
-        $sheet->setCellValue('A'.$row, 'SHIPPING PREFERENCE ;');
+        $sheet->setCellValue('A'.$row, __('store.proforma.shipping_preference'));
         $sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
         $sheet->getStyle('A'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         $sheet->setCellValue('B'.$row, $data['shipping_preference']);
-        $sheet->setCellValue('D'.$row, 'SHIPPING COST');
+        $sheet->setCellValue('D'.$row, __('store.proforma.shipping'));
         $sheet->getStyle('D'.$row)->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('D'.$row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->setCellValue('F'.$row, $data['shipping_formatted']);
@@ -488,7 +665,7 @@ class ProformaInvoiceService
         $shipRow = $row;
         $row++;
 
-        $sheet->setCellValue('E'.$row, 'TOTAL');
+        $sheet->setCellValue('E'.$row, __('store.proforma.total'));
         $sheet->setCellValue('F'.$row, $data['total_formatted']);
         $sheet->getStyle('E'.$row.':F'.$row)->getFill()->applyFromArray($greyFill);
         $sheet->getStyle('E'.$row)->getFont()->setSize(12)->getColor()->setRGB('FFFFFF');
@@ -505,7 +682,7 @@ class ProformaInvoiceService
         $sheet->getStyle('A'.$row)->getAlignment()->setWrapText(true);
         $row++;
 
-        $sheet->setCellValue('A'.$row, 'BANK DETAILS');
+        $sheet->setCellValue('A'.$row, __('store.proforma.bank_heading'));
         $sheet->getStyle('A'.$row)->getFill()->applyFromArray($greyFill);
         $sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(10)->getColor()->setRGB('FFFFFF');
         $bankStart = $row;
@@ -520,7 +697,7 @@ class ProformaInvoiceService
         $sheet->mergeCells('A'.$row.':F'.$row);
         $sheet->setCellValue(
             'A'.$row,
-            'Phone: '.$data['company_phone'].'   E-mail: '.$data['company_email'].' / Web : '.$data['company_web']
+            __('store.proforma.phone').': '.$data['company_phone'].'   '.__('store.proforma.email').': '.$data['company_email'].' / '.__('store.proforma.web').': '.$data['company_web']
         );
         $sheet->getStyle('A'.$row)->getBorders()->getTop()->setBorderStyle(Border::BORDER_DOUBLE);
 
@@ -540,14 +717,14 @@ class ProformaInvoiceService
         }
 
         $lines = [
-            ['Bank Name    :', $bank['bank_name']],
-            ['Account Name:', $bank['holder']],
-            ['Branch          :', $bank['branch'] ?: ''],
-            ['Swift No       :', $swift],
-            ['Account No   :', $bank['account_no']],
-            ['Iban No   TL      :', $bank['iban_try']],
-            ['Iban N    Eur    :', $bank['iban_eur']],
-            ['Iban No  Usd      :', $bank['iban_usd']],
+            [__('store.proforma.bank_name'), $bank['bank_name']],
+            [__('store.proforma.account_name'), $bank['holder']],
+            [__('store.proforma.branch'), $bank['branch'] ?: ''],
+            [__('store.proforma.swift'), $swift],
+            [__('store.proforma.account_no'), $bank['account_no']],
+            [__('store.proforma.iban_try'), $bank['iban_try']],
+            [__('store.proforma.iban_eur'), $bank['iban_eur']],
+            [__('store.proforma.iban_usd'), $bank['iban_usd']],
         ];
 
         foreach ($lines as $i => [$label, $value]) {

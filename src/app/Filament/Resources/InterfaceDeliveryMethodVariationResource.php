@@ -45,17 +45,19 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                             ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT kullanın.'),
                         ...LocaleNameInputs::make(),
                         Forms\Components\Textarea::make('description')
-                            ->label('Açıklama')
+                            ->label('Açıklama (TR)')
                             ->rows(4)
                             ->maxLength(2000)
                             ->nullable()
                             ->helperText('Opsiyonel. Teslimat türü hakkında kısa açıklama.'),
+                        ...LocaleNameInputs::textAreas('description', 'Açıklama (EN)', 'Açıklama (IT)', 4, 2000),
                         Forms\Components\TextInput::make('estimated_delivery_time')
-                            ->label('Tahmini teslimat süresi')
+                            ->label('Tahmini teslimat süresi (TR)')
                             ->maxLength(255)
                             ->nullable()
                             ->placeholder('Örn. 15-20 iş günü, 3-5 hafta')
                             ->helperText('Mağazada teslim şekli seçildiğinde “Seçilen seçenekler” bölümünde belirgin şekilde gösterilir.'),
+                        ...LocaleNameInputs::make('estimated_delivery_time', 'Tahmini süre (EN)', 'Tahmini süre (IT)'),
                         Forms\Components\FileUpload::make('image_path')
                             ->label('Görsel')
                             ->directory('interface_delivery_method_variations')
@@ -95,11 +97,12 @@ class InterfaceDeliveryMethodVariationResource extends Resource
                                     ->maxLength(255),
                                 ...LocaleNameInputs::make(),
                                 Forms\Components\Textarea::make('description')
-                                    ->label('Bilgi metni')
+                                    ->label('Bilgi metni (TR)')
                                     ->rows(3)
                                     ->maxLength(2000)
                                     ->nullable()
                                     ->helperText('Seçildiğinde alt panelde gösterilir.'),
+                                ...LocaleNameInputs::textAreas('description', 'Bilgi metni (EN)', 'Bilgi metni (IT)', 3, 2000),
                                 Forms\Components\TextInput::make('price_multiplier')
                                     ->label('Fiyat çarpanı (×)')
                                     ->numeric()

@@ -897,7 +897,7 @@
                                                         $rowPositionImage = is_object($customRow) ? ($customRow->position_image ?? null) : ($customRow['position_image'] ?? null);
                                                         $rowPositionImageUrl = filled($rowPositionImage) ? \App\Support\MediaUrl::public($rowPositionImage) : '';
                                                     @endphp
-                                                    <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-2.5 sm:gap-3 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}">
+                                                    <label class="customization-row-card flex w-full max-w-full cursor-pointer items-center gap-2.5 sm:gap-3 has-[input:checked]:[&_.customization-konum-text]:text-primary-800" data-konum="{{ $clKonum }}" data-konum-label="{{ $clKonumLabel }}">
                                                         <input type="checkbox" name="product_customization_row[]" value="{{ $rowId }}" class="peer sr-only customization-row-check" aria-label="{{ __('store.product.customization_row_check_aria') }} — {{ $clKonumLabel }}">
                                                         <span class="pointer-events-none relative flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border-2 border-slate-300 bg-white transition-all duration-200 peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100" aria-hidden="true">
                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 text-white opacity-0 transition-all duration-200 scale-75"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
@@ -911,7 +911,7 @@
                                                                             data-image-url="{{ $rowPositionImageUrl }}"
                                                                             data-image-title="{{ $clKonumLabel }}"
                                                                             data-image-alt="{{ $clKonumLabel }}"
-                                                                            aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonum]) }}">
+                                                                            aria-label="{{ __('store.product.customization_position_inspect_aria', ['position' => $clKonumLabel]) }}">
                                                                             <span class="customization-position-preview-thumb relative flex h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white ring-1 ring-slate-200/80">
                                                                                 <img src="{{ $rowPositionImageUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" decoding="async">
                                                                                 <span class="absolute inset-0 flex items-center justify-center bg-slate-900/25 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true">
@@ -1263,18 +1263,7 @@
                 'it' => 'it-IT',
                 default => 'tr-TR',
             };
-            $storeCatalogLabels = [];
-            foreach ((array) config('catalog_labels.labels', []) as $src => $rows) {
-                $locale = app()->getLocale();
-                $translated = (string) $src;
-                if ($locale === 'en' && ! empty($rows['en'])) {
-                    $translated = (string) $rows['en'];
-                } elseif ($locale === 'it') {
-                    $translated = (string) ($rows['it'] ?? $rows['en'] ?? $src);
-                }
-                $storeCatalogLabels[(string) $src] = $translated;
-                $storeCatalogLabels[mb_strtolower((string) $src, 'UTF-8')] = $translated;
-            }
+            $storeCatalogLabels = \App\Support\CatalogLabelTranslator::frontendMap();
         @endphp
         <script>window.storeLocale = @json($storeLocaleBcp47);</script>
         <script>window.storeCatalogLabels = @json($storeCatalogLabels);</script>
@@ -2054,6 +2043,7 @@
                         return {
                             row_id: String(cb && cb.value ? cb.value : ''),
                             konum: row.getAttribute('data-konum') || '',
+                            konum_label: row.getAttribute('data-konum-label') || catalogLabel(row.getAttribute('data-konum') || ''),
                             en_boy_cm: en_boy_cm,
                             en_cm: en,
                             boy_cm: boy,
@@ -2088,7 +2078,7 @@
                         var usesColor = printTechniqueUsesColorMultiplier(row.baski_slug_canonical || row.baski_slug);
                         var cfg = window.storeCurrencyConfig || {};
                         var parts = [];
-                        if (row.konum) parts.push(String(row.konum));
+                        if (row.konum_label || row.konum) parts.push(String(row.konum_label || catalogLabel(row.konum)));
                         if (row.en_boy_cm && row.en_boy_cm !== '—') parts.push(String(row.en_boy_cm));
                         if (row.baski_teknigi) parts.push(String(row.baski_teknigi));
                         if (usesColor && row.renk_sayisi) {
@@ -2206,7 +2196,7 @@
                         var renk = row.renk_sayisi && colUnit ? (String(row.renk_sayisi) + ' ' + colUnit) : (row.renk_sayisi || '—');
                         var colorMult = row.color_multiplier_price_display ? String(row.color_multiplier_price_display) : '—';
                         var print = row.baski_teknigi || '—';
-                        var position = row.konum || '—';
+                        var position = row.konum_label || catalogLabel(row.konum) || '—';
                         var rowNum = typeof index === 'number' ? (index + 1) : '';
                         var positionLbl = PU.customization_col_position || 'Konum';
                         var totalLbl = PU.customization_summary_total_price || 'Toplam fiyat';
@@ -2960,6 +2950,47 @@
                             var confirmed = (panel.getAttribute('data-multi-confirmed') || '') === '1';
                             var summary = panel.querySelector('.variation-step-summary');
                             var summaryVal = panel.querySelector('.variation-step-summary-value');
+                            var vType = panel.getAttribute('data-variation-type') || '';
+                            if (vType === 'label_type' || vType === 'packaging_type' || vType === 'delivery_type') {
+                                var structuredDelta = 1;
+                                var structuredSel = getVisibleSelectedProductOption(panel);
+                                if (structuredSel) structuredDelta = variationMultiplierFromAttr(structuredSel);
+                                if (isMulti) {
+                                    structuredDelta = 1;
+                                    panel.querySelectorAll('.product-option.option-selected').forEach(function(sel) {
+                                        if (sel.style.display === 'none') return;
+                                        structuredDelta *= variationMultiplierFromAttr(sel);
+                                    });
+                                }
+                                if (vType === 'label_type') {
+                                    var labelPayload = buildLabelTypeDraftPayload(panel);
+                                    if (labelPayload) {
+                                        var labelDisplay = Array.isArray(labelPayload)
+                                            ? formatLabelTypeDraftDisplay(panel)
+                                            : formatLabelTypeSelectionDisplay(labelPayload, structuredSel ? optionDisplayLabel(structuredSel) : '');
+                                        if (labelDisplay && labelDisplay !== '—') {
+                                            list.push({ name: name, value: labelDisplay, payload: labelPayload, priceDelta: structuredDelta, isMulti: Array.isArray(labelPayload) });
+                                        }
+                                    }
+                                } else if (vType === 'packaging_type') {
+                                    var packagingPayload = buildPackagingTypeDraftPayload(panel);
+                                    if (packagingPayload) {
+                                        var packagingDisplay = formatPackagingTypeSelectionDisplay(packagingPayload, structuredSel ? optionDisplayLabel(structuredSel) : '');
+                                        if (packagingDisplay && packagingDisplay !== '—') {
+                                            list.push({ name: name, value: packagingDisplay, payload: packagingPayload, priceDelta: structuredDelta, isMulti: false });
+                                        }
+                                    }
+                                } else if (vType === 'delivery_type') {
+                                    var deliveryPayload = buildDeliveryTypeDraftPayload(panel);
+                                    if (deliveryPayload) {
+                                        var deliveryDisplay = formatDeliveryTypeSelectionDisplay(deliveryPayload, structuredSel ? optionDisplayLabel(structuredSel) : '');
+                                        if (deliveryDisplay && deliveryDisplay !== '—') {
+                                            list.push({ name: name, value: deliveryDisplay, payload: deliveryPayload, priceDelta: structuredDelta, isMulti: false });
+                                        }
+                                    }
+                                }
+                                return;
+                            }
                             if (isMulti) {
                                 if (!confirmed) return;
                                 var values = [];
@@ -2985,27 +3016,7 @@
                                 if (sel) {
                                     delta = variationMultiplierFromAttr(sel);
                                 }
-                                if ((panel.getAttribute('data-variation-type') || '') === 'label_type') {
-                                    var labelPayload = buildLabelTypeVariationPayload(panel);
-                                    if (labelPayload) {
-                                        var labelDisplay = Array.isArray(labelPayload)
-                                            ? formatLabelTypeMultiSummary(panel)
-                                            : formatLabelTypeSelectionDisplay(labelPayload, sel ? optionDisplayLabel(sel) : '');
-                                        list.push({ name: name, value: labelDisplay, payload: labelPayload, priceDelta: delta, isMulti: Array.isArray(labelPayload) });
-                                    }
-                                } else if ((panel.getAttribute('data-variation-type') || '') === 'packaging_type') {
-                                    var packagingPayload = buildPackagingTypeVariationPayload(panel);
-                                    if (packagingPayload) {
-                                        var packagingDisplay = formatPackagingTypeSelectionDisplay(packagingPayload, sel ? optionDisplayLabel(sel) : '');
-                                        list.push({ name: name, value: packagingDisplay, payload: packagingPayload, priceDelta: delta, isMulti: false });
-                                    }
-                                } else if ((panel.getAttribute('data-variation-type') || '') === 'delivery_type') {
-                                    var deliveryPayload = buildDeliveryTypeVariationPayload(panel);
-                                    if (deliveryPayload) {
-                                        var deliveryDisplay = formatDeliveryTypeSelectionDisplay(deliveryPayload, sel ? optionDisplayLabel(sel) : '');
-                                        list.push({ name: name, value: deliveryDisplay, payload: deliveryPayload, priceDelta: delta, isMulti: false });
-                                    }
-                                } else if (summary && summaryVal && !summary.classList.contains('hidden')) {
+                                if (summary && summaryVal && !summary.classList.contains('hidden')) {
                                     value = (summaryVal.textContent || '').trim();
                                     if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false });
                                 } else if (sel && sel.style.display !== 'none') {
@@ -3360,6 +3371,24 @@
                         updateMultiContinueUi(container);
                     }
 
+                    function isVisibleSizeInput(inp) {
+                        if (!inp || !inp.isConnected) return false;
+                        var wrap = inp.closest('.size-table-wrap');
+                        if (wrap && wrap.classList.contains('hidden')) return false;
+                        var layout = inp.closest('.size-qty-mobile, .size-qty-desktop');
+                        if (layout && window.getComputedStyle(layout).display === 'none') return false;
+                        return true;
+                    }
+
+                    function syncPairedSizeInputs(inp) {
+                        var wrap = inp.closest('.size-table-wrap');
+                        if (!wrap) return;
+                        var size = inp.getAttribute('data-size');
+                        wrap.querySelectorAll('input[class*="-size-input"]').forEach(function(other) {
+                            if (other !== inp && other.getAttribute('data-size') === size) other.value = inp.value;
+                        });
+                    }
+
                     function getSizeQuantities() {
                         var sizeQuantities = {};
                         var sizeMultipliers = {};
@@ -3368,6 +3397,7 @@
                         var activeWrap = document.querySelector('.size-table-wrap:not(.hidden)');
                         if (activeWrap) {
                             activeWrap.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
+                                if (!isVisibleSizeInput(inp)) return;
                                 var size = inp.getAttribute('data-size');
                                 var val = parseInt(inp.value, 10) || 0;
                                 var mult = parseFloat(inp.getAttribute('data-price-multiplier'));
@@ -3401,6 +3431,7 @@
                             if (!totalEl) return;
                             var sum = 0;
                             wrap.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
+                                if (!isVisibleSizeInput(inp)) return;
                                 sum += parseInt(inp.value, 10) || 0;
                             });
                             totalEl.textContent = sum;
@@ -3506,10 +3537,18 @@
 
                         var custPayload = getCustomizationTablePayload();
                         var hasCustRows = !!(custPayload && custPayload.rows && custPayload.rows.length);
+                        var notesTa = document.getElementById('product-customization-notes-field');
+                        var notesTxt = notesTa ? String(notesTa.value || '').trim() : '';
+                        var hasSizeQty = false;
+                        if (sizeInfo.sizeQuantities) {
+                            Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
+                                if ((parseInt(sizeInfo.sizeQuantities[size], 10) || 0) > 0) hasSizeQty = true;
+                            });
+                        }
                         var emptyPrompt = '<p class="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-400">' +
                             escapeHtml(PU.summary_select_prompt) + '</p>';
 
-                        if (ordered.length === 0 && !hasCustRows) {
+                        if (ordered.length === 0 && !hasCustRows && !notesTxt && !hasSizeQty) {
                             summaryBody.innerHTML = emptyPrompt;
                         } else {
                             var parts = [];
@@ -3523,12 +3562,11 @@
                                         ? '<span class="mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
                                             escapeHtml(formatVariationMultiplier(mult)) + '</span>'
                                         : '';
-                                    return '<li class="flex items-start justify-between gap-3 px-3.5 py-2.5 sm:px-4">' +
-                                        '<span class="min-w-0 flex-1 text-sm text-slate-500">' + escapeHtml(variationDisplayLabel(item.name)) + '</span>' +
-                                        '<div class="max-w-[62%] shrink-0 text-right sm:max-w-[70%]">' +
-                                        '<p class="text-sm font-semibold leading-snug text-slate-900 break-words">' + escapeHtml(item.value) + '</p>' +
+                                    return '<li class="px-3.5 py-2.5 sm:px-4">' +
+                                        '<p class="text-sm text-slate-500">' + escapeHtml(variationDisplayLabel(item.name)) + '</p>' +
+                                        '<p class="mt-1 text-sm font-semibold leading-snug text-slate-900 break-words whitespace-pre-wrap">' + escapeHtml(item.value) + '</p>' +
                                         multBadge +
-                                        '</div></li>';
+                                        '</li>';
                                 }).join('');
                                 parts.push(
                                     '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
@@ -3543,7 +3581,18 @@
                                 parts.push(renderCustomizationSummarySectionHtml(custPayload.rows));
                             }
 
-                            if (ordered.length > 0) {
+                            if (notesTxt) {
+                                parts.push(
+                                    '<section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">' +
+                                    '<header class="border-b border-slate-100 bg-slate-50/90 px-3.5 py-2.5 sm:px-4">' +
+                                    '<h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">' +
+                                    escapeHtml(PU.customization_notes_label || 'Not') + '</h3></header>' +
+                                    '<p class="whitespace-pre-wrap px-3.5 py-3 text-sm font-medium leading-snug text-slate-900 sm:px-4">' +
+                                    escapeHtml(notesTxt) + '</p></section>'
+                                );
+                            }
+
+                            if (hasSizeQty || (ordered.length > 0 && sizeInfo.total > 0)) {
                                 var qtyRows = [];
                                 if (sizeInfo.sizeQuantities && Object.keys(sizeInfo.sizeQuantities).length) {
                                     Object.keys(sizeInfo.sizeQuantities).forEach(function(size) {
@@ -4040,6 +4089,56 @@
                         return payload;
                     }
 
+                    function buildLabelTypeDraftPayload(block) {
+                        if (!block) return null;
+                        if (isLabelTypeMulti(block)) {
+                            var saved = parseLabelSubPayloads(block);
+                            var active = (block.getAttribute('data-label-sub-flow-active') || '') === '1'
+                                ? getLabelTypeCurrentSubFlowOption(block)
+                                : null;
+                            var activeKey = active ? getLabelSubPayloadKey(active) : '';
+                            var result = [];
+                            getLabelTypeSelectedOptions(block).forEach(function(opt) {
+                                var key = getLabelSubPayloadKey(opt);
+                                if (!key) return;
+                                if (active && key === activeKey && labelOptionNeedsSubOptions(opt)) {
+                                    var live = buildLabelTypePayloadFromWrap(block, opt);
+                                    if (live) {
+                                        result.push(live);
+                                        return;
+                                    }
+                                }
+                                if (saved[key] !== undefined) {
+                                    result.push(saved[key]);
+                                    return;
+                                }
+                                var plain = (opt.getAttribute('data-option') || '').trim();
+                                if (plain) result.push(labelOptionNeedsSubOptions(opt) ? { option: plain } : plain);
+                            });
+                            return result.length ? result : null;
+                        }
+                        var sel = getLabelTypeSelectedOption(block);
+                        if (!sel) return null;
+                        var optionVal = (sel.getAttribute('data-option') || '').trim();
+                        if (!optionVal) return null;
+                        if (!labelOptionNeedsSubOptions(sel)) return optionVal;
+                        return buildLabelTypePayloadFromWrap(block, sel);
+                    }
+
+                    function formatLabelTypeDraftDisplay(block) {
+                        var payload = buildLabelTypeDraftPayload(block);
+                        if (!payload) return '';
+                        if (Array.isArray(payload)) {
+                            return payload.map(function(item) {
+                                if (typeof item === 'string') return catalogLabel(item);
+                                return formatLabelTypeSelectionDisplay(item, catalogLabel(String(item.option || '').trim()));
+                            }).filter(Boolean).join(' · ');
+                        }
+                        if (typeof payload === 'string') return catalogLabel(payload);
+                        var sel = getLabelTypeSelectedOption(block);
+                        return formatLabelTypeSelectionDisplay(payload, sel ? optionDisplayLabel(sel) : '');
+                    }
+
                     function formatLabelTypeMultiSummary(block) {
                         var payloads = parseLabelSubPayloads(block);
                         var parts = [];
@@ -4127,27 +4226,18 @@
                     }
 
                     function updateLabelTypePanelSummary(block) {
-                        if (isLabelTypeMulti(block)) {
-                            if ((block.getAttribute('data-label-options-confirmed') || '') === '1') {
-                                updatePanelSummary(block, formatLabelTypeMultiSummary(block) || '—');
+                        var display = formatLabelTypeDraftDisplay(block);
+                        if (!display) {
+                            if (isLabelTypeMulti(block)) {
+                                var names = getLabelTypeSelectedOptions(block).map(optionDisplayLabel).filter(Boolean);
+                                updatePanelSummary(block, names.join(', ') || '—');
                                 return;
                             }
-                            var names = getLabelTypeSelectedOptions(block).map(optionDisplayLabel).filter(Boolean);
-                            updatePanelSummary(block, names.join(', ') || '—');
+                            var sel = getLabelTypeSelectedOption(block);
+                            updatePanelSummary(block, sel ? optionDisplayLabel(sel) : '—');
                             return;
                         }
-                        var sel = getLabelTypeSelectedOption(block);
-                        if (!sel) {
-                            updatePanelSummary(block, '—');
-                            return;
-                        }
-                        var optionVal = (sel.getAttribute('data-option') || '').trim();
-                        if (!labelOptionNeedsSubOptions(sel) || (block.getAttribute('data-label-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionDisplayLabel(sel));
-                            return;
-                        }
-                        var payload = buildLabelTypeVariationPayload(block);
-                        updatePanelSummary(block, formatLabelTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
+                        updatePanelSummary(block, display);
                     }
 
                     function syncLabelTypeSubOptionsPanel(block) {
@@ -4371,12 +4461,20 @@
                         if (cont) cont.disabled = !isPackagingTypeSubOptionsValid(block);
                     }
 
-                    function buildPackagingTypeVariationPayload(block) {
+                    function buildPackagingTypeDraftPayload(block) {
                         var sel = getPackagingTypeSelectedOption(block);
                         if (!sel) return null;
                         var optionVal = (sel.getAttribute('data-option') || '').trim();
                         if (!optionVal) return null;
+                        return buildPackagingTypePayloadBody(block, sel, optionVal);
+                    }
+
+                    function buildPackagingTypeVariationPayload(block) {
                         if ((block.getAttribute('data-packaging-options-confirmed') || '') !== '1') return null;
+                        return buildPackagingTypeDraftPayload(block);
+                    }
+
+                    function buildPackagingTypePayloadBody(block, sel, optionVal) {
                         var wrap = block.querySelector('.packaging-type-suboptions-wrap');
                         if (!wrap) return { option: optionVal };
                         var payload = {
@@ -4439,12 +4537,7 @@
                             updatePanelSummary(block, '—');
                             return;
                         }
-                        var optionVal = (sel.getAttribute('data-option') || '').trim();
-                        if ((block.getAttribute('data-packaging-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionDisplayLabel(sel));
-                            return;
-                        }
-                        var payload = buildPackagingTypeVariationPayload(block);
+                        var payload = buildPackagingTypeDraftPayload(block);
                         updatePanelSummary(block, formatPackagingTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
                     }
 
@@ -4571,12 +4664,20 @@
                         if (cont) cont.disabled = !isDeliveryTypeSubOptionsValid(block);
                     }
 
-                    function buildDeliveryTypeVariationPayload(block) {
+                    function buildDeliveryTypeDraftPayload(block) {
                         var sel = getVisibleSelectedProductOption(block);
                         if (!sel) return null;
                         var optionVal = (sel.getAttribute('data-option') || '').trim();
                         if (!optionVal) return null;
+                        return buildDeliveryTypePayloadBody(block, sel, optionVal);
+                    }
+
+                    function buildDeliveryTypeVariationPayload(block) {
                         if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') return null;
+                        return buildDeliveryTypeDraftPayload(block);
+                    }
+
+                    function buildDeliveryTypePayloadBody(block, sel, optionVal) {
                         var payload = {
                             option: optionVal,
                             delivery_preset_id: sel.getAttribute('data-delivery-preset-id') || ''
@@ -4588,7 +4689,9 @@
                             var wrap = block.querySelector('.delivery-type-suboptions-wrap');
                             var subBtn = wrap ? wrap.querySelector('.delivery-type-suboption-btn[data-selected="1"]') : null;
                             if (subBtn) {
-                                payload.sub_option = subBtn.getAttribute('data-suboption-name') || '';
+                                var subName = subBtn.getAttribute('data-suboption-name') || '';
+                                var subLabelEl = subBtn.querySelector('span');
+                                payload.sub_option = catalogLabel(subName) || (subLabelEl ? String(subLabelEl.textContent || '').trim() : subName);
                                 payload.sub_option_id = subBtn.getAttribute('data-suboption-id') || '';
                                 var subMult = parseFloat(subBtn.getAttribute('data-price-multiplier'));
                                 if (isFinite(subMult) && subMult > 0) payload.sub_option_multiplier = subMult;
@@ -4606,11 +4709,15 @@
                         var parts = [optionLabel || catalogLabel(String(payload.option || '').trim())];
                         if (payload.sub_option) {
                             var tpl = PU.delivery_suboption_summary || 'Alt teslim: :suboption';
-                            parts.push(tpl.replace(':suboption', payload.sub_option));
+                            parts.push(tpl.replace(':suboption', catalogLabel(payload.sub_option)));
                         }
                         if (payload.estimated_delivery_time) {
                             var estTpl = PU.delivery_estimated_time_panel_prefix || 'Tahmini teslimat süresi:';
                             parts.push(estTpl + ' ' + payload.estimated_delivery_time);
+                        }
+                        if (payload.sub_option_description && String(payload.sub_option_description).trim()) {
+                            var subDescTpl = PU.label_description_summary || 'Açıklama: :text';
+                            parts.push(subDescTpl.replace(':text', String(payload.sub_option_description).trim()));
                         }
                         return parts.filter(Boolean).join(' · ');
                     }
@@ -4621,12 +4728,7 @@
                             updatePanelSummary(block, '—');
                             return;
                         }
-                        var optionVal = (sel.getAttribute('data-option') || '').trim();
-                        if ((block.getAttribute('data-delivery-options-confirmed') || '') !== '1') {
-                            updatePanelSummary(block, optionDisplayLabel(sel));
-                            return;
-                        }
-                        var payload = buildDeliveryTypeVariationPayload(block);
+                        var payload = buildDeliveryTypeDraftPayload(block);
                         updatePanelSummary(block, formatDeliveryTypeSelectionDisplay(payload, optionDisplayLabel(sel)) || optionDisplayLabel(sel));
                     }
 
@@ -5128,6 +5230,8 @@
                             if (turnOn) btn.setAttribute('data-selected', '1');
                             else btn.removeAttribute('data-selected');
                             updateLabelTypeContinueButton(block);
+                            updateLabelTypePanelSummary(block);
+                            updateVariationSummaryAndButton();
                         });
                     });
 
@@ -5136,6 +5240,8 @@
                             var block = input.closest('.product-variation-block');
                             if (!block) return;
                             updateLabelTypeContinueButton(block);
+                            updateLabelTypePanelSummary(block);
+                            updateVariationSummaryAndButton();
                         });
                     });
 
@@ -5171,6 +5277,8 @@
                                 else b.removeAttribute('data-selected');
                             });
                             updatePackagingTypeContinueButton(block);
+                            updatePackagingTypePanelSummary(block);
+                            updateVariationSummaryAndButton();
                         });
                     });
 
@@ -5186,6 +5294,8 @@
                                 else b.removeAttribute('data-selected');
                             });
                             updatePackagingTypeContinueButton(block);
+                            updatePackagingTypePanelSummary(block);
+                            updateVariationSummaryAndButton();
                         });
                     });
 
@@ -5201,6 +5311,8 @@
                                 else b.removeAttribute('data-selected');
                             });
                             updatePackagingTypeContinueButton(block);
+                            updatePackagingTypePanelSummary(block);
+                            updateVariationSummaryAndButton();
                         });
                     });
 
@@ -5231,6 +5343,7 @@
                             });
                             updateDeliverySubOptionInfo(wrap);
                             updateDeliveryTypeContinueButton(block);
+                            updateDeliveryTypePanelSummary(block);
                             updateVariationSummaryAndButton();
                             return;
                         }
@@ -6014,8 +6127,14 @@
                         quantityInput.addEventListener('change', updateVariationSummaryAndButton);
                     }
                     document.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
-                        inp.addEventListener('input', updateVariationSummaryAndButton);
-                        inp.addEventListener('change', updateVariationSummaryAndButton);
+                        inp.addEventListener('input', function() {
+                            syncPairedSizeInputs(inp);
+                            updateVariationSummaryAndButton();
+                        });
+                        inp.addEventListener('change', function() {
+                            syncPairedSizeInputs(inp);
+                            updateVariationSummaryAndButton();
+                        });
                     });
 
                     function confirmCustomizationStepAndAdvance() {
@@ -6068,6 +6187,12 @@
                         tbl.addEventListener('input', function(e) {
                             if (e.target && e.target.closest && e.target.closest('.customization-row-card')) syncCustUi();
                         });
+                        var notesField = document.getElementById('product-customization-notes-field');
+                        if (notesField) {
+                            notesField.addEventListener('input', function() {
+                                if (typeof updateVariationSummaryAndButton === 'function') updateVariationSummaryAndButton();
+                            });
+                        }
                         var skipCb = document.getElementById('customization-skip-checkbox');
                         if (skipCb) {
                             skipCb.addEventListener('change', function() {
@@ -6144,6 +6269,7 @@
                             var activeWrap = document.querySelector('.size-table-wrap:not(.hidden)');
                             if (activeWrap) {
                                 activeWrap.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
+                                    if (!isVisibleSizeInput(inp)) return;
                                     var size = inp.getAttribute('data-size');
                                     var val = parseInt(inp.value, 10) || 0;
                                     sizeQuantities[size] = val;

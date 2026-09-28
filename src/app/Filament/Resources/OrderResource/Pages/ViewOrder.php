@@ -23,6 +23,11 @@ class ViewOrder extends ViewRecord
                 ->icon('heroicon-o-table-cells')
                 ->url(fn () => route('store.proforma.excel', $this->record))
                 ->openUrlInNewTab(),
+            Actions\Action::make('orderFormPdf')
+                ->label(__('store.order_confirmation.download_order_form'))
+                ->icon('heroicon-o-clipboard-document-list')
+                ->url(fn () => route('store.order-form.pdf', $this->record))
+                ->openUrlInNewTab(),
         ];
     }
 }

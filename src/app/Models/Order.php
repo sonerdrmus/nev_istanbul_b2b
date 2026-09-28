@@ -20,6 +20,7 @@ class Order extends Model
         'shipping_method_id',
         'shipping_cost',
         'notes',
+        'locale',
     ];
 
     protected function casts(): array

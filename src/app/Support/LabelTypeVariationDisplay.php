@@ -15,6 +15,10 @@ class LabelTypeVariationDisplay
             return PackagingTypeVariationDisplay::formatPackagingSelection($value);
         }
 
+        if (is_array($value) && self::isDeliverySelection($value)) {
+            return self::formatDeliverySelection($value);
+        }
+
         if (is_array($value) && $value !== [] && ! self::isLabelTypeSelection($value)) {
             $parts = [];
             foreach ($value as $item) {
@@ -23,7 +27,7 @@ class LabelTypeVariationDisplay
                 } elseif (is_scalar($item)) {
                     $label = trim((string) $item);
                     if ($label !== '') {
-                        $parts[] = $label;
+                        $parts[] = CatalogLabelTranslator::label($label);
                     }
                 }
             }
@@ -37,7 +41,7 @@ class LabelTypeVariationDisplay
 
         if (is_array($value)) {
             $parts = array_values(array_filter(array_map(
-                static fn ($x) => is_scalar($x) ? trim((string) $x) : '',
+                static fn ($x) => is_scalar($x) ? CatalogLabelTranslator::label(trim((string) $x)) : '',
                 $value
             )));
 
@@ -48,12 +52,14 @@ class LabelTypeVariationDisplay
             return null;
         }
 
-        return (string) $value;
+        $text = trim((string) $value);
+
+        return $text === '' ? null : CatalogLabelTranslator::label($text);
     }
 
     public static function formatLabelTypeSelection(array $value): string
     {
-        $parts = [trim($value['option'])];
+        $parts = [CatalogLabelTranslator::label(trim($value['option']))];
 
         if (array_key_exists('custom_print', $value) && $value['custom_print'] !== null) {
             $parts[] = $value['custom_print']
@@ -95,5 +101,37 @@ class LabelTypeVariationDisplay
         }
 
         return implode(' · ', array_filter($parts, static fn ($part) => $part !== ''));
+    }
+
+    /** @param  array<string, mixed>  $value */
+    private static function isDeliverySelection(array $value): bool
+    {
+        return array_key_exists('sub_option', $value)
+            || array_key_exists('estimated_delivery_time', $value)
+            || array_key_exists('delivery_preset_id', $value);
+    }
+
+    /** @param  array<string, mixed>  $value */
+    private static function formatDeliverySelection(array $value): string
+    {
+        $parts = [];
+        $option = CatalogLabelTranslator::label(trim((string) ($value['option'] ?? '')));
+        if ($option !== '') {
+            $parts[] = $option;
+        }
+        $subOption = CatalogLabelTranslator::label(trim((string) ($value['sub_option'] ?? '')));
+        if ($subOption !== '') {
+            $parts[] = __('store.cart.detail_sub_option').': '.$subOption;
+        }
+        $estimate = CatalogLabelTranslator::label(trim((string) ($value['estimated_delivery_time'] ?? '')));
+        if ($estimate !== '') {
+            $parts[] = __('store.cart.detail_estimated_delivery').': '.$estimate;
+        }
+        $description = trim((string) ($value['sub_option_description'] ?? ''));
+        if ($description !== '') {
+            $parts[] = __('store.cart.detail_sub_option_description').': '.$description;
+        }
+
+        return implode(' · ', $parts);
     }
 }

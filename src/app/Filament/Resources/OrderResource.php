@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Support\VariationSelectionDisplay;
+use Illuminate\Support\HtmlString;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -13,7 +15,6 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Str;
 
 class OrderResource extends Resource
 {
@@ -124,6 +125,14 @@ class OrderResource extends Resource
                                     ->label('Ara Toplam')
                                     ->disabled()
                                     ->prefix('₺'),
+                                Forms\Components\Placeholder::make('variation_preview')
+                                    ->label('Seçimler ve girilen bilgiler')
+                                    ->content(function (Forms\Get $get): HtmlString {
+                                        $data = $get('variation_data');
+
+                                        return new HtmlString(VariationSelectionDisplay::panelHtml(is_array($data) ? $data : null));
+                                    })
+                                    ->columnSpanFull(),
                             ])
                             ->columns(4)
                             ->disabled()
@@ -154,7 +163,16 @@ class OrderResource extends Resource
                 \Filament\Infolists\Components\Section::make('Müşteri Bilgileri')
                     ->schema([
                         TextEntry::make('customer_name')->label('Müşteri'),
+                        TextEntry::make('user.company.name')->label('Firma')->placeholder('—'),
                         TextEntry::make('customer_email')->label('E-posta')->copyable(),
+                        TextEntry::make('locale')
+                            ->label('Sipariş dili')
+                            ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                'tr' => 'Türkçe',
+                                'en' => 'İngilizce',
+                                'it' => 'İtalyanca',
+                                default => 'Kayıtlı değil',
+                            }),
                         TextEntry::make('customer_phone')->label('Telefon')->visible(fn ($record): bool => filled($record->customer_phone)),
                         TextEntry::make('customer_address')->label('Adres / Teslimat Notu')->columnSpanFull()->visible(fn ($record): bool => filled($record->customer_address)),
                     ])
@@ -190,10 +208,10 @@ class OrderResource extends Resource
                                     ->money('TRY')
                                     ->weight('bold'),
                                 TextEntry::make('variation_data')
-                                    ->label('Seçilen varyasyonlar ve alt seçimler')
+                                    ->label('Seçimler ve girilen bilgiler')
                                     ->state(fn (OrderItem $record): string => self::formatVariationDataForPanel($record->variation_data))
                                     ->html()
-                                    ->columnSpan(4),
+                                    ->columnSpanFull(),
                             ])
                             ->columns(4)
                             ->columnSpanFull(),
@@ -203,50 +221,7 @@ class OrderResource extends Resource
 
     private static function formatVariationDataForPanel(mixed $value): string
     {
-        if (! is_array($value) || $value === []) {
-            return '<span class="text-gray-500">—</span>';
-        }
-
-        $render = function (mixed $current, ?string $label = null) use (&$render): string {
-            if (is_array($current)) {
-                $items = [];
-                foreach ($current as $key => $child) {
-                    if (in_array((string) $key, ['extra_price_try', 'price_multiplier'], true)) {
-                        continue;
-                    }
-                    $childLabel = is_int($key) ? null : Str::of((string) $key)->replace('_', ' ')->headline()->toString();
-                    $items[] = $render($child, $childLabel);
-                }
-                if ($items === []) {
-                    return '';
-                }
-                $heading = $label !== null
-                    ? '<p class="border-b border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-800 dark:border-gray-700 dark:text-gray-100">'.e($label).'</p>'
-                    : '';
-                return '<div class="overflow-hidden rounded-lg border border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-900">'.$heading.'<div class="space-y-1 px-3 py-2">'.implode('', $items).'</div></div>';
-            }
-
-            if ($current === null || $current === '') {
-                return '';
-            }
-
-            $display = is_bool($current)
-                ? ($current ? 'Evet' : 'Hayır')
-                : (string) $current;
-            $labelHtml = $label !== null ? '<span class="font-semibold text-gray-700 dark:text-gray-300">'.e($label).'</span>' : '';
-
-            return '<div class="grid grid-cols-[minmax(8rem,auto)_minmax(0,1fr)] gap-x-3 border-b border-gray-100 py-1.5 text-sm last:border-b-0 dark:border-gray-700/70">'.$labelHtml.'<span class="break-words font-medium text-gray-950 dark:text-white">'.e($display).'</span></div>';
-        };
-
-        $rendered = [];
-        foreach ($value as $key => $item) {
-            if (in_array((string) $key, ['quick_order', 'product_customization'], true) && $item === null) {
-                continue;
-            }
-            $rendered[] = $render($item, Str::of((string) $key)->replace('_', ' ')->headline()->toString());
-        }
-
-        return '<div class="space-y-2 text-left">'.implode('', array_filter($rendered)).'</div>';
+        return VariationSelectionDisplay::panelHtml($value);
     }
 
     public static function table(Table $table): Table

@@ -47,19 +47,19 @@
                 <table class="box">
                     <tr><td class="grey meta-title" colspan="2">{{ $data['title'] }}</td></tr>
                     <tr>
-                        <td class="meta-label">Date</td>
+                        <td class="meta-label">{{ __('store.proforma.date') }}</td>
                         <td class="meta-val">{{ $data['date'] }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">Invoice NR</td>
+                        <td class="meta-label">{{ __('store.proforma.invoice_nr') }}</td>
                         <td class="meta-val">{{ $data['invoice_number'] }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">Order Nr.</td>
+                        <td class="meta-label">{{ __('store.proforma.order_nr') }}</td>
                         <td class="meta-val">{{ $data['order_number'] }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">Project Nr.</td>
+                        <td class="meta-label">{{ __('store.proforma.project_nr') }}</td>
                         <td class="meta-val">{{ $data['project_number'] }}</td>
                     </tr>
                 </table>
@@ -70,17 +70,17 @@
     <table style="margin-top: 12px;">
         <tr>
             <td style="width: 58%; padding-right: 10px;">
-                <div class="bar">Bill To</div>
+                <div class="bar">{{ __('store.proforma.bill_to') }}</div>
                 <div class="bill">{!! nl2br(e($data['bill_to_text'])) !!}</div>
             </td>
             <td>
                 <table class="box">
                     <tr>
-                        <td style="width: 45%;">PRODUCTION TIMES</td>
+                        <td style="width: 45%;">{{ __('store.proforma.production_times') }}</td>
                         <td>{{ $data['production_times'] }}</td>
                     </tr>
                     <tr>
-                        <td>Delivery Type:</td>
+                        <td>{{ __('store.proforma.delivery_type') }}</td>
                         <td>{{ $data['delivery_type'] }}</td>
                     </tr>
                 </table>
@@ -91,7 +91,7 @@
     <table class="items" style="margin-top: 10px;">
         <thead>
             <tr>
-                <th style="width: 46%;">ITEMS</th>
+                <th style="width: 46%;">{{ __('store.proforma.items') }}</th>
                 <th class="center" style="width: 12%;">{{ __('store.proforma.qty') }}</th>
                 <th class="center" style="width: 18%;">{{ __('store.proforma.unit_price') }}</th>
                 <th class="center" style="width: 24%;">{{ $data['items_header_right'] }}</th>
@@ -108,16 +108,16 @@
             @endforeach
             <tr>
                 <td colspan="2"></td>
-                <td class="center"><strong>FOB - PRICE</strong></td>
+                <td class="center"><strong>{{ __('store.proforma.subtotal') }}</strong></td>
                 <td class="num">{{ $data['currency_code'] }} {{ $data['goods_formatted'] }}</td>
             </tr>
             <tr>
-                <td colspan="2"><strong>SHIPPING PREFERENCE ;</strong> {{ $data['shipping_preference'] }}</td>
-                <td class="center"><strong>SHIPPING COST</strong></td>
+                <td colspan="2"><strong>{{ __('store.proforma.shipping_preference') }}</strong> {{ $data['shipping_preference'] }}</td>
+                <td class="center"><strong>{{ __('store.proforma.shipping') }}</strong></td>
                 <td class="num">{{ $data['currency_code'] }} {{ $data['shipping_formatted'] }}</td>
             </tr>
             <tr class="total-bar">
-                <td colspan="3">TOTAL</td>
+                <td colspan="3">{{ __('store.proforma.total') }}</td>
                 <td class="num">{{ $data['currency_code'] }} {{ $data['total_formatted'] }}</td>
             </tr>
         </tbody>
@@ -125,34 +125,34 @@
 
     <div class="pay">{{ $data['payment_line'] }}</div>
 
-    <div class="bar">BANK DETAILS</div>
+    <div class="bar">{{ __('store.proforma.bank_heading') }}</div>
     <table style="margin-top: 0;">
         <tr>
             @if($data['primary_bank'])
                 <td style="width: 50%; padding-right: 8px;">
                     <table>
-                        <tr><td class="bank-label">Bank Name    :</td><td>{{ $data['primary_bank']['bank_name'] }}</td></tr>
-                        <tr><td class="bank-label">Account Name:</td><td>{{ $data['primary_bank']['holder'] }}</td></tr>
-                        <tr><td class="bank-label">Branch          :</td><td>{{ $data['primary_bank']['branch'] }}</td></tr>
-                        <tr><td class="bank-label">Swift No       :</td><td>{{ $data['swift'] }}</td></tr>
-                        <tr><td class="bank-label">Account No   :</td><td>{{ $data['primary_bank']['account_no'] }}</td></tr>
-                        <tr><td class="bank-label">Iban No   TL      :</td><td>{{ $data['primary_bank']['iban_try'] }}</td></tr>
-                        <tr><td class="bank-label">Iban N    Eur    :</td><td>{{ $data['primary_bank']['iban_eur'] }}</td></tr>
-                        <tr><td class="bank-label">Iban No  Usd      :</td><td>{{ $data['primary_bank']['iban_usd'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.bank_name') }}</td><td>{{ $data['primary_bank']['bank_name'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.account_name') }}</td><td>{{ $data['primary_bank']['holder'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.branch') }}</td><td>{{ $data['primary_bank']['branch'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.swift') }}</td><td>{{ $data['swift'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.account_no') }}</td><td>{{ $data['primary_bank']['account_no'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_try') }}</td><td>{{ $data['primary_bank']['iban_try'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_eur') }}</td><td>{{ $data['primary_bank']['iban_eur'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_usd') }}</td><td>{{ $data['primary_bank']['iban_usd'] }}</td></tr>
                     </table>
                 </td>
             @endif
             @if($data['secondary_bank'])
                 <td style="width: 50%;">
                     <table>
-                        <tr><td class="bank-label">Bank Name    :</td><td>{{ $data['secondary_bank']['bank_name'] }}</td></tr>
-                        <tr><td class="bank-label">Account Name:</td><td>{{ $data['secondary_bank']['holder'] }}</td></tr>
-                        <tr><td class="bank-label">Branch          :</td><td>{{ $data['secondary_bank']['branch'] }}</td></tr>
-                        <tr><td class="bank-label">Swift No       :</td><td>{{ $data['swift'] }}</td></tr>
-                        <tr><td class="bank-label">Account No   :</td><td>{{ $data['secondary_bank']['account_no'] }}</td></tr>
-                        <tr><td class="bank-label">Iban No   TL      :</td><td>{{ $data['secondary_bank']['iban_try'] }}</td></tr>
-                        <tr><td class="bank-label">Iban N    Eur    :</td><td>{{ $data['secondary_bank']['iban_eur'] }}</td></tr>
-                        <tr><td class="bank-label">Iban No  Usd      :</td><td>{{ $data['secondary_bank']['iban_usd'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.bank_name') }}</td><td>{{ $data['secondary_bank']['bank_name'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.account_name') }}</td><td>{{ $data['secondary_bank']['holder'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.branch') }}</td><td>{{ $data['secondary_bank']['branch'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.swift') }}</td><td>{{ $data['swift'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.account_no') }}</td><td>{{ $data['secondary_bank']['account_no'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_try') }}</td><td>{{ $data['secondary_bank']['iban_try'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_eur') }}</td><td>{{ $data['secondary_bank']['iban_eur'] }}</td></tr>
+                        <tr><td class="bank-label">{{ __('store.proforma.iban_usd') }}</td><td>{{ $data['secondary_bank']['iban_usd'] }}</td></tr>
                     </table>
                 </td>
             @endif
@@ -160,9 +160,9 @@
     </table>
 
     <div class="footer">
-        Phone: {{ $data['company_phone'] }}
-        &nbsp;&nbsp; E-mail: {{ $data['company_email'] }}
-        &nbsp;/&nbsp; Web : {{ $data['company_web'] }}
+        {{ __('store.proforma.phone') }}: {{ $data['company_phone'] }}
+        &nbsp;&nbsp; {{ __('store.proforma.email') }}: {{ $data['company_email'] }}
+        &nbsp;/&nbsp; {{ __('store.proforma.web') }}: {{ $data['company_web'] }}
     </div>
 </body>
 </html>

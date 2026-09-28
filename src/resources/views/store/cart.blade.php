@@ -5,69 +5,6 @@
 @section('content')
     @php
         $selectedCurrency = $selectedCurrency ?? \App\Models\Currency::getDefault();
-        $totalSymbol = $selectedCurrency?->symbol ?? '₺';
-        $variationDetailLabel = static function (string $key): string {
-            return match ($key) {
-                'option' => __('store.cart.detail_option'),
-                'custom_print' => __('store.cart.detail_custom_print'),
-                'custom_print_artwork' => __('store.cart.detail_custom_print_artwork'),
-                'positions' => __('store.cart.detail_positions'),
-                'description' => __('store.cart.detail_description'),
-                'material' => __('store.cart.detail_material'),
-                'customization_label', 'customization' => __('store.cart.detail_customization'),
-                'barcode_area' => __('store.cart.detail_barcode_area'),
-                'sticker_design_label' => __('store.cart.detail_sticker_design'),
-                default => \Illuminate\Support\Str::of($key)->replace('_', ' ')->headline(),
-            };
-        };
-        $formatVariationDetailValue = static function (mixed $value, string $key = ''): string {
-            if (is_bool($value)) {
-                return $value ? __('store.cart.detail_yes') : __('store.cart.detail_no');
-            }
-            if ($key === 'custom_print_artwork') {
-                return match ((string) $value) {
-                    'customer_send' => __('store.product.label_custom_print_artwork_summary_customer'),
-                    'company_prepare' => __('store.product.label_custom_print_artwork_summary_company'),
-                    default => (string) $value,
-                };
-            }
-            if ($key === 'positions' && is_array($value)) {
-                return implode(', ', array_map(static fn ($position) => match ((string) $position) {
-                    'front' => __('store.product.label_position_front'),
-                    'back' => __('store.product.label_position_back'),
-                    default => (string) $position,
-                }, $value));
-            }
-            return is_scalar($value) ? trim((string) $value) : '';
-        };
-        $variationDetailRows = static function (mixed $value, string $parentKey = '') use (&$variationDetailRows, $variationDetailLabel, $formatVariationDetailValue): array {
-            if (! is_array($value)) {
-                $formatted = $formatVariationDetailValue($value, $parentKey);
-                return $formatted === '' ? [] : [['label' => $variationDetailLabel($parentKey), 'value' => $formatted]];
-            }
-            $rows = [];
-            foreach ($value as $key => $childValue) {
-                if (in_array((string) $key, ['extra_price_try', 'price_multiplier'], true)) {
-                    continue;
-                }
-                if ((string) $key === 'positions') {
-                    $formatted = $formatVariationDetailValue($childValue, (string) $key);
-                    if ($formatted !== '') {
-                        $rows[] = ['label' => $variationDetailLabel((string) $key), 'value' => $formatted];
-                    }
-                    continue;
-                }
-                if (is_array($childValue)) {
-                    $rows = array_merge($rows, $variationDetailRows($childValue, (string) $key));
-                    continue;
-                }
-                $formatted = $formatVariationDetailValue($childValue, (string) $key);
-                if ($formatted !== '') {
-                    $rows[] = ['label' => $variationDetailLabel((string) $key), 'value' => $formatted];
-                }
-            }
-            return $rows;
-        };
     @endphp
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-slate-900 tracking-tight">{{ __('store.cart.title') }}</h1>
@@ -128,7 +65,7 @@
                                                                 <ul class="mt-0.5 ml-3 list-disc space-y-0.5 text-slate-600">
                                                                     @foreach($custRows as $crow)
                                                                         <li>
-                                                                            {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                            {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['konum'] ?? '')) }} — {{ $crow['en_boy_cm'] ?? '' }}
                                                                             @if(!empty($crow['alan_cm2_display']))
                                                                                 · {{ __('store.product.customization_area_cm2', ['area' => $crow['alan_cm2_display']]) }}
                                                                             @elseif(!empty($crow['alan_m2_display']))
@@ -140,22 +77,31 @@
                                                                             @if(!empty($crow['renk_sayisi']))
                                                                                 · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
                                                                             @endif
-                                                                            · {{ $crow['baski_teknigi'] ?? '' }}
+                                                                            · {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['baski_teknigi'] ?? '')) }}
                                                                         </li>
                                                                     @endforeach
                                                                 </ul>
                                                             </div>
                                                         @endif
                                                     @else
-                                                        @php $detailRows = $variationDetailRows($optValue, (string) $optName); @endphp
+                                                        @php $detailRows = \App\Support\VariationSelectionDisplay::rows($optValue); @endphp
                                                         @if($detailRows !== [])
                                                             <div class="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                                                                <p class="text-sm font-semibold text-slate-800">{{ \App\Support\CatalogLabelTranslator::label((string) $optName) }}</p>
                                                                 <dl class="mt-1.5 divide-y divide-slate-100">
                                                                     @foreach($detailRows as $detailRow)
-                                                                        <div class="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-3 gap-y-0.5 py-1 first:pt-0 last:pb-0 text-sm">
-                                                                            <dt class="font-medium text-slate-500">{{ $detailRow['label'] }}</dt>
-                                                                            <dd class="min-w-0 break-words text-slate-800">{{ $detailRow['value'] }}</dd>
-                                                                        </div>
+                                                                        @if(!empty($detailRow['divider']))
+                                                                            <div class="border-t border-slate-200"></div>
+                                                                        @else
+                                                                            <div class="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-3 gap-y-0.5 py-1 first:pt-0 last:pb-0 text-sm">
+                                                                                @if(($detailRow['label'] ?? '') !== '')
+                                                                                    <dt class="font-medium text-slate-500">{{ $detailRow['label'] }}</dt>
+                                                                                    <dd class="min-w-0 whitespace-pre-wrap break-words text-slate-800">{{ $detailRow['value'] }}</dd>
+                                                                                @else
+                                                                                    <dd class="col-span-2 min-w-0 whitespace-pre-wrap break-words text-slate-800">{{ $detailRow['value'] }}</dd>
+                                                                                @endif
+                                                                            </div>
+                                                                        @endif
                                                                     @endforeach
                                                                 </dl>
                                                             </div>
@@ -168,7 +114,7 @@
                                         @if(!empty($item->size_quantities) && is_array($item->size_quantities))
                                             @php $sizeParts = array_filter($item->size_quantities, fn($q) => (int)$q > 0); @endphp
                                             @if(count($sizeParts) > 0)
-                                                <p class="hidden mt-1 text-xs text-slate-500">{{ __('store.cart.size_breakdown') }} @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</p>
+                                                <p class="mt-2 text-sm text-slate-600">{{ __('store.cart.size_breakdown') }} @foreach($sizeParts as $size => $qty){{ $size }}: {{ $qty }}@if(!$loop->last), @endif @endforeach</p>
                                             @endif
                                         @endif
                                         @if(!empty($item->quick_order['notes'] ?? null))

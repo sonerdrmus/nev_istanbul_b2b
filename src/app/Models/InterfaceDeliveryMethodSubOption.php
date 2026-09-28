@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FillsLocalizedNameFromCatalog;
 use App\Models\Concerns\HasLocalizedName;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,6 +20,8 @@ class InterfaceDeliveryMethodSubOption extends Model
         'name_en',
         'name_it',
         'description',
+        'description_en',
+        'description_it',
         'price_multiplier',
         'sort_order',
         'is_default',
@@ -33,6 +36,11 @@ class InterfaceDeliveryMethodSubOption extends Model
             'is_default' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function getLocalizedDescriptionAttribute(): string
+    {
+        return LocaleContent::display($this->description, $this->description_en ?? null, $this->description_it ?? null);
     }
 
     public function deliveryMethod(): BelongsTo

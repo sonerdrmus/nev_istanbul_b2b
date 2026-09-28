@@ -35,6 +35,31 @@ class StoreController extends Controller
         return (string) $productId;
     }
 
+    private function variationValueIsBlank(mixed $value): bool
+    {
+        if (is_array($value)) {
+            if (array_key_exists('option', $value)) {
+                return $this->variationValueIsBlank($value['option']);
+            }
+            if ($value === []) {
+                return true;
+            }
+            foreach ($value as $item) {
+                if (! $this->variationValueIsBlank($item)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($value === null || is_bool($value)) {
+            return true;
+        }
+
+        return trim((string) $value) === '';
+    }
+
     private function getCart(): array
     {
         return session('cart', []);
@@ -532,20 +557,7 @@ class StoreController extends Controller
                     if (! isset($variationData[$variationName])) {
                         return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                     }
-                    $val = $variationData[$variationName];
-                    if (is_array($val) && array_key_exists('option', $val)) {
-                        if (trim((string) ($val['option'] ?? '')) === '') {
-                            return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
-                        }
-
-                        continue;
-                    }
-                    if (is_array($val)) {
-                        $nonEmpty = array_values(array_filter($val, fn ($x) => $x !== null && trim((string) $x) !== ''));
-                        if ($nonEmpty === []) {
-                            return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
-                        }
-                    } elseif ((string) $val === '') {
+                    if ($this->variationValueIsBlank($variationData[$variationName])) {
                         return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                     }
                 }
@@ -713,6 +725,9 @@ class StoreController extends Controller
                 'shipping_method_id' => $shippingMethod?->id,
                 'shipping_cost' => $shippingCost,
                 'notes' => $request->notes,
+                'locale' => in_array(app()->getLocale(), \App\Http\Middleware\SetStoreLocale::SUPPORTED, true)
+                    ? app()->getLocale()
+                    : 'tr',
             ]);
 
             foreach ($cartItems as $item) {

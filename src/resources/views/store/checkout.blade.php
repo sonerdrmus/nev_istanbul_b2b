@@ -125,7 +125,7 @@
                     @foreach($cartItems as $item)
                         <li class="pt-3 first:pt-0">
                             <div class="flex justify-between text-sm">
-                                <span class="text-slate-600">{{ $item->product->name }} × {{ $item->quantity }}</span>
+                                <span class="text-slate-600">{{ $item->product->localized_name }} × {{ $item->quantity }}</span>
                                 @php
     $convertedSubtotal = $selectedCurrency->convertFromTRY($item->subtotal);
 @endphp
@@ -156,7 +156,7 @@
                                                     <ul class="mt-0.5 ml-3 list-disc space-y-0.5">
                                                         @foreach($custRowsChk as $crow)
                                                             <li>
-                                                                {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['konum'] ?? '')) }} — {{ $crow['en_boy_cm'] ?? '' }}
                                                                 @if(!empty($crow['alan_cm2_display']))
                                                                     · {{ __('store.product.customization_area_cm2', ['area' => $crow['alan_cm2_display']]) }}
                                                                 @elseif(!empty($crow['alan_m2_display']))
@@ -168,19 +168,29 @@
                                                                 @if(!empty($crow['renk_sayisi']))
                                                                     · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
                                                                 @endif
-                                                                · {{ $crow['baski_teknigi'] ?? '' }}
+                                                                · {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['baski_teknigi'] ?? '')) }}
                                                             </li>
                                                         @endforeach
                                                     </ul>
                                                 </li>
                                             @endif
                                         @else
-                                            @php
-                                                $varDispChk = \App\Support\LabelTypeVariationDisplay::formatVariationValue($optValue);
-                                                $showVarChk = $varDispChk !== null && $varDispChk !== '';
-                                            @endphp
-                                            @if($showVarChk)
-                                                <li><span class="font-medium text-slate-600">{{ $optName }}:</span> {{ $varDispChk }}</li>
+                                            @php $detailRowsChk = \App\Support\VariationSelectionDisplay::rows($optValue); @endphp
+                                            @if($detailRowsChk !== [])
+                                                <li>
+                                                    <span class="font-medium text-slate-600">{{ \App\Support\CatalogLabelTranslator::label((string) $optName) }}</span>
+                                                    <ul class="mt-0.5 space-y-0.5">
+                                                        @foreach($detailRowsChk as $detailRow)
+                                                            @if(!empty($detailRow['divider']))
+                                                                <li class="my-1 border-t border-slate-100"></li>
+                                                            @elseif(($detailRow['label'] ?? '') !== '')
+                                                                <li class="whitespace-pre-wrap"><span class="font-medium text-slate-600">{{ $detailRow['label'] }}:</span> {{ $detailRow['value'] }}</li>
+                                                            @else
+                                                                <li class="whitespace-pre-wrap">{{ $detailRow['value'] }}</li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+                                                </li>
                                             @endif
                                         @endif
                                     @endforeach

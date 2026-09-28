@@ -56,11 +56,12 @@ class InterfaceFabricTypeVariationResource extends Resource
                                     ->nullable()
                                     ->helperText('Opsiyonel. Örn. doku / kumaş örneği swatch görseli.'),
                                 Forms\Components\Textarea::make('detail_text')
-                                    ->label('Detaylı bilgi metni')
+                                    ->label('Detaylı bilgi metni (TR)')
                                     ->rows(4)
                                     ->maxLength(5000)
                                     ->nullable()
                                     ->helperText('Opsiyonel. Mağazada kumaş adının yanında info ikonu ve «detaylı bilgi» ile modalda açılır.'),
+                                ...LocaleNameInputs::textAreas('detail_text', 'Detaylı bilgi (EN)', 'Detaylı bilgi (IT)', 4, 5000),
                             ])
                             ->columns(1),
                         Forms\Components\TextInput::make('price_multiplier')

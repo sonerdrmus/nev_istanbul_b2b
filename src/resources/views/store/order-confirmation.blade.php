@@ -24,7 +24,7 @@
                         @foreach($order->items as $item)
                             <li class="pb-2 border-b border-slate-100 last:border-0">
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-slate-700 font-medium">{{ $item->product_name }} × {{ $item->quantity }}</span>
+                                    <span class="text-slate-700 font-medium">{{ \App\Support\CatalogLabelTranslator::label((string) $item->product_name) }} × {{ $item->quantity }}</span>
                                     @php
     $convertedSubtotal = $selectedCurrency->convertFromTRY($item->subtotal);
 @endphp
@@ -60,7 +60,7 @@
                                                         <ul class="mt-0.5 ml-3 list-disc space-y-0.5">
                                                             @foreach($custRowsOc as $crow)
                                                                 <li>
-                                                                    {{ $crow['konum'] ?? '' }} — {{ $crow['en_boy_cm'] ?? '' }}
+                                                                    {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['konum'] ?? '')) }} — {{ $crow['en_boy_cm'] ?? '' }}
                                                                     @if(!empty($crow['alan_cm2_display']))
                                                                         · {{ __('store.product.customization_area_cm2', ['area' => $crow['alan_cm2_display']]) }}
                                                                     @elseif(!empty($crow['alan_m2_display']))
@@ -72,16 +72,29 @@
                                                                     @if(!empty($crow['renk_sayisi']))
                                                                         · {{ $crow['renk_sayisi'] }} {{ __('store.product.customization_colors_unit') }}
                                                                     @endif
-                                                                    · {{ $crow['baski_teknigi'] ?? '' }}
+                                                                    · {{ \App\Support\CatalogLabelTranslator::label((string) ($crow['baski_teknigi'] ?? '')) }}
                                                                 </li>
                                                             @endforeach
                                                         </ul>
                                                     </li>
                                                 @endif
                                             @else
-                                                @php $dispOc = \App\Support\LabelTypeVariationDisplay::formatVariationValue($optValue); @endphp
-                                                @if($dispOc !== null && $dispOc !== '')
-                                                    <li><span class="font-medium text-slate-700">{{ $optName }}:</span> {{ $dispOc }}</li>
+                                                @php $detailRowsOc = \App\Support\VariationSelectionDisplay::rows($optValue); @endphp
+                                                @if($detailRowsOc !== [])
+                                                    <li>
+                                                        <span class="font-medium text-slate-700">{{ \App\Support\CatalogLabelTranslator::label((string) $optName) }}</span>
+                                                        <ul class="mt-0.5 space-y-0.5">
+                                                            @foreach($detailRowsOc as $detailRow)
+                                                                @if(!empty($detailRow['divider']))
+                                                                    <li class="my-1 border-t border-slate-100"></li>
+                                                                @elseif(($detailRow['label'] ?? '') !== '')
+                                                                    <li class="whitespace-pre-wrap"><span class="font-medium text-slate-700">{{ $detailRow['label'] }}:</span> {{ $detailRow['value'] }}</li>
+                                                                @else
+                                                                    <li class="whitespace-pre-wrap">{{ $detailRow['value'] }}</li>
+                                                                @endif
+                                                            @endforeach
+                                                        </ul>
+                                                    </li>
                                                 @endif
                                             @endif
                                         @endforeach
@@ -145,6 +158,10 @@
                     <a href="{{ route('store.proforma.pdf', ['order' => $order, 'currency' => $selectedCurrency?->code]) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {{ __('store.order_confirmation.download_pdf') }}
+                    </a>
+                    <a href="{{ route('store.order-form.pdf', ['order' => $order, 'currency' => $selectedCurrency?->code]) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 font-medium text-sm hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {{ __('store.order_confirmation.download_order_form') }}
                     </a>
                     <a href="{{ route('store.proforma.excel', ['order' => $order, 'currency' => $selectedCurrency?->code]) }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 font-medium text-sm hover:bg-slate-50 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>

@@ -85,6 +85,7 @@
                                         <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold {{ $statusClass($order->status) }}">{{ $statusLabel($order->status) }}</span>
                                         <span class="text-sm font-semibold text-slate-900">{{ number_format((float) $order->total, 2, ',', '.') }} ₺</span>
                                         <a href="{{ route('store.proforma.pdf', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_pdf') }}</a>
+                                        <a href="{{ route('store.order-form.pdf', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_order_form') }}</a>
                                         <a href="{{ route('store.proforma.excel', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_excel') }}</a>
                                     </div>
                                 </div>

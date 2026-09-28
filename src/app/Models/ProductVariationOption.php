@@ -60,6 +60,18 @@ class ProductVariationOption extends Model
         return LocaleContent::display($this->info_text, $this->info_text_en, $this->info_text_it);
     }
 
+    /**
+     * Option-level EN/IT wins. Empty locale fields fall back to the linked preset translation.
+     */
+    public function storeInfoText(?string $presetTr, ?string $presetEn = null, ?string $presetIt = null): string
+    {
+        return LocaleContent::display(
+            filled($this->info_text) ? $this->info_text : $presetTr,
+            filled($this->info_text_en) ? $this->info_text_en : $presetEn,
+            filled($this->info_text_it) ? $this->info_text_it : $presetIt,
+        );
+    }
+
     protected static function booted(): void
     {
         static::saving(function (ProductVariationOption $option): void {

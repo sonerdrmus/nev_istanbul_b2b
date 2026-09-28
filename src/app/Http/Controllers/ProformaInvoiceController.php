@@ -24,6 +24,13 @@ class ProformaInvoiceController extends Controller
         return $proforma->downloadExcel($order, $this->currency($request));
     }
 
+    public function orderForm(Request $request, Order $order, ProformaInvoiceService $proforma)
+    {
+        $this->authorizeOrder($order);
+
+        return $proforma->downloadOrderFormPdf($order, $this->currency($request));
+    }
+
     private function authorizeOrder(Order $order): void
     {
         abort_unless($order->isAccessibleBy(auth()->user()), 403);

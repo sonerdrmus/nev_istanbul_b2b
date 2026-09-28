@@ -30,4 +30,30 @@ final class LocaleNameInputs
                 ->helperText($helper),
         ];
     }
+
+    /**
+     * @return array<int, Forms\Components\Textarea>
+     */
+    public static function textAreas(
+        string $base,
+        string $labelEn,
+        string $labelIt,
+        int $rows = 3,
+        int $maxLength = 5000,
+    ): array {
+        $helper = 'Yalnızca mağaza gösterimi. TR metin değişmez.';
+
+        return [
+            Forms\Components\Textarea::make($base.'_en')
+                ->label($labelEn)
+                ->rows($rows)
+                ->maxLength($maxLength)
+                ->helperText($helper),
+            Forms\Components\Textarea::make($base.'_it')
+                ->label($labelIt)
+                ->rows($rows)
+                ->maxLength($maxLength)
+                ->helperText($helper),
+        ];
+    }
 }

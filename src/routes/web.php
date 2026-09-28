@@ -62,4 +62,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/siparis/{order}', [StoreController::class, 'orderConfirmation'])->name('store.order-confirmation');
     Route::get('/siparis/{order}/proforma.pdf', [ProformaInvoiceController::class, 'pdf'])->name('store.proforma.pdf');
     Route::get('/siparis/{order}/proforma.xlsx', [ProformaInvoiceController::class, 'excel'])->name('store.proforma.excel');
+    Route::get('/siparis/{order}/siparis-formu.pdf', [ProformaInvoiceController::class, 'orderForm'])->name('store.order-form.pdf');
 });

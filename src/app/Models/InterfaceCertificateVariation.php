@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\FillsLocalizedNameFromCatalog;
 use App\Models\Concerns\HasLocalizedName;
 use App\Models\Concerns\SyncsLinkedProductVariationOptions;
+use App\Support\LocaleContent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +22,8 @@ class InterfaceCertificateVariation extends Model
         'name_en',
         'name_it',
         'description',
+        'description_en',
+        'description_it',
         'image_path',
         'price_multiplier',
         'sort_order',
@@ -34,6 +37,11 @@ class InterfaceCertificateVariation extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function getLocalizedDescriptionAttribute(): string
+    {
+        return LocaleContent::display($this->description, $this->description_en ?? null, $this->description_it ?? null);
     }
 
     protected static function linkedProductVariationType(): string
