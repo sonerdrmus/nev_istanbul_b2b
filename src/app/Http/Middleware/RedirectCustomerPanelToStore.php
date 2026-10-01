@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,7 +14,7 @@ class RedirectCustomerPanelToStore
         $user = $request->user();
 
         if ($user?->is_admin) {
-            return redirect('/admin');
+            return redirect(Filament::getPanel('admin')->getUrl());
         }
 
         if ($user) {

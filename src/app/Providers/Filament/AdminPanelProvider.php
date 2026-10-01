@@ -47,7 +47,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path(config('app.admin_panel_path'))
             ->login()
             ->brandName('NEVISTANBUL')
             ->brandLogo(asset('images/nevistanbul-logo-beyaz.png'))

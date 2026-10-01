@@ -64,6 +64,12 @@ return [
     'media_query_version' => env('MEDIA_QUERY_VERSION', ''),
 
     /*
+    | Yönetim paneli URL yolu. /admin tahmin edilebilir olduğu için ayrı tutulur.
+    | Üretimde config önbelleği yenilenmeden değişmez.
+    */
+    'admin_panel_path' => env('ADMIN_PANEL_PATH', 'nvst-8k4m2q7w'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

@@ -50,11 +50,11 @@ class ManageStoreDisplay extends Page implements HasForms
         return $form
             ->schema([
                 Forms\Components\Section::make('Mağaza ürün sayfası')
-                    ->description('×1,19 gibi fiyat çarpanı etiketleri. Kapalıyken müşteri bu etiketleri görmez; fiyat hesabı aynı şekilde uygulanır.')
+                    ->description('×1,19 gibi fiyat çarpanı etiketleri yalnızca yönetici ürün sayfasında açılır. Müşteri ve diğer sayfalar bu etiketleri görmez; fiyat hesabı herkes için aynı şekilde uygulanır.')
                     ->schema([
                         Forms\Components\Toggle::make('show_price_multipliers')
                             ->label('Fiyat çarpanlarını göster')
-                            ->helperText('Açıkken seçim özeti, teslimat alt seçenekleri ve özelleştirme kartındaki çarpan alanları görünür.'),
+                            ->helperText('Açıkken çarpan etiketleri sadece admin hesabının ürün sayfasında görünür. Sepet, sipariş ve müşteri ekranlarında görünmez.'),
                         Forms\Components\Toggle::make('show_print_total')
                             ->label('Baskı toplamını göster')
                             ->helperText('Açıkken ürün sayfasında Baskı toplamı, adet çarpımı ve açıklama satırı görünür. Kapalıyken bu kutu gizlenir; baskı tutarı sipariş hesabına eklenmeye devam eder.'),

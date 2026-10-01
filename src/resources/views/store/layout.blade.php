@@ -186,7 +186,7 @@
 
                     @auth
                         @if(auth()->user()->is_admin)
-                            <a href="{{ url('/admin') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.admin') }}</a>
+                            <a href="{{ \Filament\Facades\Filament::getPanel('admin')->getUrl() }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.admin') }}</a>
                         @else
                             <a href="{{ route('store.account') }}" class="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-primary-700 hover:bg-primary-50 transition-colors">{{ __('store.header.my_panel') }}</a>
                         @endif
@@ -353,7 +353,7 @@
                 </a>
 
                 @auth
-                    <a href="{{ auth()->user()->is_admin ? url('/admin') : route('store.account') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
+                    <a href="{{ auth()->user()->is_admin ? \Filament\Facades\Filament::getPanel('admin')->getUrl() : route('store.account') }}" class="flex flex-col items-center justify-center py-2 rounded-xl text-slate-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/></svg>
                         <span class="text-[11px] font-medium mt-1">{{ auth()->user()->is_admin ? __('store.header.admin') : __('store.bottom_nav.account') }}</span>
                     </a>

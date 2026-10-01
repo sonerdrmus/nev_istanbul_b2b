@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DealerRequest;
 use App\Models\Order;
+use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -83,7 +84,7 @@ class StoreAccountController extends Controller
         }
 
         if ($user->is_admin) {
-            return redirect('/admin');
+            return redirect(Filament::getPanel('admin')->getUrl());
         }
 
         $user->load('company');
@@ -105,7 +106,7 @@ class StoreAccountController extends Controller
     private function redirectAfterLogin(\App\Models\User $user): RedirectResponse
     {
         if ($user->is_admin) {
-            return redirect('/admin');
+            return redirect(Filament::getPanel('admin')->getUrl());
         }
 
         return redirect()->intended(route('store.account'));

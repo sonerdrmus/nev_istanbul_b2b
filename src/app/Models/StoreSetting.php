@@ -35,7 +35,11 @@ class StoreSetting extends Model
 
     public static function showsPriceMultipliers(): bool
     {
-        return (bool) static::current()->show_price_multipliers;
+        if (! static::current()->show_price_multipliers) {
+            return false;
+        }
+
+        return (bool) auth()->user()?->is_admin;
     }
 
     public static function showsPrintTotal(): bool
