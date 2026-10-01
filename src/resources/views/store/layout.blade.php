@@ -379,10 +379,6 @@
                 </button>
             </div>
             <div class="px-5 pb-5">
-                <a href="{{ route('home') }}" class="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 hover:bg-primary-50 hover:border-primary-200 transition-colors text-slate-800 font-medium">
-                    <svg class="w-5 h-5 flex-shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
-                    {{ __('store.mobile_cats.all_products') }}
-                </a>
                 @isset($menuCategories)
                     <div class="mt-2 space-y-1">
                         @foreach($menuCategories as $parent)

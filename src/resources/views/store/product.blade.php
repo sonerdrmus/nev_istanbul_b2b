@@ -59,7 +59,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-6 xl:gap-8 items-start">
         {{-- Sol lg+: galeri + “Seçilen seçenekler” birlikte sticky; sağdaki uzun varyasyon listesi kayarken sabit kalır --}}
         @php $displayImages = $product->display_image_urls; @endphp
-        <div class="w-full max-w-[30.8rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[19.8rem] xl:w-[22rem] 2xl:w-[34.2rem] shrink-0 lg:self-stretch">
+        <div class="w-full max-w-[27.7rem] mx-auto lg:mx-0 lg:max-w-none lg:w-[17.8rem] xl:w-[19.8rem] 2xl:w-[30.8rem] shrink-0 lg:self-stretch">
         <div class="lg:sticky lg:top-24 lg:z-[1] lg:shrink-0 lg:self-start w-full">
         <div class="rounded-2xl overflow-hidden bg-slate-100 aspect-square max-h-[400px] lg:max-h-[min(88vh,572px)] lg:aspect-square relative shadow-2xl shadow-slate-300/30 ring-1 ring-slate-200/70 w-full">
             @if(count($displayImages) > 0)
@@ -262,7 +262,6 @@
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.per_piece_price_label') }}</span>
                         <div class="text-right">
                             <span id="product-per-piece-price" class="text-sm font-semibold text-primary-800">—</span>
-                            <p id="product-per-piece-price-note" class="mt-0.5 text-[11px] font-normal text-slate-500 tabular-nums"></p>
                         </div>
                         <span class="text-sm font-semibold text-slate-600">{{ __('store.product.order_total_price_label') }}</span>
                         <div class="text-right">
@@ -359,26 +358,72 @@
                         $showProductCustomization = $flow['show_customization'] && $customStepIndex >= 0 && $hasCustomizationRows;
                         $sizeTables = $sizeTables ?? collect();
                         $sizeTablesById = $sizeTables->keyBy('id');
-                        $variationPanelStepIndexByFlowKey = [];
-                        $variationNameToPanelStepIndex = [];
-                        $displayPanelStepCounter = 0;
-                        foreach ($flowSteps as $flowKey => $flowStep) {
+                        $extraByParentId = \App\Models\ExtraVariationAssignment::query()
+                            ->where('product_id', $product->id)
+                            ->with(['extraVariation.options'])
+                            ->get()
+                            ->filter(function ($assignment) {
+                                $extra = $assignment->extraVariation;
+                                if (! $extra || ! $extra->is_active || ! $assignment->after_product_variation_id) {
+                                    return false;
+                                }
+                                if ($extra->isRadio() && $extra->options->isEmpty()) {
+                                    return false;
+                                }
+                                if ($extra->answer_type === \App\Models\ExtraVariation::TYPE_INFO && trim((string) $extra->info_text) === '') {
+                                    return false;
+                                }
+
+                                return true;
+                            })
+                            ->groupBy('after_product_variation_id');
+                        $choiceByParentId = \App\Models\CustomizationChoiceAssignment::query()
+                            ->where('product_id', $product->id)
+                            ->with(['customizationChoice.options'])
+                            ->get()
+                            ->filter(function ($assignment) {
+                                $choice = $assignment->customizationChoice;
+                                if (! $choice || ! $choice->is_active || ! $assignment->after_product_variation_id) {
+                                    return false;
+                                }
+
+                                return $choice->options->isNotEmpty();
+                            })
+                            ->groupBy('after_product_variation_id');
+                        $displaySteps = [];
+                        foreach ($flowSteps as $flowStep) {
+                            $displaySteps[] = $flowStep;
                             if (($flowStep['type'] ?? '') !== 'variation') {
-                                $variationPanelStepIndexByFlowKey[$flowKey] = $displayPanelStepCounter;
-                                $displayPanelStepCounter++;
                                 continue;
                             }
-                            $flowVariation = $flowStep['variation'];
-                            $variationPanelStepIndexByFlowKey[$flowKey] = $displayPanelStepCounter;
-                            $variationNameToPanelStepIndex[(string) $flowVariation->name] = $displayPanelStepCounter;
-                            $displayPanelStepCounter++;
+                            $parentId = (int) $flowStep['variation']->id;
+                            $extras = ($extraByParentId[$parentId] ?? collect())
+                                ->sortBy(fn ($assignment) => sprintf('%05d-%05d', (int) ($assignment->extraVariation->sort_order ?? 0), (int) $assignment->id));
+                            foreach ($extras as $assignment) {
+                                $displaySteps[] = ['type' => 'extra', 'assignment' => $assignment];
+                            }
+                            $choices = ($choiceByParentId[$parentId] ?? collect())
+                                ->sortBy(fn ($assignment) => sprintf('%05d-%05d', (int) ($assignment->customizationChoice->sort_order ?? 0), (int) $assignment->id));
+                            foreach ($choices as $assignment) {
+                                $displaySteps[] = ['type' => 'customization_choice', 'assignment' => $assignment];
+                            }
                         }
-                        $customizationPanelStepIndex = $showProductCustomization
-                            ? ($variationPanelStepIndexByFlowKey[$customStepIndex] ?? $customStepIndex)
-                            : -1;
-                        $sizePanelStepIndex = $sizeStepIndex >= 0
-                            ? ($variationPanelStepIndexByFlowKey[$sizeStepIndex] ?? $sizeStepIndex)
-                            : -1;
+                        $panelIndex = 0;
+                        $customizationPanelStepIndex = -1;
+                        $sizePanelStepIndex = -1;
+                        foreach ($displaySteps as $displayKey => $displayStep) {
+                            $displaySteps[$displayKey]['panel_index'] = $panelIndex;
+                            if (($displayStep['type'] ?? '') === 'customization' && $showProductCustomization) {
+                                $customizationPanelStepIndex = $panelIndex;
+                            }
+                            if (($displayStep['type'] ?? '') === 'size') {
+                                $sizePanelStepIndex = $panelIndex;
+                            }
+                            $panelIndex++;
+                        }
+                        if ($sizePanelStepIndex < 0 && $sizeStepIndex >= 0) {
+                            $sizePanelStepIndex = $sizeStepIndex;
+                        }
                     @endphp
                     @push('head')
                     <style>
@@ -742,13 +787,30 @@
                         .variation-step-panel.variation-step-locked .variation-step-dot {
                             cursor: not-allowed;
                         }
+                        #variation-selections-reset-dock {
+                            position: fixed;
+                            left: 0;
+                            right: 0;
+                            bottom: calc(5.35rem + env(safe-area-inset-bottom, 0px));
+                            z-index: 120;
+                            display: flex;
+                            justify-content: center;
+                            pointer-events: none;
+                            padding-left: 1rem;
+                            padding-right: 1rem;
+                        }
+                        @media (min-width: 1024px) {
+                            #variation-selections-reset-dock {
+                                bottom: 1.5rem;
+                            }
+                        }
                     </style>
                     @endpush
                     <section class="mt-3 lg:mt-4 w-full" aria-labelledby="variations-heading">
                         <div class="rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50/60 shadow-sm overflow-hidden ring-1 ring-slate-200/30">
                             <div class="px-4 sm:px-5 lg:px-6 py-3.5 lg:py-4 border-b border-slate-200/70 bg-white/95">
-                                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                    <div>
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="min-w-0">
                                 <h2 id="variations-heading" class="text-lg sm:text-xl lg:text-2xl font-semibold text-slate-800 tracking-tight flex items-center gap-2.5">
                                     <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
@@ -757,7 +819,7 @@
                                 </h2>
                                         <p class="mt-1 text-sm sm:text-base text-slate-500 leading-snug">{{ __('store.product.variations_subtitle') }}</p>
                                     </div>
-                                    <div class="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5" role="tablist" aria-label="{{ __('store.product.order_mode_tabs') }}">
+                                    <div class="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5 sm:shrink-0" role="tablist" aria-label="{{ __('store.product.order_mode_tabs') }}">
                                         <button type="button" class="order-mode-tab rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors bg-primary-600 text-white" data-order-mode="detailed" role="tab" aria-selected="true">{{ __('store.product.order_mode_detailed') }}</button>
                                         <button type="button" class="order-mode-tab rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white" data-order-mode="quick" role="tab" aria-selected="false">{{ __('store.product.order_mode_quick') }}</button>
                                     </div>
@@ -765,13 +827,13 @@
                             </div>
                             <div id="order-mode-detailed-panel" class="order-mode-panel">
                             <div id="product-variations" class="variation-steps-container px-3.5 sm:px-5 lg:px-6 py-4 lg:py-5" data-customization-step-index="{{ $customizationPanelStepIndex }}" data-size-step-index="{{ $sizePanelStepIndex }}" data-customization-enabled="{{ $showProductCustomization ? '1' : '0' }}" data-customization-depends-key="{{ \App\Support\ProductVariationFlowSteps::CUSTOMIZATION_DEPENDS_ON }}">
-                                @foreach($flowSteps as $stepIndex => $step)
+                                @foreach($displaySteps as $step)
                                 @if($step['type'] === 'variation')
                                     @php
                                         $variation = $step['variation'];
                                         $dependsOnName = trim((string) ($variation->depends_on ?? ''));
                                         $isDependent = $dependsOnName !== '';
-                                        $panelStepIndex = $variationPanelStepIndexByFlowKey[$stepIndex] ?? $stepIndex;
+                                        $panelStepIndex = $step['panel_index'];
                                         $hasVariationInfoText = filled($variation->localized_info_text);
                                     @endphp
                                     <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-3 lg:mt-4' }} {{ $isDependent ? 'dependent-variation-block variation-step-locked' : '' }}"
@@ -831,8 +893,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                @elseif($step['type'] === 'extra')
+                                    @php $panelStepIndex = $step['panel_index']; @endphp
+                                    @include('store.partials.extra-variation-step', ['assignment' => $step['assignment'], 'panelStepIndex' => $panelStepIndex, 'product' => $product])
+                                @elseif($step['type'] === 'customization_choice')
+                                    @php $panelStepIndex = $step['panel_index']; @endphp
+                                    @include('store.partials.customization-choice-step', ['assignment' => $step['assignment'], 'panelStepIndex' => $panelStepIndex, 'product' => $product])
                                 @elseif($step['type'] === 'customization' && $showProductCustomization)
-                                @php $customizationPanelStepIndex = $variationPanelStepIndexByFlowKey[$stepIndex] ?? $stepIndex; @endphp
+                                @php $customizationPanelStepIndex = $step['panel_index']; @endphp
                                 {{-- Ürün özelleştirme (zorunlu adım) --}}
                                 <div class="variation-step-panel variation-customization-panel flex flex-row gap-0 mt-3 lg:mt-4"
                                      data-step-index="{{ $customizationPanelStepIndex }}"
@@ -1035,6 +1103,12 @@
                     @endguest
                 @endif
             </form>
+            <div id="variation-selections-reset-dock">
+                <button type="button" id="variation-selections-reset" class="pointer-events-auto inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-slate-900/95 px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_-12px_rgba(15,23,42,0.7)] ring-1 ring-black/10 backdrop-blur-md transition hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-300/70">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    {{ __('store.product.variations_reset') }}
+                </button>
+            </div>
 
             {{-- Modern uyarı dialog: minimum sipariş vb. --}}
             <div id="product-warning-dialog" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="alertdialog" aria-labelledby="product-warning-dialog-title" aria-describedby="product-warning-dialog-desc">
@@ -1245,6 +1319,10 @@
                 'delivery_suboption_summary' => __('store.product.delivery_suboption_summary'),
                 'delivery_estimated_time_title' => __('store.product.delivery_estimated_time_title'),
                 'delivery_estimated_time_panel_prefix' => __('store.product.delivery_estimated_time_panel_prefix'),
+                'show_price_multipliers' => \App\Models\StoreSetting::showsPriceMultipliers(),
+                'show_print_total' => \App\Models\StoreSetting::showsPrintTotal(),
+                'show_print_price' => \App\Models\StoreSetting::showsPrintPrice(),
+                'show_print_card_total' => \App\Models\StoreSetting::showsPrintCardTotal(),
             ];
             $dimensionMultipliersByPrint = $dimensionMultipliersByPrint ?? [];
             $printTechniqueSlugCanonical = $printTechniqueSlugCanonical
@@ -1277,6 +1355,18 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var PU = window.storeProductUi || {};
+                    function showPriceMultipliers() {
+                        return !!PU.show_price_multipliers;
+                    }
+                    function showPrintTotal() {
+                        return !!PU.show_print_total;
+                    }
+                    function showPrintPrice() {
+                        return !!PU.show_print_price;
+                    }
+                    function showPrintCardTotal() {
+                        return !!PU.show_print_card_total;
+                    }
                     function optionDisplayLabel(el) {
                         if (!el) return '';
                         var label = (el.getAttribute('data-option-label') || '').trim();
@@ -1509,6 +1599,12 @@
                     function isProductVariationBlockSelectionReady(block) {
                         if (!block) return true;
                         if (block.style.display === 'none') return true;
+                        if ((block.getAttribute('data-extra-variation') || '') === '1') {
+                            var extraKind = block.getAttribute('data-extra-answer') || '';
+                            if (extraKind === 'info' || extraKind === 'textarea') {
+                                return (block.getAttribute('data-extra-confirmed') || '') === '1';
+                            }
+                        }
                         if ((block.getAttribute('data-variation-type') || '') === 'size_table') {
                             var target = resolveSizeTableTarget(block);
                             if (!target || (!target.optionVal && !target.slug)) return false;
@@ -2087,7 +2183,7 @@
                         }
                         var label = parts.length ? parts.join(' · ') : '—';
                         var priceHtml = '';
-                        if (cfg.canSeePrices && row.total_price_display) {
+                        if (showPrintCardTotal() && cfg.canSeePrices && row.total_price_display) {
                             priceHtml = '<span class="shrink-0 font-medium text-slate-900">' + escapeHtml(row.total_price_display) + '</span>';
                         }
                         return '<li class="flex items-baseline justify-between gap-3 py-0.5">' +
@@ -2128,7 +2224,7 @@
                             html += '</ul>';
                             var cfg = window.storeCurrencyConfig || {};
                             var grandTry = customizationSummaryGrandTotalTry(rows);
-                            if (cfg.canSeePrices && grandTry !== null && rows.length > 1) {
+                            if (showPrintTotal() && cfg.canSeePrices && grandTry !== null && rows.length > 1) {
                                 var grandLbl = PU.customization_section_grand_total || 'Baskı toplamı';
                                 var grandDisp = formatStoreCurrencyAmount(grandTry) || '—';
                                 html += '<p class="mt-1.5 text-xs font-medium text-primary-800">' +
@@ -2186,7 +2282,8 @@
                         var colorMultLbl = PU.customization_summary_color_multiplier || 'Renk çarpanı';
                         var usesColor = printTechniqueUsesColorMultiplier(row.baski_slug_canonical || row.baski_slug);
                         var cfg = window.storeCurrencyConfig || {};
-                        var showPrice = !!(cfg.canSeePrices && row.size_multiplier_price_display);
+                        var showMultFields = showPriceMultipliers();
+                        var showPrice = !!(showPrintPrice() && cfg.canSeePrices && row.size_multiplier_price_display);
                         var dim = (row.en_boy_cm != null && row.en_boy_cm !== '') ? String(row.en_boy_cm) : '—';
                         var area = row.alan_cm2_display ? customizationAreaCm2Label(row.alan_cm2_display) : '—';
                         var ebat = row.ebat ? String(row.ebat) : '—';
@@ -2200,17 +2297,23 @@
                         var rowNum = typeof index === 'number' ? (index + 1) : '';
                         var positionLbl = PU.customization_col_position || 'Konum';
                         var totalLbl = PU.customization_summary_total_price || 'Toplam fiyat';
-                        var gridCols = showPrice
-                            ? (usesColor ? 'sm:grid-cols-7' : 'sm:grid-cols-5')
-                            : (usesColor ? 'sm:grid-cols-6' : 'sm:grid-cols-4');
+                        var metricCount = 3 + (showMultFields ? 1 : 0) + (showPrice ? 1 : 0) + (usesColor ? 1 : 0) + (usesColor && showMultFields ? 1 : 0);
+                        var gridCols = ({
+                            2: ' sm:grid-cols-2',
+                            3: ' sm:grid-cols-3',
+                            4: ' sm:grid-cols-4',
+                            5: ' sm:grid-cols-5',
+                            6: ' sm:grid-cols-6',
+                            7: ' sm:grid-cols-7'
+                        })[metricCount] || ' sm:grid-cols-4';
                         var colorMetricsHtml = usesColor
-                            ? (customizationSummaryMetric(colorsLbl, renk) + customizationSummaryMetricColorMultiplier(colorMultLbl, colorMult))
+                            ? (customizationSummaryMetric(colorsLbl, renk) + (showMultFields ? customizationSummaryMetricColorMultiplier(colorMultLbl, colorMult) : ''))
                             : '';
                         var totalFooter = '';
-                        if (cfg.canSeePrices && row.total_price_display) {
+                        if (showPrintCardTotal() && cfg.canSeePrices && row.total_price_display) {
                             totalFooter = '<footer class="border-t border-primary-100 bg-gradient-to-r from-primary-50/80 to-emerald-50/50 px-3.5 py-3 sm:px-4">' +
                                 '<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">' +
-                                (row.total_price_formula_display
+                                (showMultFields && row.total_price_formula_display
                                     ? '<p class="text-xs leading-snug text-slate-600">' + escapeHtml(row.total_price_formula_display) + '</p>'
                                     : '<span></span>') +
                                 '<p class="shrink-0 text-right">' +
@@ -2233,7 +2336,7 @@
                             customizationSummaryMetricDim(dimLbl, dim) +
                             customizationSummaryMetric(areaLbl, area) +
                             customizationSummaryMetric(ebatLbl, ebat) +
-                            customizationSummaryMetric(multLbl, mult) +
+                            (showMultFields ? customizationSummaryMetric(multLbl, mult) : '') +
                             (showPrice ? customizationSummaryMetricPrice(priceLbl, price) : '') +
                             colorMetricsHtml +
                             '</div>' +
@@ -2356,11 +2459,12 @@
                             var heading = slugs.length > 1
                                 ? '<p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">' + escapeHtml(title) + '</p>'
                                 : '';
+                            var showMult = showPriceMultipliers();
                             return '<div class="rounded-lg border border-slate-200/70 bg-white/80 p-2.5">' + heading +
-                                '<div class="grid grid-cols-1 gap-2 sm:grid-cols-3">' +
+                                '<div class="grid grid-cols-1 gap-2 ' + (showMult ? 'sm:grid-cols-3' : 'sm:grid-cols-2') + '">' +
                                 metric(qtyLbl, qtyVal) +
                                 metric(rangeLbl, rangeVal) +
-                                metric(multLbl, multVal, 'text-emerald-800') +
+                                (showMult ? metric(multLbl, multVal, 'text-emerald-800') : '') +
                                 '</div></div>';
                         }).join('');
                         return '<div class="quantity-multiplier-summary border-b border-slate-200/80 bg-slate-50/60 px-3.5 py-3 sm:px-4 space-y-2">' + blocks + '</div>';
@@ -2368,7 +2472,7 @@
 
                     function renderCustomizationGrandTotalHtml(rows) {
                         var cfg = window.storeCurrencyConfig || {};
-                        if (!cfg.canSeePrices || !rows || !rows.length) {
+                        if (!showPrintTotal() || !cfg.canSeePrices || !rows || !rows.length) {
                             return '';
                         }
                         var sumTry = 0;
@@ -2946,6 +3050,23 @@
                             if ((panel.getAttribute('data-customization-panel') || '') === '1') return;
                             var name = (panel.getAttribute('data-variation-name') || '').trim();
                             if (!name) return;
+                            if ((panel.getAttribute('data-extra-variation') || '') === '1') {
+                                var extraKind = panel.getAttribute('data-extra-answer') || '';
+                                if (extraKind === 'textarea' || extraKind === 'info') {
+                                    var extraValue = '';
+                                    if (extraKind === 'textarea') {
+                                        var extraTa = panel.querySelector('.extra-variation-textarea');
+                                        extraValue = extraTa ? String(extraTa.value || '').trim() : '';
+                                    } else if ((panel.getAttribute('data-extra-confirmed') || '') === '1') {
+                                        var extraInfo = panel.querySelector('.extra-variation-info-text');
+                                        extraValue = extraInfo ? String(extraInfo.textContent || '').trim() : '';
+                                    }
+                                    if (extraValue) {
+                                        list.push({ name: name, value: extraValue, rawValue: extraValue, priceDelta: 1, isMulti: false });
+                                    }
+                                    return;
+                                }
+                            }
                             var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
                             var confirmed = (panel.getAttribute('data-multi-confirmed') || '') === '1';
                             var summary = panel.querySelector('.variation-step-summary');
@@ -3053,25 +3174,13 @@
                             basePriceEl.textContent = formatPrice(baseConverted);
                         }
                         var perPieceEl = document.getElementById('product-per-piece-price');
-                        var perPieceNoteEl = document.getElementById('product-per-piece-price-note');
                         if (perPieceEl) {
                             if (qty > 0) {
                                 var perPieceTry = lineTry / qty;
                                 var perPieceConverted = convertFromTry(perPieceTry);
                                 perPieceEl.textContent = formatPrice(perPieceConverted);
-                                if (perPieceNoteEl) {
-                                    var noteTpl = PU.summary_unit_from_total_note || ':total ÷ :qty adet';
-                                    perPieceNoteEl.textContent = noteTpl
-                                        .replace(':total', formatPrice(lineConverted))
-                                        .replace(':qty', String(qty));
-                                    perPieceNoteEl.classList.remove('hidden');
-                                }
                             } else {
                                 perPieceEl.textContent = '—';
-                                if (perPieceNoteEl) {
-                                    perPieceNoteEl.textContent = '';
-                                    perPieceNoteEl.classList.add('hidden');
-                                }
                             }
                         }
                         var strikeEl = document.getElementById('product-price-strike');
@@ -3521,6 +3630,7 @@
                     }
 
                     function updateVariationSummaryAndButton() {
+                        scheduleSaveVariationDraft();
                         updateSizeTotalDisplays();
                         if (typeof updateSizeTableVisibility === 'function') updateSizeTableVisibility();
                         updatePriceAndInput();
@@ -3557,7 +3667,7 @@
                                 var choiceItems = ordered.map(function(item) {
                                     var mult = parseFloat(item.priceDelta);
                                     if (!isFinite(mult) || mult <= 0) mult = 1;
-                                    var showMult = Math.abs(mult - 1) > 0.0001;
+                                    var showMult = showPriceMultipliers() && Math.abs(mult - 1) > 0.0001;
                                     var multBadge = showMult
                                         ? '<span class="mt-1 inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-amber-800 ring-1 ring-inset ring-amber-200/80">' +
                                             escapeHtml(formatVariationMultiplier(mult)) + '</span>'
@@ -3801,6 +3911,8 @@
 
                     var totalVariationSteps = document.querySelectorAll('.variation-step-dot').length;
                     var currentVariationStep = 0;
+                    var variationDraftPersist = false;
+                    var variationDraftTimer = null;
 
                     function updatePanelSummary(panel, selectedValue) {
                         var valEl = panel.querySelector('.variation-step-summary-value');
@@ -4635,7 +4747,7 @@
                                 var subMult = parseFloat(opt.price_multiplier);
                                 if (!isFinite(subMult) || subMult <= 0) subMult = 1;
                                 btn.setAttribute('data-price-multiplier', String(subMult));
-                                var multHtml = subMult > 0 && Math.abs(subMult - 1) > 0.0001
+                                var multHtml = showPriceMultipliers() && subMult > 0 && Math.abs(subMult - 1) > 0.0001
                                     ? '<span class="shrink-0 text-xs font-semibold text-slate-500">' + escapeHtml(formatVariationMultiplier(subMult)) + '</span>'
                                     : '';
                                 btn.innerHTML = '<span class="min-w-0">' + escapeHtml(String(opt.label || opt.name || '')) + '</span>' + multHtml;
@@ -5360,6 +5472,37 @@
                         }
                     });
 
+                    document.querySelectorAll('.extra-variation-continue-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var block = btn.closest('.product-variation-block');
+                            if (!block) return;
+                            var kind = block.getAttribute('data-extra-answer') || '';
+                            if (kind === 'textarea') {
+                                var ta = block.querySelector('.extra-variation-textarea');
+                                var text = ta ? String(ta.value || '').trim() : '';
+                                if (!text) return;
+                                updatePanelSummary(block, text);
+                            } else {
+                                var infoEl = block.querySelector('.extra-variation-info-text');
+                                updatePanelSummary(block, infoEl ? String(infoEl.textContent || '').trim() : '—');
+                            }
+                            block.setAttribute('data-extra-confirmed', '1');
+                            finishVariationStepIfReady(block);
+                            scheduleApplyDependencyChain();
+                            updateVariationSummaryAndButton();
+                        });
+                    });
+                    document.querySelectorAll('.extra-variation-textarea').forEach(function(ta) {
+                        ta.addEventListener('input', function() {
+                            var block = ta.closest('.product-variation-block');
+                            if (!block) return;
+                            block.setAttribute('data-extra-confirmed', '0');
+                            var continueBtn = block.querySelector('.extra-variation-continue-btn');
+                            if (continueBtn) continueBtn.disabled = String(ta.value || '').trim() === '';
+                            updateVariationSummaryAndButton();
+                        });
+                    });
+
                     document.querySelectorAll('.variation-multi-continue-btn').forEach(function(btn) {
                         btn.addEventListener('click', function() {
                             var container = btn.closest('.product-variation-block');
@@ -5406,6 +5549,9 @@
                             }
                             if ((panel.getAttribute('data-allows-multiple') || '') === '1') {
                                 panel.setAttribute('data-multi-confirmed', '0');
+                            }
+                            if ((panel.getAttribute('data-extra-variation') || '') === '1') {
+                                panel.setAttribute('data-extra-confirmed', '0');
                             }
                             var vType = panel.getAttribute('data-variation-type') || '';
                             if (vType === 'label_type') {
@@ -5735,6 +5881,55 @@
                         if (vn === 'cocuk' && tn === 'cocuk') return true;
                         return cocukAliases.indexOf(v.toLowerCase()) !== -1 && cocukAliases.indexOf(t.toLowerCase()) !== -1;
                     }
+                    /** Seçilen cinsiyet ile beden tablosu tetikleyicisi arasındaki yakınlık (yüksek = daha doğru tablo). */
+                    function triggerMatchScore(selectedValue, triggerValue) {
+                        if (!triggerValue) return 0;
+                        var tRaw = (triggerValue || '').trim();
+                        if (/[|,]/.test(tRaw)) {
+                            var parts = tRaw.split(/[|,]/).map(function(part) { return (part || '').trim(); }).filter(Boolean);
+                            var bestPart = 0;
+                            parts.forEach(function(part) {
+                                bestPart = Math.max(bestPart, triggerMatchScore(selectedValue, part));
+                            });
+                            if (bestPart > 0 && parts.length > 1) bestPart += 20;
+                            return bestPart;
+                        }
+                        if (!valueMatchesTrigger(selectedValue, tRaw)) return 0;
+                        var vn = normalizeForMatch(selectedValue);
+                        var tn = normalizeForMatch(tRaw);
+                        if (vn && vn === tn) return 100;
+                        var selBoth = vn.indexOf('erkek') !== -1 && vn.indexOf('unisex') !== -1;
+                        var trigBoth = tn.indexOf('erkek') !== -1 && tn.indexOf('unisex') !== -1;
+                        if (selBoth && trigBoth) return 95;
+                        if (selBoth && !trigBoth) return 40;
+                        return 70;
+                    }
+                    function sizeTableElementTriggerScore(el) {
+                        if (!el) return 0;
+                        var triggerVar = (el.getAttribute('data-trigger-variation') || '').trim();
+                        if (!triggerVar) return 0;
+                        var triggerVal = (el.getAttribute('data-trigger-value') || '').trim();
+                        var selectedVals = getDomSelectionValuesForVariation(triggerVar);
+                        if (!selectedVals.length) return 0;
+                        if (!triggerVal) return 10;
+                        var best = 0;
+                        selectedVals.forEach(function(v) {
+                            best = Math.max(best, triggerMatchScore(v, triggerVal));
+                        });
+                        return best;
+                    }
+                    function pickBestTriggerElement(elements) {
+                        var best = null;
+                        var bestScore = 0;
+                        elements.forEach(function(el) {
+                            var score = sizeTableElementTriggerScore(el);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                best = el;
+                            }
+                        });
+                        return best;
+                    }
                     function rawSelectedValuesForVariationKey(selected, variation) {
                         if (!variation) return [];
                         var vv = variation.trim().toLowerCase();
@@ -5911,6 +6106,17 @@
                     function resolveSizeTableTarget(block) {
                         if (!block) return null;
 
+                        var wraps = block.querySelectorAll('.size-table-variation-grids .size-table-wrap-in-variation');
+                        var bestWrap = pickBestTriggerElement(Array.prototype.slice.call(wraps));
+                        if (bestWrap) {
+                            return targetFromSizeTableWrap(bestWrap, 'trigger');
+                        }
+                        var optionEls = block.querySelectorAll('.product-variation-options .product-option');
+                        var bestOpt = pickBestTriggerElement(Array.prototype.slice.call(optionEls));
+                        if (bestOpt) {
+                            return targetFromSizeTableOption(bestOpt, 'trigger');
+                        }
+
                         var selected = block.querySelector('.product-option.option-selected');
                         if (selected && selected.style.display === 'none') {
                             setProductOptionVisual(selected, false);
@@ -5918,42 +6124,6 @@
                         }
                         if (selected && selected.style.display !== 'none') {
                             return targetFromSizeTableOption(selected, 'selected');
-                        }
-
-                        var wraps = block.querySelectorAll('.size-table-variation-grids .size-table-wrap-in-variation');
-                        var triggerMatches = [];
-                        wraps.forEach(function(wrap) {
-                            if (sizeTableElementMatchesSelections(wrap) === true) {
-                                triggerMatches.push(wrap);
-                            }
-                        });
-                        if (triggerMatches.length === 1) {
-                            return targetFromSizeTableWrap(triggerMatches[0], 'trigger');
-                        }
-                        if (triggerMatches.length > 1) {
-                            var withValue = triggerMatches.filter(function(w) {
-                                return (w.getAttribute('data-trigger-value') || '').trim() !== '';
-                            });
-                            if (withValue.length === 1) {
-                                return targetFromSizeTableWrap(withValue[0], 'trigger');
-                            }
-                            // Birden fazla eşleşme (örn. Erkek + Unisex ailesi) → ilk erkek/unisex tablosu
-                            return targetFromSizeTableWrap(triggerMatches[0], 'trigger');
-                        }
-
-                        // Buton tarafında tetikleyici eşleşmesi (wrap attribute yoksa)
-                        var optionTriggerMatches = [];
-                        block.querySelectorAll('.product-variation-options .product-option').forEach(function(opt) {
-                            if (opt.style.display === 'none') return;
-                            if (sizeTableElementMatchesSelections(opt) === true) {
-                                optionTriggerMatches.push(opt);
-                            }
-                        });
-                        if (optionTriggerMatches.length === 1) {
-                            return targetFromSizeTableOption(optionTriggerMatches[0], 'trigger');
-                        }
-                        if (optionTriggerMatches.length > 1) {
-                            return targetFromSizeTableOption(optionTriggerMatches[0], 'trigger');
                         }
 
                         var visible = [];
@@ -6013,44 +6183,25 @@
                         var continueWrap = block.querySelector('.size-table-variation-continue-wrap');
                         var optionButtons = block.querySelectorAll('.product-variation-options .product-option');
                         var optionCount = optionButtons.length;
-                        var selected = block.querySelector('.product-option.option-selected');
-                        if (selected && selected.style.display === 'none') {
-                            setProductOptionVisual(selected, false);
-                            selected = null;
-                        }
 
-                        var target = null;
-                        if (selected) {
-                            target = targetFromSizeTableOption(selected, 'selected');
-                        } else {
-                            var resolved = resolveSizeTableTarget(block);
-                            // Upstream trigger/parent match: show grid without auto-clicking option buttons.
-                            if (resolved && resolved.source !== 'auto') {
-                                target = resolved;
-                            }
-                        }
+                        var target = resolveSizeTableTarget(block);
 
                         var optionVal = target ? target.optionVal : '';
                         var slug = target ? target.slug : '';
-
-                        var visibleOptions = [];
-                        optionButtons.forEach(function(opt) {
-                            if (opt.style.display === 'none') return;
-                            visibleOptions.push(opt);
-                        });
-                        var singleVisible = visibleOptions.length === 1;
                         var hasTarget = !!(target && (optionVal || slug));
 
                         if (optionCount > 0) {
                             optionButtons.forEach(function(b) {
-                                setProductOptionVisual(b, !!selected && b === selected && b.style.display !== 'none');
+                                var bOpt = (b.getAttribute('data-option') || '').trim();
+                                var bSlug = (b.getAttribute('data-size-table-slug') || '').trim();
+                                var match = hasTarget && ((optionVal !== '' && bOpt === optionVal) || (slug !== '' && bSlug === slug));
+                                if (match) b.style.display = '';
+                                setProductOptionVisual(b, match);
                             });
                         }
 
                         if (grids) {
-                            grids.classList.toggle('hidden', !hasTarget && (optionCount > 1 || visibleOptions.length > 1));
-                        }
-                        if (grids) {
+                            grids.classList.toggle('hidden', !hasTarget);
                             grids.querySelectorAll('.size-table-wrap-in-variation').forEach(function(wrap) {
                                 var wOpt = (wrap.getAttribute('data-size-table-option') || '').trim();
                                 var wSlug = (wrap.getAttribute('data-size-table-slug') || '').trim();
@@ -6061,20 +6212,15 @@
 
                         var picker = block.querySelector('.product-variation-options');
                         var pickerHint = picker ? picker.previousElementSibling : null;
-                        if (picker) {
-                            picker.classList.toggle('hidden', hasTarget && (singleVisible || visibleOptions.length <= 1));
-                        }
-                        if (pickerHint && pickerHint.tagName === 'P') {
-                            pickerHint.classList.toggle('hidden', hasTarget && (singleVisible || visibleOptions.length <= 1));
-                        }
+                        if (picker) picker.style.display = 'none';
+                        if (pickerHint && pickerHint.tagName === 'P') pickerHint.style.display = 'none';
                         if (continueWrap) {
                             continueWrap.classList.toggle('hidden', !hasTarget);
                         }
                         if (hasTarget && (block.getAttribute('data-size-table-confirmed') || '') !== '1') {
                             block.setAttribute('data-size-table-confirmed', '0');
-                        }
-                        if (hasTarget && selected) {
-                            updatePanelSummary(block, selected ? optionDisplayLabel(selected) : (catalogLabel(optionVal || slug) || '—'));
+                            var labelBtn = block.querySelector('.product-option.option-selected');
+                            updatePanelSummary(block, labelBtn ? optionDisplayLabel(labelBtn) : (catalogLabel(optionVal || slug) || '—'));
                         }
                     }
 
@@ -6108,14 +6254,341 @@
                         if (quantityInput) quantityInput.setAttribute('name', anyTableVisible ? 'quantity_placeholder' : 'quantity');
                     }
 
+                    var VARIATION_DRAFT_ATTRS = [
+                        'data-multi-confirmed',
+                        'data-size-table-confirmed',
+                        'data-label-options-confirmed',
+                        'data-label-sub-flow-active',
+                        'data-label-queue-index',
+                        'data-label-sub-payloads',
+                        'data-packaging-options-confirmed',
+                        'data-delivery-options-confirmed',
+                        'data-extra-confirmed',
+                        'data-customization-confirmed'
+                    ];
+
+                    function variationDraftStorageKey() {
+                        var idInput = document.querySelector('#add-to-cart-form input[name="product_id"]');
+                        return 'store-variation-draft:' + (idInput ? idInput.value : '0');
+                    }
+
+                    function variationFieldStorageKey(el) {
+                        if (!el || el.type === 'file' || el.type === 'hidden' || el.type === 'button' || el.type === 'submit') return null;
+                        if (el.id) return '#' + el.id;
+                        var card = el.closest('.customization-row-card');
+                        if (card) {
+                            var check = card.querySelector('.customization-row-check');
+                            var rowId = check ? check.value : '';
+                            if (el.classList.contains('customization-dim-en')) return 'cust:' + rowId + ':en';
+                            if (el.classList.contains('customization-dim-boy')) return 'cust:' + rowId + ':boy';
+                            if (el.classList.contains('customization-row-check')) return 'cust:' + rowId + ':check';
+                        }
+                        if (el.name) {
+                            if (el.name.indexOf('[]') !== -1) return 'name:' + el.name + ':' + (el.value || '');
+                            return 'name:' + el.name;
+                        }
+                        if (el.classList.contains('extra-variation-textarea')) {
+                            var extraPanel = el.closest('[data-variation-name]');
+                            return 'extra:' + (extraPanel ? extraPanel.getAttribute('data-variation-name') : '');
+                        }
+                        if (el.classList.contains('label-type-description-input')) {
+                            var labelPanel = el.closest('[data-variation-name]');
+                            return 'label-desc:' + (labelPanel ? labelPanel.getAttribute('data-variation-name') : '');
+                        }
+                        var size = el.getAttribute('data-size');
+                        if (size && el.className.indexOf('-size-input') !== -1) {
+                            var wrap = el.closest('.size-table-wrap');
+                            var slug = wrap ? wrap.getAttribute('data-slug') : '';
+                            var layout = el.closest('.size-qty-desktop') ? 'd' : 'm';
+                            return 'size:' + slug + ':' + size + ':' + layout;
+                        }
+                        return null;
+                    }
+
+                    function collectVariationDraftFields(root) {
+                        var fields = [];
+                        var seen = {};
+                        root.querySelectorAll('input, textarea, select').forEach(function(el) {
+                            var key = variationFieldStorageKey(el);
+                            if (!key || seen[key]) return;
+                            seen[key] = true;
+                            if (el.type === 'checkbox' || el.type === 'radio') {
+                                fields.push({ key: key, checked: !!el.checked });
+                            } else {
+                                fields.push({ key: key, value: el.value });
+                            }
+                        });
+                        return fields;
+                    }
+
+                    function indexVariationDraftFields(root) {
+                        var map = {};
+                        root.querySelectorAll('input, textarea, select').forEach(function(el) {
+                            var key = variationFieldStorageKey(el);
+                            if (!key || map[key]) return;
+                            map[key] = el;
+                        });
+                        return map;
+                    }
+
+                    function markDraftSubButton(el, on) {
+                        setProductOptionVisual(el, on);
+                        if (on) el.setAttribute('data-selected', '1');
+                        else el.removeAttribute('data-selected');
+                    }
+
+                    function scheduleSaveVariationDraft() {
+                        if (!variationDraftPersist) return;
+                        if (variationDraftTimer) clearTimeout(variationDraftTimer);
+                        variationDraftTimer = setTimeout(saveVariationDraft, 180);
+                    }
+
+                    function variationOptionDraftKey(btn) {
+                        if (!btn) return '';
+                        var id = btn.getAttribute('data-option-id');
+                        if (id) return 'id:' + id;
+                        var value = btn.getAttribute('data-option');
+                        if (value) return 'val:' + value;
+                        return '';
+                    }
+
+                    function draftOptionIsSelected(btn, saved) {
+                        var keys = Array.isArray(saved.optionKeys) ? saved.optionKeys : null;
+                        if (keys) {
+                            var key = variationOptionDraftKey(btn);
+                            return !!(key && keys.indexOf(key) !== -1);
+                        }
+                        var id = btn.getAttribute('data-option-id');
+                        if (!id) return false;
+                        return (saved.optionIds || []).some(function(savedId) {
+                            return String(savedId) === String(id);
+                        });
+                    }
+
+                    function saveVariationDraft() {
+                        variationDraftTimer = null;
+                        if (!variationDraftPersist) return;
+                        var root = document.getElementById('product-variations');
+                        if (!root) return;
+                        var panels = [];
+                        var hasChoice = false;
+                        root.querySelectorAll('.variation-step-panel').forEach(function(panel) {
+                            var optionIds = [];
+                            var optionKeys = [];
+                            panel.querySelectorAll('.product-option.option-selected').forEach(function(btn) {
+                                if (btn.style.display === 'none') return;
+                                var id = btn.getAttribute('data-option-id');
+                                var key = variationOptionDraftKey(btn);
+                                if (id) optionIds.push(String(id));
+                                if (key) optionKeys.push(key);
+                            });
+                            if (optionKeys.length) hasChoice = true;
+                            var attrs = {};
+                            VARIATION_DRAFT_ATTRS.forEach(function(name) {
+                                if (panel.hasAttribute(name)) attrs[name] = panel.getAttribute(name);
+                            });
+                            var deliveryBtn = panel.querySelector('.delivery-type-suboption-btn[data-selected="1"]');
+                            var materialBtn = panel.querySelector('.packaging-type-material-btn[data-selected="1"]');
+                            var customizationBtn = panel.querySelector('.packaging-type-customization-btn[data-selected="1"]');
+                            var stickerBtn = panel.querySelector('.packaging-type-sticker-design-btn[data-selected="1"]');
+                            panels.push({
+                                key: (panel.getAttribute('data-step-index') || '') + '|' + (panel.getAttribute('data-variation-name') || ''),
+                                optionIds: optionIds,
+                                optionKeys: optionKeys,
+                                attrs: attrs,
+                                deliverySubId: deliveryBtn ? (deliveryBtn.getAttribute('data-suboption-id') || '') : '',
+                                material: materialBtn ? (materialBtn.getAttribute('data-material-slug') || '') : '',
+                                customization: customizationBtn ? (customizationBtn.getAttribute('data-customization-slug') || '') : '',
+                                sticker: stickerBtn ? (stickerBtn.getAttribute('data-sticker-design') || '') : ''
+                            });
+                        });
+                        var fields = collectVariationDraftFields(root);
+                        var fieldMap = indexVariationDraftFields(root);
+                        var hasField = fields.some(function(field) {
+                            var el = fieldMap[field.key];
+                            if (!el) return false;
+                            if (el.type === 'checkbox' || el.type === 'radio') return !!el.checked;
+                            if (el.tagName === 'SELECT') {
+                                var initial = el.querySelector('option[selected]');
+                                var initialVal = initial ? initial.value : (el.options[0] ? el.options[0].value : '');
+                                return String(el.value || '') !== String(initialVal);
+                            }
+                            return String(el.value || '') !== String(el.defaultValue || '');
+                        });
+                        try {
+                            if (!hasChoice && !hasField && currentVariationStep <= 0) {
+                                localStorage.removeItem(variationDraftStorageKey());
+                                return;
+                            }
+                            localStorage.setItem(variationDraftStorageKey(), JSON.stringify({
+                                v: 1,
+                                step: currentVariationStep,
+                                panels: panels,
+                                fields: fields
+                            }));
+                        } catch (e) {}
+                    }
+
+                    function restoreVariationDraft() {
+                        var raw = null;
+                        try { raw = localStorage.getItem(variationDraftStorageKey()); } catch (e) { return false; }
+                        if (!raw) return false;
+                        var draft = null;
+                        try { draft = JSON.parse(raw); } catch (e) { return false; }
+                        if (!draft || draft.v !== 1 || !Array.isArray(draft.panels)) return false;
+                        var root = document.getElementById('product-variations');
+                        if (!root) return false;
+
+                        var panelByKey = {};
+                        root.querySelectorAll('.variation-step-panel').forEach(function(panel) {
+                            panelByKey[(panel.getAttribute('data-step-index') || '') + '|' + (panel.getAttribute('data-variation-name') || '')] = panel;
+                        });
+
+                        draft.panels.forEach(function(saved) {
+                            var panel = panelByKey[saved.key];
+                            if (!panel) return;
+                            panel.querySelectorAll('.product-option').forEach(function(btn) {
+                                setProductOptionVisual(btn, draftOptionIsSelected(btn, saved));
+                            });
+                            var attrs = saved.attrs || {};
+                            VARIATION_DRAFT_ATTRS.forEach(function(name) {
+                                if (!Object.prototype.hasOwnProperty.call(attrs, name)) return;
+                                if (name === 'data-packaging-options-confirmed' || name === 'data-delivery-options-confirmed') {
+                                    panel.setAttribute(name, '0');
+                                    return;
+                                }
+                                panel.setAttribute(name, attrs[name]);
+                            });
+                        });
+
+                        applyDependencyChainNow();
+
+                        draft.panels.forEach(function(saved) {
+                            var panel = panelByKey[saved.key];
+                            if (!panel) return;
+                            if (saved.material || saved.customization || saved.sticker) {
+                                var wrap = panel.querySelector('.packaging-type-suboptions-wrap');
+                                if (wrap) {
+                                    wrap.querySelectorAll('.packaging-type-material-btn').forEach(function(btn) {
+                                        markDraftSubButton(btn, saved.material && btn.getAttribute('data-material-slug') === saved.material);
+                                    });
+                                    wrap.querySelectorAll('.packaging-type-customization-btn').forEach(function(btn) {
+                                        markDraftSubButton(btn, saved.customization && btn.getAttribute('data-customization-slug') === saved.customization);
+                                    });
+                                    wrap.querySelectorAll('.packaging-type-sticker-design-btn').forEach(function(btn) {
+                                        markDraftSubButton(btn, saved.sticker && btn.getAttribute('data-sticker-design') === saved.sticker);
+                                    });
+                                }
+                            }
+                            if (saved.deliverySubId) {
+                                var list = panel.querySelector('.delivery-type-suboptions-list');
+                                if (list) {
+                                    list.querySelectorAll('.delivery-type-suboption-btn').forEach(function(btn) {
+                                        markDraftSubButton(btn, btn.getAttribute('data-suboption-id') === String(saved.deliverySubId));
+                                    });
+                                    updateDeliverySubOptionInfo(panel.querySelector('.delivery-type-suboptions-wrap'));
+                                }
+                            }
+                            var attrs = saved.attrs || {};
+                            if (Object.prototype.hasOwnProperty.call(attrs, 'data-packaging-options-confirmed')) {
+                                panel.setAttribute('data-packaging-options-confirmed', attrs['data-packaging-options-confirmed']);
+                            }
+                            if (Object.prototype.hasOwnProperty.call(attrs, 'data-delivery-options-confirmed')) {
+                                panel.setAttribute('data-delivery-options-confirmed', attrs['data-delivery-options-confirmed']);
+                            }
+                            var type = panel.getAttribute('data-variation-type') || '';
+                            var isMulti = (panel.getAttribute('data-allows-multiple') || '') === '1';
+                            if (type === 'label_type') {
+                                updateLabelTypePanelSummary(panel);
+                            } else if (type === 'packaging_type') {
+                                updatePackagingTypePanelSummary(panel);
+                            } else if (type === 'delivery_type') {
+                                updateDeliveryTypePanelSummary(panel);
+                            } else if (isMulti) {
+                                updatePanelSummaryMulti(panel);
+                            } else if ((panel.getAttribute('data-extra-variation') || '') === '1') {
+                                var extraTa = panel.querySelector('.extra-variation-textarea');
+                                if (extraTa && String(extraTa.value || '').trim()) updatePanelSummary(panel, String(extraTa.value || '').trim());
+                            } else if (type !== 'size_table') {
+                                var selectedBtn = panel.querySelector('.product-option.option-selected');
+                                if (selectedBtn && selectedBtn.style.display !== 'none') updatePanelSummary(panel, optionDisplayLabel(selectedBtn));
+                            }
+                        });
+
+                        var fieldMap = indexVariationDraftFields(root);
+                        (draft.fields || []).forEach(function(field) {
+                            var el = fieldMap[field.key];
+                            if (!el) return;
+                            if (Object.prototype.hasOwnProperty.call(field, 'checked')) el.checked = !!field.checked;
+                            else el.value = field.value;
+                        });
+                        root.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
+                            if (isVisibleSizeInput(inp)) syncPairedSizeInputs(inp);
+                        });
+
+                        draft.panels.forEach(function(saved) {
+                            var panel = panelByKey[saved.key];
+                            if (!panel || (panel.getAttribute('data-variation-type') || '') !== 'size_table') return;
+                            if ((panel.getAttribute('data-size-table-confirmed') || '') !== '1') return;
+                            var info = getSizeQuantities();
+                            var selectedBtn = panel.querySelector('.product-option.option-selected');
+                            var label = selectedBtn ? optionDisplayLabel(selectedBtn) : '';
+                            var summary = label;
+                            if (info.total > 0) summary += (summary ? ' · ' : '') + info.total + ' ' + (PU.units_suffix || '');
+                            updatePanelSummary(panel, summary || '—');
+                        });
+                        root.querySelectorAll('.extra-variation-textarea').forEach(function(ta) {
+                            var panel = ta.closest('.product-variation-block');
+                            if (!panel) return;
+                            var text = String(ta.value || '').trim();
+                            var continueBtn = panel.querySelector('.extra-variation-continue-btn');
+                            if (continueBtn) continueBtn.disabled = text === '';
+                            if (text) updatePanelSummary(panel, text);
+                        });
+
+                        syncVariationStepUnlockStates();
+                        if (typeof syncVariationJsonFromSelections === 'function') syncVariationJsonFromSelections();
+                        var reachable = maxReachableVariationStepIndex();
+                        var step = parseInt(draft.step, 10);
+                        if (isNaN(step) || step < 0) step = 0;
+                        if (step > reachable) step = reachable;
+                        if (allVisibleVariationsSelected()) {
+                            showVariationSelectionCompleteState();
+                        } else if (totalVariationSteps > 0) {
+                            showVariationStep(step, { scrollIntoView: true });
+                        }
+                        updateVariationSummaryAndButton();
+                        return true;
+                    }
+
+                    function resetVariationDraft() {
+                        variationDraftPersist = false;
+                        if (variationDraftTimer) {
+                            clearTimeout(variationDraftTimer);
+                            variationDraftTimer = null;
+                        }
+                        try { localStorage.removeItem(variationDraftStorageKey()); } catch (e) {}
+                        window.location.reload();
+                    }
+
                     applyDependencyChainNow();
                     initSizeTableVariationBlocks();
-                    if (totalVariationSteps > 0) showVariationStep(0);
-                    document.querySelectorAll('.product-variation-block[data-allows-multiple="1"]').forEach(function(el) {
-                        updateMultiContinueUi(el);
-                    });
-                    updateSizeTableVisibility();
-                    updateVariationSummaryAndButton();
+                    var variationDraftRestored = restoreVariationDraft();
+                    if (!variationDraftRestored) {
+                        if (totalVariationSteps > 0) showVariationStep(0);
+                        document.querySelectorAll('.product-variation-block[data-allows-multiple="1"]').forEach(function(el) {
+                            updateMultiContinueUi(el);
+                        });
+                        updateSizeTableVisibility();
+                        updateVariationSummaryAndButton();
+                    }
+                    variationDraftPersist = true;
+                    saveVariationDraft();
+
+                    var variationResetBtn = document.getElementById('variation-selections-reset');
+                    if (variationResetBtn) {
+                        variationResetBtn.addEventListener('click', resetVariationDraft);
+                    }
 
                     var confirmCheckbox = document.getElementById('variation-confirm-checkbox');
                     if (confirmCheckbox) {

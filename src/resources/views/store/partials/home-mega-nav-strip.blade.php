@@ -7,15 +7,6 @@
         <nav class="flex items-center gap-2 py-3 sm:py-3.5" aria-label="{{ __('store.mega_nav.nav_aria') }}">
             {{-- Tek satır: tüm kırılımlarda yatay kaydırma (wrap kapatıldı — şerit taşması / iki satır bozulmasını önler) --}}
             <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto overflow-y-visible overscroll-x-contain scrollbar-hide py-0.5 touch-pan-x" id="home-mega-nav-strip">
-                <a href="{{ route('home') }}"
-                   class="group relative flex-shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-200 whitespace-nowrap
-                   {{ ! request('category')
-                        ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-md shadow-primary-600/25 ring-1 ring-primary-500/30'
-                        : 'border border-slate-200/90 bg-white text-slate-700 shadow-sm hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-800 hover:shadow-md' }}">
-                    <svg class="h-4 w-4 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
-                    {{ __('store.mega_nav.all_products') }}
-                </a>
-
                 @foreach($topMenuCategories ?? collect() as $cat)
                     @php
                         $slug = $cat->slug;

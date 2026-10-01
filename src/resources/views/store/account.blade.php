@@ -84,9 +84,9 @@
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold {{ $statusClass($order->status) }}">{{ $statusLabel($order->status) }}</span>
                                         <span class="text-sm font-semibold text-slate-900">{{ number_format((float) $order->total, 2, ',', '.') }} ₺</span>
-                                        <a href="{{ route('store.proforma.pdf', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_pdf') }}</a>
-                                        <a href="{{ route('store.order-form.pdf', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_order_form') }}</a>
-                                        <a href="{{ route('store.proforma.excel', $order) }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.order_confirmation.download_excel') }}</a>
+                                        <button type="button" disabled class="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold text-slate-400">{{ __('store.order_confirmation.download_pdf') }} — {{ __('store.account.documents_preparing') }}</button>
+                                        <button type="button" disabled class="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold text-slate-400">{{ __('store.order_confirmation.download_order_form') }} — {{ __('store.account.documents_preparing') }}</button>
+                                        <button type="button" disabled class="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold text-slate-400">{{ __('store.order_confirmation.download_excel') }} — {{ __('store.account.documents_preparing') }}</button>
                                     </div>
                                 </div>
                             </li>

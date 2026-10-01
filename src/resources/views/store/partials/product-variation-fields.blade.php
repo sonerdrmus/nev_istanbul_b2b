@@ -7,8 +7,8 @@
                                                 @if($variation->type === 'size_table')
                                                     @php $sizeTableOptionCount = $variation->options->count(); @endphp
                                                     @if($sizeTableOptionCount > 1)
-                                                        <p class="text-sm text-slate-600 mb-3">{{ __('store.product.size_table_pick_table_hint') }}</p>
-                                                        <div class="flex flex-wrap gap-2.5 sm:gap-3 product-variation-options">
+                                                        <p class="text-sm text-slate-600 mb-3" style="display:none">{{ __('store.product.size_table_pick_table_hint') }}</p>
+                                                        <div class="flex flex-wrap gap-2.5 sm:gap-3 product-variation-options" style="display:none">
                                                             @foreach($variation->options as $option)
                                                                 @php
                                                                     $linkedSizeTable = $option->sizeTable ?? $sizeTablesById->get($option->size_table_id);

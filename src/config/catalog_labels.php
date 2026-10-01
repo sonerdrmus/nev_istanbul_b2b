@@ -16,6 +16,7 @@ return [
         'Çocuk' => ['en' => 'Kids', 'it' => 'Bambini'],
         'Çoçuk' => ['en' => 'Kids', 'it' => 'Bambini'],
         'Erkek/Unisex' => ['en' => 'Men/Unisex', 'it' => 'Uomo/Unisex'],
+        'Hiçbirini istemiyorum' => ['en' => 'I don\'t want any', 'it' => 'Non ne voglio nessuno'],
         'Erkek/Bayan' => ['en' => 'Men/Women', 'it' => 'Uomo/Donna'],
 
         // Size tables

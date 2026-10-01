@@ -3,9 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\BannerSlideResource;
+use App\Filament\Resources\CustomizationChoiceResource;
+use App\Filament\Resources\ExtraVariationResource;
 use App\Filament\Resources\CategoryResource;
 use App\Filament\Pages\ManagePackagingPreferences;
 use App\Filament\Pages\ManageProductCustomization;
+use App\Filament\Pages\ManageStoreDisplay;
 use App\Filament\Resources\InterfaceCertificateVariationResource;
 use App\Filament\Resources\InterfaceColorVariationResource;
 use App\Filament\Resources\InterfaceDeliveryMethodVariationResource;
@@ -168,7 +171,9 @@ class AdminPanelProvider extends PanelProvider
                     || request()->routeIs('filament.admin.pages.packaging-preferences')
                     || request()->routeIs(SizeTableResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs('filament.admin.pages.product-customization')
-                    || request()->routeIs('filament.admin.pages.size-dimension-multipliers'))
+                    || request()->routeIs('filament.admin.pages.size-dimension-multipliers')
+                    || request()->routeIs(ExtraVariationResource::getRouteBaseName($panelId).'.*')
+                    || request()->routeIs(CustomizationChoiceResource::getRouteBaseName($panelId).'.*'))
                 ->childItems([
                     NavigationItem::make('Renk Varyasyonları')
                         ->url(fn (): string => InterfaceColorVariationResource::getUrl(panel: $panelId))
@@ -206,6 +211,14 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => ManageProductCustomization::getUrl(panel: $panelId))
                         ->icon('heroicon-o-table-cells')
                         ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.product-customization', 'filament.admin.pages.size-dimension-multipliers')),
+                    NavigationItem::make('Ekstra Varyasyon Oluştur')
+                        ->url(fn (): string => ExtraVariationResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-plus-circle')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(ExtraVariationResource::getRouteBaseName($panelId).'.*')),
+                    NavigationItem::make('Özelleştirme Seçeneği')
+                        ->url(fn (): string => CustomizationChoiceResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-squares-plus')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(CustomizationChoiceResource::getRouteBaseName($panelId).'.*')),
                 ]),
             NavigationItem::make('Arayüz Yönetimi')
                 ->group('E-Ticaret')
@@ -215,7 +228,8 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn (): bool => request()->routeIs(BannerSlideResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterMenuGroupResource::getRouteBaseName($panelId) . '.*')
                     || request()->routeIs(FooterSettingResource::getRouteBaseName($panelId) . '.*')
-                    || request()->routeIs(LegalPageResource::getRouteBaseName($panelId) . '.*'))
+                    || request()->routeIs(LegalPageResource::getRouteBaseName($panelId) . '.*')
+                    || request()->routeIs('filament.admin.pages.store-display'))
                 ->childItems([
                     NavigationItem::make('Banner Slaytlar')
                         ->url(fn (): string => BannerSlideResource::getUrl(panel: $panelId))
@@ -233,6 +247,10 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => LegalPageResource::getUrl(panel: $panelId))
                         ->icon('heroicon-o-document-text')
                         ->isActiveWhen(fn (): bool => request()->routeIs(LegalPageResource::getRouteBaseName($panelId) . '.*')),
+                    NavigationItem::make('Fiyat çarpanı görünümü')
+                        ->url(fn (): string => ManageStoreDisplay::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-eye')
+                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.store-display')),
                 ]),
         ];
     }
