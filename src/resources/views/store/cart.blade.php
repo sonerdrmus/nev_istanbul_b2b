@@ -35,6 +35,11 @@
                                     <div class="flex-1 min-w-0">
                                         <p class="text-xs text-primary-600 font-medium">{{ $p->company?->name }}</p>
                                         <h2 class="font-semibold text-slate-900 truncate">{{ $p->localized_name }}</h2>
+                                        @if(($item->separate_order ?? null) === 'same')
+                                            <p class="mt-1 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">{{ __('store.cart.separate_same') }}</p>
+                                        @elseif(($item->separate_order ?? null) === 'different')
+                                            <p class="mt-1 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800 ring-1 ring-sky-200">{{ __('store.cart.separate_different') }}</p>
+                                        @endif
                                         @if(!empty($item->variation_data) && is_array($item->variation_data))
                                             <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
                                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('store.cart.selected_variations') }}</p>

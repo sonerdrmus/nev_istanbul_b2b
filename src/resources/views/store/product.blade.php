@@ -1599,6 +1599,11 @@
                     function isProductVariationBlockSelectionReady(block) {
                         if (!block) return true;
                         if (block.style.display === 'none') return true;
+                        if ((block.getAttribute('data-extra-variation') || '') !== '1'
+                            && block.querySelectorAll('.product-option').length === 0
+                            && block.querySelectorAll('.size-table-input').length === 0) {
+                            return true;
+                        }
                         if ((block.getAttribute('data-extra-variation') || '') === '1') {
                             var extraKind = block.getAttribute('data-extra-answer') || '';
                             if (extraKind === 'info' || extraKind === 'textarea') {
@@ -3131,18 +3136,28 @@
                                 }
                             } else {
                                 if (!isProductVariationBlockComplete(panel)) return;
-                                var value = '';
-                                var delta = 1;
                                 var sel = getVisibleSelectedProductOption(panel);
-                                if (sel) {
-                                    delta = variationMultiplierFromAttr(sel);
+                                if (!sel) {
+                                    panel.querySelectorAll('.product-option.option-selected').forEach(function(b) {
+                                        if (!sel) sel = b;
+                                    });
+                                }
+                                var raw = sel ? (sel.getAttribute('data-option') || '').trim() : '';
+                                if (raw) {
+                                    list.push({
+                                        name: name,
+                                        value: optionDisplayLabel(sel),
+                                        rawValue: raw,
+                                        priceDelta: variationMultiplierFromAttr(sel),
+                                        isMulti: false
+                                    });
+                                    return;
                                 }
                                 if (summary && summaryVal && !summary.classList.contains('hidden')) {
-                                    value = (summaryVal.textContent || '').trim();
-                                    if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false });
-                                } else if (sel && sel.style.display !== 'none') {
-                                    value = optionDisplayLabel(sel);
-                                    if (value && value !== '—') list.push({ name: name, value: value, priceDelta: delta, isMulti: false, rawValue: (sel.getAttribute('data-option') || '').trim() });
+                                    var summaryText = (summaryVal.textContent || '').trim();
+                                    if (summaryText && summaryText !== '—') {
+                                        list.push({ name: name, value: summaryText, priceDelta: 1, isMulti: false });
+                                    }
                                 }
                             }
                         });

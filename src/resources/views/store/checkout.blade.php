@@ -125,7 +125,13 @@
                     @foreach($cartItems as $item)
                         <li class="pt-3 first:pt-0">
                             <div class="flex justify-between text-sm">
-                                <span class="text-slate-600">{{ $item->product->localized_name }} × {{ $item->quantity }}</span>
+                                <span class="text-slate-600">{{ $item->product->localized_name }} × {{ $item->quantity }}
+                                    @if(($item->separate_order ?? null) === 'same')
+                                        <span class="mt-1 block text-xs font-semibold text-amber-800">{{ __('store.cart.separate_same') }}</span>
+                                    @elseif(($item->separate_order ?? null) === 'different')
+                                        <span class="mt-1 block text-xs font-semibold text-sky-800">{{ __('store.cart.separate_different') }}</span>
+                                    @endif
+                                </span>
                                 @php
     $convertedSubtotal = $selectedCurrency->convertFromTRY($item->subtotal);
 @endphp

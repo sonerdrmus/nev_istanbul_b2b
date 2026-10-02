@@ -32,7 +32,57 @@ class StoreController extends Controller
 {
     private function cartKey(int $productId): string
     {
-        return (string) $productId;
+        return $productId.'-'.bin2hex(random_bytes(4));
+    }
+
+    /** Aynı ürünün her sepete eklenişi ayrı satırdır; seçimlerin aynı olup olmadığını ayırır. */
+    private function variationSelectionSignature(mixed $variationData): string
+    {
+        if (! is_array($variationData) || $variationData === []) {
+            return '';
+        }
+
+        $copy = $variationData;
+        unset($copy['quick_order']);
+        $this->ksortRecursive($copy);
+
+        return json_encode($copy) ?: '';
+    }
+
+    private function ksortRecursive(array &$value): void
+    {
+        foreach ($value as &$item) {
+            if (is_array($item)) {
+                $this->ksortRecursive($item);
+            }
+        }
+        unset($item);
+        ksort($value);
+    }
+
+    private function markSeparateCartLines(\Illuminate\Support\Collection $items): void
+    {
+        $groups = [];
+        foreach ($items as $item) {
+            $groups[(int) $item->product->id][] = $item;
+        }
+
+        foreach ($groups as $group) {
+            if (count($group) < 2) {
+                continue;
+            }
+
+            $counts = [];
+            foreach ($group as $item) {
+                $signature = $this->variationSelectionSignature($item->variation_data ?? null);
+                $counts[$signature] = ($counts[$signature] ?? 0) + 1;
+            }
+
+            foreach ($group as $item) {
+                $signature = $this->variationSelectionSignature($item->variation_data ?? null);
+                $item->separate_order = ($counts[$signature] ?? 0) > 1 ? 'same' : 'different';
+            }
+        }
     }
 
     private function variationValueIsBlank(mixed $value): bool
@@ -170,8 +220,11 @@ class StoreController extends Controller
                 'variation_data' => $item['variation_data'] ?? null,
                 'size_quantities' => $item['size_quantities'] ?? null,
                 'quick_order' => $item['quick_order'] ?? null,
+                'separate_order' => null,
             ]);
         }
+
+        $this->markSeparateCartLines($items);
 
         return $items;
     }
@@ -332,7 +385,12 @@ class StoreController extends Controller
         $this->filterFabricVariationOptionsForProduct($product);
         $this->filterMoldModelVariationOptionsForProduct($product);
         $this->filterSizeTableVariationOptionsForProduct($product);
-        $product->setRelation('variations', ProductVariationFlowSteps::topologicallySorted($product->variations));
+        $product->setRelation(
+            'variations',
+            ProductVariationFlowSteps::topologicallySorted(
+                $product->variations->filter(fn ($variation) => $variation->options->isNotEmpty())->values()
+            )
+        );
         $canSeePrices = auth()->check();
         $customerDiscountPercent = $this->getCustomerDiscountPercent();
         $customerGroupId = auth()->check() && auth()->user()->company?->customer_group_id
@@ -547,8 +605,15 @@ class StoreController extends Controller
 
         if (! $isQuickOrder) {
             // Varyasyonu olan ürünlerde tüm (kök) varyasyonların seçilmesi zorunlu
-            $product->load('variations');
-            $rootVariations = $product->variations->filter(fn ($v) => empty($v->depends_on))->pluck('name')->unique()->values();
+            $product->load('variations.options');
+            $this->filterFabricVariationOptionsForProduct($product);
+            $this->filterMoldModelVariationOptionsForProduct($product);
+            $this->filterSizeTableVariationOptionsForProduct($product);
+            $rootVariations = $product->variations
+                ->filter(fn ($variation) => empty($variation->depends_on) && $variation->options->isNotEmpty())
+                ->pluck('name')
+                ->unique()
+                ->values();
             if ($rootVariations->isNotEmpty()) {
                 if (empty($variationData) || ! is_array($variationData)) {
                     return redirect()->back()->with('error', __('store.flash.select_all_options'));
@@ -564,16 +629,15 @@ class StoreController extends Controller
             }
         }
 
-        $key = $this->cartKey((int) $product->id);
         $cart = $this->getCart();
-        if (isset($cart[$key])) {
-            $cart[$key]['quantity'] += $qty;
-        } else {
-            $cart[$key] = [
-                'product_id' => $product->id,
-                'quantity' => $qty,
-            ];
-        }
+        $alreadyInCart = collect($cart)->contains(
+            fn ($row) => (int) ($row['product_id'] ?? 0) === (int) $product->id
+        );
+        $key = $this->cartKey((int) $product->id);
+        $cart[$key] = [
+            'product_id' => $product->id,
+            'quantity' => $qty,
+        ];
         if ($variationData !== null) {
             $cart[$key]['variation_data'] = $variationData;
         }
@@ -592,7 +656,11 @@ class StoreController extends Controller
             return response()->json(['ok' => true, 'cart_count' => collect($cart)->sum('quantity')]);
         }
 
-        return redirect()->route('store.cart')->with('success', __('store.flash.cart_added'));
+        $message = $alreadyInCart
+            ? __('store.flash.cart_added_separate')
+            : __('store.flash.cart_added');
+
+        return redirect()->route('store.cart')->with('success', $message);
     }
 
     public function updateCart(Request $request)

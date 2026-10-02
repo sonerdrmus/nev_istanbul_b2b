@@ -188,45 +188,105 @@ class ProductVariationOption extends Model
         $factor = 1.0;
 
         foreach ($selections as $variationName => $optionValue) {
-            if ((string) $variationName === 'size_quantities') {
+            if (in_array((string) $variationName, [
+                'size_quantities',
+                'product_customization',
+                'product_customization_notes',
+                'product_customization_table',
+                'quick_order',
+            ], true)) {
                 continue;
             }
 
-            $variation = $product->variations->firstWhere('name', (string) $variationName);
+            $variation = $product->variations->first(
+                fn ($row) => trim((string) $row->name) === trim((string) $variationName)
+            );
             if (! $variation) {
                 continue;
             }
 
-            $optionLabel = self::resolveSelectionOptionLabel($optionValue);
+            $factor *= self::multiplierForStoredValue($variation, $optionValue);
+        }
 
-            if (is_array($optionValue) && ! self::isMultiValueList($optionValue)) {
-                $option = $variation->options->firstWhere('option_value', $optionLabel);
-                if ($option) {
-                    $factor *= self::normalizePriceMultiplier($option->price_delta);
+        return $factor;
+    }
+
+    private static function multiplierForStoredValue(ProductVariation $variation, mixed $optionValue): float
+    {
+        if (is_array($optionValue) && ! self::isMultiValueList($optionValue)) {
+            return self::multiplierForStructuredChoice($variation, $optionValue);
+        }
+
+        if (is_array($optionValue)) {
+            $factor = 1.0;
+            foreach ($optionValue as $value) {
+                if (is_array($value)) {
+                    $factor *= self::multiplierForStructuredChoice($variation, $value);
+
+                    continue;
                 }
-
-                continue;
+                if ($value === null || trim((string) $value) === '') {
+                    continue;
+                }
+                $factor *= self::multiplierForOptionLabel($variation, (string) $value);
             }
 
-            if (is_array($optionValue)) {
-                foreach ($optionValue as $v) {
-                    if (is_array($v) || $v === null || trim((string) $v) === '') {
-                        continue;
-                    }
-                    $option = $variation->options->firstWhere('option_value', (string) $v);
-                    if ($option) {
-                        $factor *= self::normalizePriceMultiplier($option->price_delta);
-                    }
-                }
-            } else {
-                $option = $variation->options->firstWhere('option_value', $optionLabel);
-                if ($option) {
-                    $factor *= self::normalizePriceMultiplier($option->price_delta);
-                }
+            return $factor;
+        }
+
+        return self::multiplierForOptionLabel($variation, (string) $optionValue);
+    }
+
+    /** @param  array<string, mixed>  $value */
+    private static function multiplierForStructuredChoice(ProductVariation $variation, array $value): float
+    {
+        $factor = self::multiplierForOptionLabel($variation, self::resolveSelectionOptionLabel($value));
+        if (isset($value['sub_option_multiplier']) && is_numeric($value['sub_option_multiplier'])) {
+            $sub = (float) $value['sub_option_multiplier'];
+            if ($sub > 0.0) {
+                $factor *= $sub;
             }
         }
 
         return $factor;
+    }
+
+    private static function multiplierForOptionLabel(ProductVariation $variation, string $label): float
+    {
+        $option = self::findOptionByStoredLabel($variation, $label);
+
+        return $option ? self::normalizePriceMultiplier($option->price_delta) : 1.0;
+    }
+
+    /**
+     * Sepet, seçimi bazen görünen adla kaydeder (EN/IT veya "etiket · adet").
+     * Çarpan, kanonik option_value ile aynı seçeneğe bağlanır.
+     */
+    private static function findOptionByStoredLabel(ProductVariation $variation, string $label): ?self
+    {
+        $needle = trim($label);
+        if ($needle === '') {
+            return null;
+        }
+
+        $candidates = [$needle];
+        $head = trim((string) preg_split('/\s+·\s+/u', $needle)[0]);
+        if ($head !== '' && $head !== $needle) {
+            $candidates[] = $head;
+        }
+
+        foreach (['option_value', 'option_value_en', 'option_value_it'] as $field) {
+            foreach ($candidates as $candidate) {
+                $option = $variation->options->first(
+                    fn ($row) => trim((string) $row->{$field}) === $candidate
+                );
+                if ($option) {
+                    return $option;
+                }
+            }
+        }
+
+        return null;
     }
 
     /** @param  array<string, mixed>  $selections */
