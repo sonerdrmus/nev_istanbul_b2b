@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Schema;
 
 trait FillsLocalizedNameFromCatalog
 {
+    /** @var array<string, bool> */
+    protected static array $localizedColumnExists = [];
+
     /**
      * Canonical TR field that matching/sync still uses.
      */
@@ -26,7 +29,11 @@ trait FillsLocalizedNameFromCatalog
 
             $enAttr = $sourceAttr.'_en';
             $itAttr = $sourceAttr.'_it';
-            if (! Schema::hasColumn($model->getTable(), $enAttr)) {
+            $columnKey = $model->getTable().'.'.$enAttr;
+            if (! array_key_exists($columnKey, static::$localizedColumnExists)) {
+                static::$localizedColumnExists[$columnKey] = Schema::hasColumn($model->getTable(), $enAttr);
+            }
+            if (! static::$localizedColumnExists[$columnKey]) {
                 return;
             }
 

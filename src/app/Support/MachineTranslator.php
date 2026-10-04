@@ -41,35 +41,18 @@ class MachineTranslator
             return null;
         }
 
-        // Keep simple HTML structure: translate plain text chunks between tags
-        if (! str_contains($html, '<')) {
-            return self::translate($html, $from, $to);
+        // One request for the whole description. Per-tag calls time out the admin save.
+        $plain = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? '');
+        if ($plain === '') {
+            return null;
         }
 
-        $parts = preg_split('/(<[^>]+>)/u', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if ($parts === false) {
-            return self::translate(strip_tags($html), $from, $to);
+        $translated = self::translate($plain, $from, $to);
+        if ($translated === null || trim($translated) === '') {
+            return null;
         }
 
-        $out = '';
-        foreach ($parts as $part) {
-            if ($part === '') {
-                continue;
-            }
-            if (str_starts_with($part, '<')) {
-                $out .= $part;
-                continue;
-            }
-            $plain = html_entity_decode($part, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            if (trim($plain) === '') {
-                $out .= $part;
-                continue;
-            }
-            $translated = self::translate($plain, $from, $to);
-            $out .= $translated !== null ? e($translated) : $part;
-        }
-
-        return $out;
+        return '<p>'.e($translated).'</p>';
     }
 
     private static function translateLong(string $text, string $from, string $to): ?string
@@ -90,7 +73,8 @@ class MachineTranslator
     private static function request(string $text, string $from, string $to): ?string
     {
         try {
-            $response = Http::timeout(12)
+            $response = Http::timeout(4)
+                ->connectTimeout(3)
                 ->acceptJson()
                 ->get('https://api.mymemory.translated.net/get', [
                     'q' => $text,

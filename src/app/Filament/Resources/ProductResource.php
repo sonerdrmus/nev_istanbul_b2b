@@ -88,40 +88,64 @@ class ProductResource extends Resource
      * - value (key): disk üzerindeki göreli path (örn: `products/abc.jpg`)
      * - label: dosya adı
      */
-    protected static function getPublicImageSelectOptions(string $directory): array
+    /**
+     * @return list<string>
+     */
+    protected static function publicImagePaths(string $directory): array
     {
-        $cacheKey = 'public-image-options:'.$directory;
         static $cache = [];
-        if (isset($cache[$cacheKey])) {
-            return $cache[$cacheKey];
+        if (isset($cache[$directory])) {
+            return $cache[$directory];
         }
 
-        $paths = Storage::disk('public')->files($directory);
         $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $paths = Storage::disk('public')->files($directory);
 
-        $options = collect($paths)
-            ->filter(function (string $path) use ($allowed) {
+        $cache[$directory] = collect($paths)
+            ->filter(function (string $path) use ($allowed): bool {
                 $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
                 return in_array($ext, $allowed, true);
             })
             ->sort()
-            ->mapWithKeys(function (string $path) {
-                $label = basename($path);
-                $url = asset('storage/'.$path);
-
-                // Filament Select dropdown içinde thumbnail göstermek için HTML label.
-                // Search performansı için label sade tutulur.
-                $html = '<div class="flex items-center gap-2">'
-                    .'<img src="'.e($url).'" alt="'.e($label).'" class="w-7 h-7 rounded-md object-cover border border-slate-200" />'
-                    .'<span class="text-sm leading-tight break-all">'.e($label).'</span>'
-                    .'</div>';
-
-                return [$path => $html];
-            })
+            ->values()
             ->all();
 
-        $cache[$cacheKey] = $options;
+        return $cache[$directory];
+    }
+
+    protected static function publicImageOptionHtml(string $path): string
+    {
+        $label = basename($path);
+        $url = asset('storage/'.$path);
+
+        return '<div class="flex items-center gap-2">'
+            .'<img src="'.e($url).'" alt="" loading="lazy" class="w-7 h-7 rounded-md object-cover border border-slate-200" />'
+            .'<span class="text-sm leading-tight break-all">'.e($label).'</span>'
+            .'</div>';
+    }
+
+    /**
+     * @param  list<string>  $directories
+     * @return array<string, string>
+     */
+    protected static function searchPublicImageOptions(array $directories, string $search): array
+    {
+        $search = mb_strtolower(trim($search));
+        $options = [];
+
+        foreach ($directories as $directory) {
+            foreach (static::publicImagePaths($directory) as $path) {
+                if ($search !== '' && ! str_contains(mb_strtolower(basename($path)), $search)) {
+                    continue;
+                }
+
+                $options[$path] = static::publicImageOptionHtml($path);
+                if (count($options) >= 25) {
+                    return $options;
+                }
+            }
+        }
 
         return $options;
     }
@@ -230,14 +254,11 @@ class ProductResource extends Resource
                                             ->required(),
                                         Forms\Components\Select::make('home_showcase_image')
                                             ->label('Vitrin görseli')
-                                            ->helperText('Önerilen oran: kategori vitrin kartlarına uyum için yatay / kare görsel. Boş bırakılırsa ana görsel veya galeri ilk sırası kullanılır.')
-                                            ->options(fn () => array_merge(
-                                                self::getPublicImageSelectOptions('products'),
-                                                self::getPublicImageSelectOptions('products/home-showcase'),
-                                            ))
+                                            ->helperText('Dosya adını yazarak arayın. Boş bırakılırsa ana görsel veya galeri ilk sırası kullanılır.')
+                                            ->getSearchResultsUsing(fn (string $search): array => static::searchPublicImageOptions(['products', 'products/home-showcase'], $search))
+                                            ->getOptionLabelUsing(fn ($value): ?string => is_string($value) && $value !== '' ? static::publicImageOptionHtml($value) : null)
                                             ->allowHtml()
                                             ->searchable()
-                                            ->preload()
                                             ->placeholder('Mevcut görsellerden seçin')
                                             ->nullable()
                                             ->columnSpanFull(),
@@ -306,7 +327,6 @@ class ProductResource extends Resource
                                             ->preload()
                                             ->default(fn () => Currency::getDefault()?->id)
                                             ->placeholder('Varsayılan')
-                                            ->live()
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('price')
                                             ->label('Fiyat')
@@ -394,10 +414,11 @@ class ProductResource extends Resource
                                             ->columnSpan(1),
                                         Forms\Components\Select::make('image')
                                             ->label('Ana görsel (liste / öne çıkan)')
-                                            ->options(fn () => self::getPublicImageSelectOptions('products'))
+                                            ->helperText('Dosya adını yazarak arayın. Tüm görseller sayfaya yüklenmez.')
+                                            ->getSearchResultsUsing(fn (string $search): array => static::searchPublicImageOptions(['products'], $search))
+                                            ->getOptionLabelUsing(fn ($value): ?string => is_string($value) && $value !== '' ? static::publicImageOptionHtml($value) : null)
                                             ->allowHtml()
                                             ->searchable()
-                                            ->preload()
                                             ->placeholder('Görsel seçin')
                                             ->nullable()
                                             ->columnSpanFull(),
@@ -1066,9 +1087,10 @@ class ProductResource extends Resource
                                                         if ($livewire && method_exists($livewire, 'getRecord')) {
                                                             $record = $livewire->getRecord();
                                                             if ($record instanceof Product && $record->exists) {
-                                                                $names = $names->merge(
-                                                                    $record->variations()->orderBy('sort_order')->pluck('name')
-                                                                );
+                                                                $loadedNames = $record->relationLoaded('variations')
+                                                                    ? $record->variations->sortBy('sort_order')->pluck('name')
+                                                                    : $record->variations()->orderBy('sort_order')->pluck('name');
+                                                                $names = $names->merge($loadedNames);
                                                             }
                                                         }
                                                         $current = trim((string) ($get('customization_trigger_variation') ?? ''));
@@ -1182,7 +1204,13 @@ class ProductResource extends Resource
                     ->boolean(),
             ])
             ->defaultSort('sort_order', 'asc')
-            ->modifyQueryUsing(fn ($query) => $query->with('productImages'))
+            ->modifyQueryUsing(fn ($query) => $query->with([
+                'productImages',
+                'company',
+                'category.parent',
+                'taxClass',
+                'currency',
+            ]))
             ->filters([
                 Tables\Filters\SelectFilter::make('company_id')
                     ->label('Şirket')
@@ -1737,17 +1765,23 @@ class ProductResource extends Resource
                 }
                 $removed += $removeQuery->delete();
 
+                $existingLookup = array_fill_keys(
+                    $variation->options()->whereNotNull($fkField)->pluck($fkField)->map(fn ($id): int => (int) $id)->all(),
+                    true,
+                );
+
                 foreach ($visibleRows as $row) {
                     $rowPresetId = (int) $row[$fkField];
                     if ($presetId !== null && $rowPresetId !== $presetId) {
                         continue;
                     }
 
-                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                    if (isset($existingLookup[$rowPresetId])) {
                         continue;
                     }
 
                     static::createVariationOptionFromPresetRow($variation, $row, 'fabric');
+                    $existingLookup[$rowPresetId] = true;
                     $added++;
                 }
             });
@@ -1792,17 +1826,23 @@ class ProductResource extends Resource
                 }
                 $removed += $removeQuery->delete();
 
+                $existingLookup = array_fill_keys(
+                    $variation->options()->whereNotNull($fkField)->pluck($fkField)->map(fn ($id): int => (int) $id)->all(),
+                    true,
+                );
+
                 foreach ($visibleRows as $row) {
                     $rowPresetId = (int) $row[$fkField];
                     if ($presetId !== null && $rowPresetId !== $presetId) {
                         continue;
                     }
 
-                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                    if (isset($existingLookup[$rowPresetId])) {
                         continue;
                     }
 
                     static::createVariationOptionFromPresetRow($variation, $row, 'mold_model_type');
+                    $existingLookup[$rowPresetId] = true;
                     $added++;
                 }
             });
@@ -1845,17 +1885,23 @@ class ProductResource extends Resource
                 }
                 $removed += $removeQuery->delete();
 
+                $existingLookup = array_fill_keys(
+                    $variation->options()->whereNotNull($fkField)->pluck($fkField)->map(fn ($id): int => (int) $id)->all(),
+                    true,
+                );
+
                 foreach ($visibleRows as $row) {
                     $rowPresetId = (int) $row[$fkField];
                     if ($presetId !== null && $rowPresetId !== $presetId) {
                         continue;
                     }
 
-                    if ($variation->options()->where($fkField, $rowPresetId)->exists()) {
+                    if (isset($existingLookup[$rowPresetId])) {
                         continue;
                     }
 
                     static::createVariationOptionFromPresetRow($variation, $row, 'size_table');
+                    $existingLookup[$rowPresetId] = true;
                     $added++;
                 }
             });

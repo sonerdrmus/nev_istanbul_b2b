@@ -61,7 +61,7 @@ final class ProductDimensionMultiplierFormSchema
                     ])
                     ->statePath('dimension_multipliers'),
             ])
-            ->collapsed(false)
+            ->collapsed()
             ->columnSpanFull();
     }
 

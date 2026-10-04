@@ -87,9 +87,16 @@ class ProductVariationOption extends Model
             return;
         }
 
-        $table = $this->relationLoaded('sizeTable')
-            ? $this->sizeTable
-            : SizeTable::query()->find($this->size_table_id);
+        $tableId = (int) $this->size_table_id;
+        if ($this->relationLoaded('sizeTable')) {
+            $table = $this->sizeTable;
+        } else {
+            static $tables = [];
+            if (! array_key_exists($tableId, $tables)) {
+                $tables[$tableId] = SizeTable::query()->find($tableId);
+            }
+            $table = $tables[$tableId];
+        }
 
         if (! $table) {
             return;

@@ -6,6 +6,7 @@ services:
     container_name: filament_b2b_app
     volumes:
       - ./src:/var/www
+      - ./docker/php/upload-limits.ini:/usr/local/etc/php/conf.d/upload-limits.ini
     networks:
       - b2b_net
 
