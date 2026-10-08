@@ -328,7 +328,7 @@
     @endphp
     <section class="mt-5 lg:mt-6 w-full" aria-label="{{ __('store.product.section_order_options') }}">
         <div class="max-w-full">
-            <form action="{{ route('store.cart.add') }}" method="POST" novalidate class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-2 sm:p-5 lg:p-2 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}">
+            <form action="{{ route('store.cart.add') }}" method="POST" enctype="multipart/form-data" novalidate class="rounded-2xl lg:rounded-2xl border border-slate-200/90 bg-slate-50/90 p-2 sm:p-5 lg:p-2 shadow-sm shadow-slate-200/30 ring-1 ring-slate-200/40" id="add-to-cart-form" data-available-stock="{{ $availableStock }}">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 <input type="hidden" name="order_mode" id="order-mode-input" value="detailed">
@@ -1052,6 +1052,17 @@
                                     <label for="quick-order-image" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_image_label') }}</label>
                                     <input id="quick-order-image" name="quick_order_image" type="file" accept="image/png,image/jpeg,image/jpg" class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
                                     <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_image_help') }}</p>
+                                    <p id="quick-order-complete-hint" class="mt-4 text-sm text-slate-500">{{ __('store.product.quick_order_complete_hint') }}</p>
+                                    @auth
+                                    <button type="submit" name="after_add" value="checkout" id="quick-order-complete-btn" disabled class="mt-3 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold shadow-md shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {{ __('store.checkout.place_order') }}
+                                    </button>
+                                    @endauth
+                                    @guest
+                                    <button type="button" onclick="document.getElementById('login-modal').classList.remove('hidden')" class="mt-3 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold shadow-md shadow-primary-600/20">
+                                        {{ __('store.product.login_for_order') }}
+                                    </button>
+                                    @endguest
                                 </div>
                             </div>
                         </div>
@@ -3784,18 +3795,26 @@
                         var orderMode = (orderModeInput && orderModeInput.value) || 'detailed';
                         if (orderMode === 'quick') {
                             var quickState = getQuickOrderInputState();
-                            var canSubmit = quickState.hasContent;
-                            var btnLabel = document.getElementById('add-to-cart-btn-label');
+                            var canComplete = quickState.hasText && quickState.hasImage;
+                            var completeBtn = document.getElementById('quick-order-complete-btn');
+                            var completeHint = document.getElementById('quick-order-complete-hint');
                             if (warningEl) {
                                 warningEl.classList.add('hidden');
                             }
                             if (btn) {
-                                btn.disabled = !canSubmit;
-                                if (btnLabel) {
-                                    btnLabel.textContent = canSubmit ? PU.add_to_cart : PU.add_to_cart_hint;
-                                }
+                                btn.disabled = true;
+                                btn.classList.add('hidden');
+                            }
+                            if (completeBtn) {
+                                completeBtn.disabled = !canComplete;
+                            }
+                            if (completeHint) {
+                                completeHint.classList.toggle('hidden', canComplete);
                             }
                             return;
+                        }
+                        if (btn) {
+                            btn.classList.remove('hidden');
                         }
                         var allSelected = allVisibleVariationsSelected();
                         if (!isFinalVariationFlowTriggered() && shouldResetCustomizationUi()) {
@@ -6733,6 +6752,13 @@
                     var form = document.getElementById('add-to-cart-form');
                     if (form) {
                         form.addEventListener('submit', function(e) {
+                            if (orderModeInput && orderModeInput.value === 'quick') {
+                                var quickState = getQuickOrderInputState();
+                                if (!quickState.hasText || !quickState.hasImage) {
+                                    e.preventDefault();
+                                }
+                                return;
+                            }
                             if (variationInput && !allVisibleVariationsSelected()) {
                                 e.preventDefault();
                                 var w = document.getElementById('variation-summary-warning');

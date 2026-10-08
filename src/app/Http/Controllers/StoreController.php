@@ -596,6 +596,9 @@ class StoreController extends Controller
             if ($quickNotes === '' && $imagePath === null) {
                 return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_required'));
             }
+            if ($request->input('after_add') === 'checkout' && ($quickNotes === '' || $imagePath === null)) {
+                return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_both_required'));
+            }
             $quickOrder = [
                 'notes' => $quickNotes,
                 'image_path' => $imagePath,
@@ -659,6 +662,10 @@ class StoreController extends Controller
         $message = $alreadyInCart
             ? __('store.flash.cart_added_separate')
             : __('store.flash.cart_added');
+
+        if ($isQuickOrder && $request->input('after_add') === 'checkout') {
+            return redirect()->route('store.checkout')->with('success', $message);
+        }
 
         return redirect()->route('store.cart')->with('success', $message);
     }
