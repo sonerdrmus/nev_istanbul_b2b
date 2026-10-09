@@ -27,6 +27,7 @@ class EditProduct extends EditRecord
         ProductVariationOptionInterfaceSync::reconcileFabricProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcileMoldModelProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcileSizeTableProductOptions((int) $this->record->getKey());
+        ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
 
         // Mutabakat sonrası taze veri gerektiği için loadMissing değil load kullanılır.
         $this->record->load([
@@ -78,6 +79,7 @@ class EditProduct extends EditRecord
     {
         $state = $this->form->getState();
         ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $state);
-
+        ProductResource::syncPackagingAssignmentsFromProduct($this->record);
+        ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
     }
 }

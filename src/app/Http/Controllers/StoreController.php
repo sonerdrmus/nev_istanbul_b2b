@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\ProductVariationOption;
 use App\Models\ShippingMethod;
 use App\Models\SizeTable;
+use App\Support\FirewallSafeBody;
 use App\Support\ProductVariationFlowSteps;
 use App\Support\MediaUrl;
 use App\Support\DeliveryMethodCatalog;
@@ -385,6 +386,7 @@ class StoreController extends Controller
         $this->filterFabricVariationOptionsForProduct($product);
         $this->filterMoldModelVariationOptionsForProduct($product);
         $this->filterSizeTableVariationOptionsForProduct($product);
+        $this->filterPackagingVariationOptionsForProduct($product);
         $product->setRelation(
             'variations',
             ProductVariationFlowSteps::topologicallySorted(
@@ -470,6 +472,30 @@ class StoreController extends Controller
     }
 
     /**
+     * "Ambalaj Türü" seçeneklerini yalnızca bu ürüne atanmış ambalajlarla sınırlar.
+     */
+    private function filterPackagingVariationOptionsForProduct(Product $product): void
+    {
+        $hiddenPackagingIds = $product->hiddenPackagingPreferenceVariationIds();
+        if ($hiddenPackagingIds === []) {
+            return;
+        }
+
+        foreach ($product->variations as $variation) {
+            if ((string) $variation->type !== 'packaging_type') {
+                continue;
+            }
+
+            $filtered = $variation->options->reject(
+                fn ($option): bool => $option->interface_packaging_preference_variation_id !== null
+                    && in_array((int) $option->interface_packaging_preference_variation_id, $hiddenPackagingIds, true)
+            )->values();
+
+            $variation->setRelation('options', $filtered);
+        }
+    }
+
+    /**
      * "Beden Tablosu" seçeneklerini: global tablolar + bu ürüne atanmış tablolar
      * kalacak; başka ürüne özel atananlar gizlenecek şekilde filtreler.
      */
@@ -542,6 +568,8 @@ class StoreController extends Controller
 
     public function addToCart(Request $request)
     {
+        $this->decodeFirewallSafeFields($request, ['variation_data', 'size_quantities', 'quick_order_notes', 'quick_order_text']);
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'nullable|integer|min:1',
@@ -612,6 +640,7 @@ class StoreController extends Controller
             $this->filterFabricVariationOptionsForProduct($product);
             $this->filterMoldModelVariationOptionsForProduct($product);
             $this->filterSizeTableVariationOptionsForProduct($product);
+            $this->filterPackagingVariationOptionsForProduct($product);
             $rootVariations = $product->variations
                 ->filter(fn ($variation) => empty($variation->depends_on) && $variation->options->isNotEmpty())
                 ->pluck('name')
@@ -744,6 +773,14 @@ class StoreController extends Controller
 
     public function placeOrder(Request $request)
     {
+        $this->decodeFirewallSafeFields($request, [
+            'customer_name',
+            'customer_email',
+            'customer_phone',
+            'customer_address',
+            'notes',
+        ]);
+
         $cartItems = $this->getCartItems();
         if ($cartItems->isEmpty()) {
             return redirect()->route('home')->with('error', __('store.flash.cart_empty_checkout'));
@@ -861,6 +898,22 @@ class StoreController extends Controller
         }
 
         return view('store.order-confirmation', compact('order', 'selectedCurrency', 'currencies'));
+    }
+
+    /**
+     * @param  list<string>  $fields
+     */
+    private function decodeFirewallSafeFields(Request $request, array $fields): void
+    {
+        $decoded = [];
+        foreach ($fields as $field) {
+            if ($request->exists($field)) {
+                $decoded[$field] = FirewallSafeBody::decode($request->input($field));
+            }
+        }
+        if ($decoded !== []) {
+            $request->merge($decoded);
+        }
     }
 
     /** Bayi başvuru sayfası: Neden Bayi + form. */

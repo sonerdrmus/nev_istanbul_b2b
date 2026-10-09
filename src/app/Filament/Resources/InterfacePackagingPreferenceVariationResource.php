@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Filament\Forms\LocaleNameInputs;
 use App\Filament\Resources\InterfacePackagingPreferenceVariationResource\Pages;
 use App\Models\InterfacePackagingPreferenceVariation;
@@ -65,6 +66,8 @@ class InterfacePackagingPreferenceVariationResource extends Resource
                             ->numeric()
                             ->default(0)
                             ->helperText('Listede önce gelmesi için küçük sayı. Sürükleyerek de sıralayabilirsiniz.'),
+                        ProductMultiSelect::relationship('products')
+                            ->helperText('Bu ambalaj yalnızca seçilen ürünlerin Ambalaj varyasyonunda görünür. Birden fazla ürün seçebilirsiniz. Boş bırakılırsa hiçbir üründe görünmez.'),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Yayında')
                             ->default(true),
@@ -89,6 +92,10 @@ class InterfacePackagingPreferenceVariationResource extends Resource
                 Tables\Columns\TextColumn::make('price_multiplier')
                     ->label('Fiyat çarpanı')
                     ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 3, ',', '.'))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->label('Ürün')
+                    ->counts('products')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')

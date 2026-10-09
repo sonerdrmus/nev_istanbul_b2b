@@ -612,7 +612,7 @@ class ProductResource extends Resource
                                                                     'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
                                                                     'mold_model_type' => ['Bu ürüne ait kalıp modeli bulunamadı', 'Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
                                                                     'delivery_type' => ['Teslim şekli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Teslim Şeklini Yönet bölümünden kayıt ekleyin.'],
-                                                                    'packaging_type' => ['Ambalaj tercihi kaydı bulunamadı', 'Önce Varyasyon yönetimi → Ambalaj Tercih Yönetimi → Ambalaj seç bölümünden kayıt ekleyin.'],
+                                                                    'packaging_type' => ['Bu ürüne ait ambalaj bulunamadı', 'Varyasyon yönetimi → Ambalaj Tercih Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
                                                                     'size_table' => ['Beden tablosu bulunamadı', 'Önce Varyasyon yönetimi → Beden tabloları bölümünden en az bir tablo tanımlayın.'],
                                                                 ];
                                                                 if (isset($titles[$state])) {
@@ -633,7 +633,7 @@ class ProductResource extends Resource
                                                         'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                                                         'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                                                         'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
-                                                        'packaging_type' => 'Seçenekler, Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından otomatik doldurulur; malzeme ve özelleştirme mağazada alt adımlarda sorulur.',
+                                                        'packaging_type' => 'Seçenekler yalnızca Ambalaj Tercih Yönetimi → Ürünler alanından bu ürüne atanmış ambalajlardan gelir. Buradan silinen ambalaj bu üründen kalkar ve sonraki kayıtlarda geri gelmez.',
                                                         'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
                                                         'size_table' => 'Seçenekler, Beden tabloları kayıtlarından otomatik doldurulur (global tablolar + bu ürüne atanmış tablolar). İstemediğiniz satırları silebilirsiniz.',
                                                         default => null,
@@ -1391,6 +1391,66 @@ class ProductResource extends Resource
     }
 
     /**
+     * Kayıt öncesi: bu ürüne atanmamış ambalaj seçenek satırlarını düşürür.
+     */
+    public static function dropForeignPackagingOptionsFromProductFormData(array $data, ?int $productId): array
+    {
+        if (empty($data['variations']) || ! is_array($data['variations'])) {
+            return $data;
+        }
+
+        $hiddenPackagingIds = InterfacePackagingPreferenceVariation::hiddenIdsForProduct($productId);
+        if ($hiddenPackagingIds === []) {
+            return $data;
+        }
+
+        foreach ($data['variations'] as &$variation) {
+            if ((string) ($variation['type'] ?? '') !== 'packaging_type' || ! is_array($variation['options'] ?? null)) {
+                continue;
+            }
+
+            $variation['options'] = array_values(array_filter(
+                $variation['options'],
+                function ($option) use ($hiddenPackagingIds): bool {
+                    $presetId = is_array($option) ? ($option['interface_packaging_preference_variation_id'] ?? null) : null;
+
+                    return $presetId === null || ! in_array((int) $presetId, $hiddenPackagingIds, true);
+                },
+            ));
+        }
+        unset($variation);
+
+        return $data;
+    }
+
+    /**
+     * Ürün varyasyonlarındaki ambalaj satırlarını bu ürünün ataması kabul eder.
+     * Böylece ürün içeriğinden silinen ambalaj sonraki senkronlarda geri yazılmaz.
+     */
+    public static function syncPackagingAssignmentsFromProduct(Product $product): void
+    {
+        if (! InterfacePackagingPreferenceVariation::productPivotTableExists()) {
+            return;
+        }
+
+        $variationIds = $product->variations()->where('type', 'packaging_type')->pluck('id');
+        if ($variationIds->isEmpty()) {
+            return;
+        }
+
+        $presetIds = ProductVariationOption::query()
+            ->whereIn('product_variation_id', $variationIds)
+            ->whereNotNull('interface_packaging_preference_variation_id')
+            ->pluck('interface_packaging_preference_variation_id')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $product->packagingPreferences()->sync($presetIds);
+    }
+
+    /**
      * Form içinde düzenlenen ürünün id'si (oluşturma ekranında henüz kayıt olmadığı için null).
      */
     public static function currentProductIdFromLivewire(?object $livewire): ?int
@@ -1413,7 +1473,7 @@ class ProductResource extends Resource
             'certificate_type' => static::certificateVariationOptionsFromInterfacePresets(),
             'mold_model_type' => static::moldModelVariationOptionsFromInterfacePresets($productId),
             'delivery_type' => static::deliveryVariationOptionsFromInterfacePresets(),
-            'packaging_type' => static::packagingVariationOptionsFromInterfacePresets(),
+            'packaging_type' => static::packagingVariationOptionsFromInterfacePresets($productId),
             'size_table' => static::sizeTableVariationOptionsFromPresets($productId),
             default => null,
         };
@@ -1601,10 +1661,11 @@ class ProductResource extends Resource
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function packagingVariationOptionsFromInterfacePresets(): array
+    public static function packagingVariationOptionsFromInterfacePresets(?int $productId = null): array
     {
         return InterfacePackagingPreferenceVariation::query()
             ->where('is_active', true)
+            ->visibleForProduct($productId)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -1629,6 +1690,64 @@ class ProductResource extends Resource
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Ürünlerin "Ambalaj Türü" seçeneklerini ambalaj–ürün atamalarıyla eşitler:
+     * yalnızca o ürüne atanmış ambalajlar eklenir, atanmamış olanlar kaldırılır.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcilePackagingOptionsForProducts(?int $productId = null, ?int $presetId = null): array
+    {
+        $fkField = 'interface_packaging_preference_variation_id';
+        $added = 0;
+        $removed = 0;
+        $visibleRowsByProduct = [];
+
+        ProductVariation::query()
+            ->where('type', 'packaging_type')
+            ->when($productId !== null, fn (Builder $q) => $q->where('product_id', $productId))
+            ->each(function (ProductVariation $variation) use (&$added, &$removed, &$visibleRowsByProduct, $fkField, $presetId): void {
+                $variationProductId = $variation->product_id !== null ? (int) $variation->product_id : null;
+                $cacheKey = $variationProductId ?? 0;
+
+                $visibleRows = $visibleRowsByProduct[$cacheKey]
+                    ??= static::packagingVariationOptionsFromInterfacePresets($variationProductId);
+
+                $visibleIds = array_map(fn (array $row): int => (int) $row[$fkField], $visibleRows);
+
+                $removeQuery = $variation->options()->whereNotNull($fkField);
+                if ($visibleIds !== []) {
+                    $removeQuery->whereNotIn($fkField, $visibleIds);
+                }
+                if ($presetId !== null) {
+                    $removeQuery->where($fkField, $presetId);
+                }
+                $removed += $removeQuery->delete();
+
+                $existingLookup = array_fill_keys(
+                    $variation->options()->whereNotNull($fkField)->pluck($fkField)->map(fn ($id): int => (int) $id)->all(),
+                    true,
+                );
+
+                foreach ($visibleRows as $row) {
+                    $rowPresetId = (int) $row[$fkField];
+                    if ($presetId !== null && $rowPresetId !== $presetId) {
+                        continue;
+                    }
+
+                    if (isset($existingLookup[$rowPresetId])) {
+                        continue;
+                    }
+
+                    static::createVariationOptionFromPresetRow($variation, $row, 'packaging_type');
+                    $existingLookup[$rowPresetId] = true;
+                    $added++;
+                }
+            });
+
+        return ['added' => $added, 'removed' => $removed];
     }
 
     /**
@@ -1927,6 +2046,10 @@ class ProductResource extends Resource
             return static::reconcileSizeTableOptionsForProducts(presetId: $onlyPresetId)['added'];
         }
 
+        if ($variationType === 'packaging_type') {
+            return static::reconcilePackagingOptionsForProducts(presetId: $onlyPresetId)['added'];
+        }
+
         $rows = static::interfacePresetOptionRowsForType($variationType);
         if ($rows === null || $rows === []) {
             return 0;
@@ -2079,6 +2202,7 @@ class ProductResource extends Resource
         $data = static::dropForeignFabricOptionsFromProductFormData($data, $productId);
         $data = static::dropForeignMoldModelOptionsFromProductFormData($data, $productId);
         $data = static::dropForeignSizeTableOptionsFromProductFormData($data, $productId);
+        $data = static::dropForeignPackagingOptionsFromProductFormData($data, $productId);
 
         if (empty($data['variations']) || ! is_array($data['variations'])) {
             return $data;

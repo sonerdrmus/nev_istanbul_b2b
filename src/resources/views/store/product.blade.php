@@ -6749,6 +6749,23 @@
                         });
                     });
 
+                    function encodeFirewallField(el) {
+                        if (!el || el.value == null || el.value === '' || String(el.value).indexOf('h:') === 0) return;
+                        if (typeof TextEncoder === 'undefined') return;
+                        var bytes = new TextEncoder().encode(String(el.value));
+                        var hex = '';
+                        for (var i = 0; i < bytes.length; i++) {
+                            var part = bytes[i].toString(16);
+                            hex += (part.length === 1 ? '0' : '') + part;
+                        }
+                        el.value = 'h:' + hex;
+                    }
+                    function encodeCartPayload(targetForm) {
+                        ['variation_data', 'size_quantities', 'quick_order_notes', 'quick_order_text'].forEach(function(name) {
+                            targetForm.querySelectorAll('[name="' + name + '"]').forEach(encodeFirewallField);
+                        });
+                    }
+
                     var form = document.getElementById('add-to-cart-form');
                     if (form) {
                         form.addEventListener('submit', function(e) {
@@ -6756,7 +6773,9 @@
                                 var quickState = getQuickOrderInputState();
                                 if (!quickState.hasText || !quickState.hasImage) {
                                     e.preventDefault();
+                                    return;
                                 }
+                                encodeCartPayload(form);
                                 return;
                             }
                             if (variationInput && !allVisibleVariationsSelected()) {
@@ -6815,6 +6834,7 @@
                             } else {
                                 if (sizeInput) sizeInput.value = '';
                             }
+                            encodeCartPayload(form);
                         });
                     }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource;
 use App\Models\ProductImage;
 use App\Support\ProductDimensionMultiplierSync;
+use App\Support\ProductVariationOptionInterfaceSync;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProduct extends CreateRecord
@@ -40,7 +41,8 @@ class CreateProduct extends CreateRecord
         }
 
         ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
-
+        ProductResource::syncPackagingAssignmentsFromProduct($this->record);
+        ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

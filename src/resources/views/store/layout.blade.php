@@ -471,7 +471,7 @@
                                         @foreach($companyFooterGroup->items as $item)
                                             <li>
                                                 @if($item->url && $item->url !== '#')
-                                                    <a href="{{ $item->url }}" class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
+                                                    <a href="{{ $item->storefrontUrl() }}" class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                                 @endif
                                             </li>
                                         @endforeach
@@ -486,7 +486,7 @@
                                     @foreach($customerFooterGroup->items as $item)
                                         <li>
                                             @if($item->url && $item->url !== '#')
-                                                <a href="{{ $item->url }}" class="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>
+                                                <a href="{{ $item->storefrontUrl() }}" class="group flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>
                                                     <span>{{ $item->localized_label }}</span>
                                                     <svg class="w-4 h-4 shrink-0 text-slate-600 group-hover:text-primary-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                                 </a>
@@ -508,7 +508,7 @@
                                             @foreach($chunk as $item)
                                                 <li>
                                                     @if($item->url && $item->url !== '#')
-                                                        <a href="{{ $item->url }}" class="text-sm text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
+                                                        <a href="{{ $item->storefrontUrl() }}" class="text-sm text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                                     @else
                                                         <span class="text-sm text-slate-400">{{ $item->localized_label }}</span>
                                                     @endif
@@ -528,7 +528,7 @@
                                         @foreach($group->items as $item)
                                         <li>
                                             @if($item->url && $item->url !== '#')
-                                                <a href="{{ $item->url }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
+                                                <a href="{{ $item->storefrontUrl() }}" class="text-slate-400 hover:text-white transition-colors" @if($item->open_in_new_tab) target="_blank" rel="noopener" @endif>{{ $item->localized_label }}</a>
                                             @else
                                                 <span class="text-slate-400">{{ $item->localized_label }}</span>
                                             @endif

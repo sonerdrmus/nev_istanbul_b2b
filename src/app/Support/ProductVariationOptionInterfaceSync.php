@@ -67,6 +67,16 @@ class ProductVariationOptionInterfaceSync
     }
 
     /**
+     * Ambalaj–ürün atamalarını ürünlerin "Ambalaj Türü" varyasyon seçenekleriyle eşitler.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcilePackagingProductOptions(?int $productId = null, ?int $presetId = null): array
+    {
+        return ProductResource::reconcilePackagingOptionsForProducts($productId, $presetId);
+    }
+
+    /**
      * Tek preset kaydını bağlı ürün seçeneklerine yansıtır; pasifse bağlı seçenekleri kaldırır.
      */
     public static function syncPreset(object $preset, ?string $type = null): int
@@ -124,6 +134,10 @@ class ProductVariationOptionInterfaceSync
             $removed += $reconciled['removed'];
         } elseif ($variationType === 'size_table') {
             $reconciled = static::reconcileSizeTableProductOptions();
+            $added = $reconciled['added'];
+            $removed += $reconciled['removed'];
+        } elseif ($variationType === 'packaging_type') {
+            $reconciled = static::reconcilePackagingProductOptions();
             $added = $reconciled['added'];
             $removed += $reconciled['removed'];
         } else {

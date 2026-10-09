@@ -12,7 +12,7 @@
         <p class="mt-2 text-slate-600">{{ __('store.checkout.subtitle') }}</p>
     </div>
 
-    <form action="{{ route('store.place-order') }}" method="POST" class="lg:grid lg:grid-cols-12 lg:gap-8">
+    <form id="checkout-form" action="{{ route('store.place-order') }}" method="POST" class="lg:grid lg:grid-cols-12 lg:gap-8">
         @csrf
         <div class="lg:col-span-7">
             <div class="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 sm:p-8">
@@ -254,6 +254,30 @@
             </div>
         </div>
     </form>
+
+    @push('scripts')
+    <script>
+    (function() {
+        var form = document.getElementById('checkout-form');
+        if (!form) return;
+        form.addEventListener('submit', function() {
+            ['customer_name', 'customer_email', 'customer_phone', 'customer_address', 'notes'].forEach(function(name) {
+                var el = form.querySelector('[name="' + name + '"]');
+                if (!el || el.value == null || el.value === '' || String(el.value).indexOf('h:') === 0) return;
+                if (typeof TextEncoder === 'undefined') return;
+                if (el.type === 'email') el.type = 'text';
+                var bytes = new TextEncoder().encode(String(el.value));
+                var hex = '';
+                for (var i = 0; i < bytes.length; i++) {
+                    var part = bytes[i].toString(16);
+                    hex += (part.length === 1 ? '0' : '') + part;
+                }
+                el.value = 'h:' + hex;
+            });
+        });
+    })();
+    </script>
+    @endpush
 
     @if(isset($shippingMethods) && $shippingMethods->isNotEmpty())
     @push('scripts')

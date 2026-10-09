@@ -335,6 +335,27 @@ class Product extends Model
         return SizeTable::hiddenIdsForProduct((int) $this->getKey());
     }
 
+    /** Bu ambalaj tercihlerinin görüneceği ürünler (Ambalaj Tercih Yönetimi). */
+    public function packagingPreferences()
+    {
+        return $this->belongsToMany(
+            InterfacePackagingPreferenceVariation::class,
+            'interface_packaging_preference_variation_product',
+            'product_id',
+            'interface_packaging_preference_variation_id',
+        )->withTimestamps();
+    }
+
+    /**
+     * Bu üründe gizlenecek ambalaj preset id'leri: bu ürüne atanmamış tüm ambalajlar.
+     *
+     * @return array<int, int>
+     */
+    public function hiddenPackagingPreferenceVariationIds(): array
+    {
+        return InterfacePackagingPreferenceVariation::hiddenIdsForProduct((int) $this->getKey());
+    }
+
     /**
      * Sipariş miktarına göre fiyat çarpanı (eşleşme yoksa 1).
      */

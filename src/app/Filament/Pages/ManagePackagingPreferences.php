@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Forms\Components\ProductMultiSelect;
 use App\Filament\Forms\LocaleNameInputs;
 use App\Models\InterfacePackagingCustomization;
 use App\Models\InterfacePackagingMaterial;
@@ -46,6 +47,7 @@ class ManagePackagingPreferences extends Page implements HasForms
 
         $this->form->fill([
             'packaging_types' => InterfacePackagingPreferenceVariation::query()
+                ->with('products:id')
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()
@@ -58,6 +60,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                     'image_path' => $row->image_path,
                     'requires_material' => $row->requires_material,
                     'is_active' => $row->is_active,
+                    'product_ids' => $row->products->pluck('id')->map(fn ($id): int => (int) $id)->all(),
                 ])
                 ->values()
                 ->all(),
@@ -105,7 +108,7 @@ class ManagePackagingPreferences extends Page implements HasForms
         return $form
             ->schema([
                 Forms\Components\Section::make('Ambalaj seç')
-                    ->description('Mağazada müşterinin ilk seçeceği ambalaj türleri (ör. OPP Şeffaf, Kilitli Poşet).')
+                    ->description('Her ambalaj yalnızca seçilen ürünlerin varyasyonunda görünür. Ürün seçilmezse hiçbir üründe çıkmaz. Ürün sayfasından silinen ambalaj da o ürüne geri yazılmaz.')
                     ->schema([
                         Forms\Components\Repeater::make('packaging_types')
                             ->label('')
@@ -136,6 +139,9 @@ class ManagePackagingPreferences extends Page implements HasForms
                                     ->image()
                                     ->imageEditor()
                                     ->nullable(),
+                                ProductMultiSelect::make('product_ids')
+                                    ->helperText('Bu ambalaj yalnızca seçilen ürünlerde görünür. Birden fazla ürün seçebilirsiniz. Boş bırakılırsa hiçbir üründe görünmez.')
+                                    ->columnSpanFull(),
                                 Forms\Components\Toggle::make('requires_material')
                                     ->label('Malzeme seçimi gerekir (Kilitli poşet)')
                                     ->default(false)
@@ -314,17 +320,18 @@ class ManagePackagingPreferences extends Page implements HasForms
                 'sort_order' => $sort * 10,
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];
+            $model = null;
             if (! empty($row['id'])) {
                 $model = InterfacePackagingPreferenceVariation::query()->find((int) $row['id']);
-                if ($model) {
-                    $model->update($attrs);
-                    $keptTypeIds[] = $model->id;
-                    $sort++;
-
-                    continue;
-                }
             }
-            $model = InterfacePackagingPreferenceVariation::query()->create($attrs);
+            if ($model) {
+                $model->update($attrs);
+            } else {
+                $model = InterfacePackagingPreferenceVariation::query()->create($attrs);
+            }
+            if (array_key_exists('product_ids', $row)) {
+                $model->products()->sync($this->packagingProductIds($row['product_ids'] ?? []));
+            }
             $keptTypeIds[] = $model->id;
             $sort++;
         }
@@ -451,5 +458,17 @@ class ManagePackagingPreferences extends Page implements HasForms
         $notification->send();
 
         $this->mount();
+    }
+
+    /**
+     * @param  mixed  $ids
+     * @return array<int, int>
+     */
+    private function packagingProductIds(mixed $ids): array
+    {
+        return array_values(array_unique(array_filter(array_map(
+            fn ($id): int => (int) $id,
+            is_array($ids) ? $ids : [],
+        ))));
     }
 }
