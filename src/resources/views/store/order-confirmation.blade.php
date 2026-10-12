@@ -88,11 +88,11 @@
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
             <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+                @if($order->bankAccount)
                 <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-900">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                     {{ __('store.order_confirmation.payment_wire') }}
                 </h2>
-                @if($order->bankAccount)
                     <dl class="grid grid-cols-1 gap-3 text-sm text-amber-950/90 sm:grid-cols-2">
                         <div>
                             <dt class="text-[11px] font-semibold uppercase tracking-wider text-amber-800/70">{{ __('store.order_confirmation.bank') }}</dt>
@@ -128,6 +128,10 @@
                         </div>
                     </dl>
                 @elseif(config('store.bank_transfer.enabled') && config('store.bank_transfer.iban'))
+                <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-900">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    {{ __('store.order_confirmation.payment_wire') }}
+                </h2>
                     <dl class="space-y-2 text-sm text-amber-950/90">
                         <div>
                             <dt class="text-[11px] font-semibold uppercase tracking-wider text-amber-800/70">{{ __('store.order_confirmation.bank') }}</dt>
@@ -148,10 +152,11 @@
                             <dd class="mt-0.5 font-medium">{{ config('store.bank_transfer.description') }} <strong>{{ $order->order_number }}</strong></dd>
                         </div>
                     </dl>
-                @else
-                    <p class="text-sm leading-relaxed text-amber-950/90">{{ __('store.order_confirmation.email_bank_info', ['email' => $order->customer_email]) }}</p>
-                    <p class="mt-2 text-sm leading-relaxed text-amber-950/90">{{ __('store.order_confirmation.email_receipt') }}</p>
                 @endif
+                <div @class(['mt-4 border-t border-amber-200/80 pt-4' => $order->bankAccount || (config('store.bank_transfer.enabled') && config('store.bank_transfer.iban'))])>
+                    <p class="text-sm leading-relaxed text-amber-950/90">{{ __('store.order_confirmation.email_bank_info', ['email' => 'order@nevistanbul.com.tr']) }}</p>
+                    <p class="mt-2 text-sm leading-relaxed text-amber-950/90">{{ __('store.order_confirmation.email_receipt') }}</p>
+                </div>
             </div>
 
             <aside class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

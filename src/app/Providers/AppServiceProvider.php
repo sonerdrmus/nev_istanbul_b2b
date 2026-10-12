@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Models\BankAccount;
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Product;
 use App\Models\FooterMenuGroup;
 use App\Models\FooterSetting;
 use Illuminate\Support\Facades\File;
@@ -49,20 +48,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('store.layout', function ($view) {
             $view->with('menuCategories', Category::treeForMenu());
             $topMenuCategories = Category::topMenuForStore();
-            $topMenuCategoryProducts = collect();
-            foreach ($topMenuCategories as $tmCat) {
-                $ids = $tmCat->categoryIdsForProductListing();
-                $topMenuCategoryProducts[$tmCat->id] = Product::query()
-                    ->active()
-                    ->visibleInStore()
-                    ->whereIn('category_id', $ids)
-                    ->orderBy('sort_order')
-                    ->orderBy('name')
-                    ->limit(15)
-                    ->get(['id', 'name', 'name_en', 'name_it', 'slug']);
-            }
             $view->with('topMenuCategories', $topMenuCategories);
-            $view->with('topMenuCategoryProducts', $topMenuCategoryProducts);
             $currencies = Currency::forCurrentUserWithTcmbSpot();
             $code = request('currency', session('store_currency', 'TRY'));
             $selectedCurrency = $currencies->firstWhere('code', $code) ?? $currencies->first() ?? Currency::getDefault();

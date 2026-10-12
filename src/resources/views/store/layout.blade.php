@@ -6,6 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name')) – {{ __('store.meta_suffix') }}</title>
     @stack('meta')
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CMZEX5E35S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-CMZEX5E35S');
+    </script>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -75,6 +83,10 @@
             max-width: min(100vw - 1.5rem, 62rem);
             transform: translateY(0);
             transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        /* Büyük resim ve tam ekran pencereler: sticky galeri / header (z-50) / seçim sıfırlama (z-120) / mega menü (z-200) üstünde */
+        .store-overlay {
+            z-index: 400 !important;
         }
     </style>
 </head>
@@ -684,5 +696,12 @@
     })();
     </script>
     @stack('scripts')
+    <script>
+        document.querySelectorAll('.store-overlay').forEach(function (el) {
+            if (el.parentElement !== document.body) {
+                document.body.appendChild(el);
+            }
+        });
+    </script>
 </body>
 </html>

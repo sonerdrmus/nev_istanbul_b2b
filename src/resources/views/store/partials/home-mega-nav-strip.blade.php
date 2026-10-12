@@ -17,13 +17,21 @@
                             || $cat->children->contains('slug', $activeCategory);
                     @endphp
                     {{-- w-max: flex min-width:auto ile mega içeriği satırı şişirmesin (panel kapalıyken tek satır) --}}
-                    <div class="relative w-max max-w-full flex-shrink-0" data-home-mega>
+                    @php
+                        $pillClass = $isActive
+                            ? 'border-primary-300 bg-primary-50 text-primary-900 shadow-sm ring-2 ring-primary-500/20'
+                            : 'border-slate-200/90 bg-white text-slate-700 shadow-sm hover:border-primary-200 hover:bg-slate-50 hover:text-primary-800 hover:shadow-md';
+                    @endphp
+                    <div class="relative w-max max-w-full flex-shrink-0" @if($cat->children->isNotEmpty()) data-home-mega @endif>
+                        @if($cat->children->isEmpty())
+                            <a href="{{ route('home', array_merge($qBase, ['category' => $slug])) }}"
+                               class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-200 whitespace-nowrap {{ $pillClass }}">
+                                {{ $label }}
+                            </a>
+                        @else
                         <button type="button"
                                 data-home-mega-trigger
-                                class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-200 whitespace-nowrap
-                                {{ $isActive
-                                    ? 'border-primary-300 bg-primary-50 text-primary-900 shadow-sm ring-2 ring-primary-500/20'
-                                    : 'border-slate-200/90 bg-white text-slate-700 shadow-sm hover:border-primary-200 hover:bg-slate-50 hover:text-primary-800 hover:shadow-md' }}"
+                                class="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-200 whitespace-nowrap {{ $pillClass }}"
                                 aria-expanded="false"
                                 aria-haspopup="true">
                             {{ $label }}
@@ -36,43 +44,19 @@
                              role="menu"
                              aria-label="{{ __('store.mega_nav.submenu_aria', ['category' => $label]) }}">
                             <div class="max-h-[min(70vh,22rem)] overflow-y-auto py-2">
-                                <p class="px-4 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500" id="mega-panel-heading-{{ $slug }}">
-                                    {{ __('store.mega_nav.section_products_title') }}
+                                <p class="px-4 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ __('store.mega_nav.subcategories_title') }}
                                 </p>
-
-                                @php
-                                    $megaPanelProducts = ($topMenuCategoryProducts ?? collect())->get($cat->id, collect());
-                                @endphp
-                                @if($megaPanelProducts->isNotEmpty())
-                                    <ul class="list-none border-t border-slate-100 pb-1 pt-2" role="list">
-                                        @foreach($megaPanelProducts as $megaProduct)
-                                            <li>
-                                                <a href="{{ route('store.product.show', $megaProduct) }}"
-                                                   class="block px-4 py-2 text-sm leading-snug text-slate-700 transition-colors hover:bg-slate-50 hover:text-primary-700 line-clamp-2"
-                                                   role="menuitem">
-                                                    {{ $megaProduct->localized_name }}
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-
-                                @if($cat->children->isNotEmpty())
-                                    <div class="mx-4 border-t border-slate-100 pt-2 pb-1">
-                                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                            {{ __('store.mega_nav.subcategories_title') }}
-                                        </p>
-                                    </div>
-                                    @foreach($cat->children as $child)
-                                        <a href="{{ route('home', array_merge($qBase, ['parent' => $slug, 'category' => $child->slug])) }}"
-                                           class="block px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-primary-700"
-                                           role="menuitem">
-                                            {{ $child->localized_name }}
-                                        </a>
-                                    @endforeach
-                                @endif
+                                @foreach($cat->children as $child)
+                                    <a href="{{ route('home', array_merge($qBase, ['parent' => $slug, 'category' => $child->slug])) }}"
+                                       class="block px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-primary-700"
+                                       role="menuitem">
+                                        {{ $child->localized_name }}
+                                    </a>
+                                @endforeach
                             </div>
                         </div>
+                        @endif
                     </div>
                 @endforeach
             </div>

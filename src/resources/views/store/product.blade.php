@@ -84,7 +84,7 @@
                     @endif
                 </div>
                 {{-- Lightbox: tıklanınca büyütme --}}
-                <div id="product-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.lightbox_aria') }}">
+                <div id="product-image-lightbox" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.lightbox_aria') }}">
                     <button type="button" id="lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.lightbox_close') }}">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -1067,7 +1067,7 @@
                             </div>
                         </div>
                     </section>
-                    <div id="variation-image-lightbox" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.variation_lightbox_aria') }}">
+                    <div id="variation-image-lightbox" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.variation_lightbox_aria') }}">
                         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" id="variation-lightbox-backdrop"></div>
                         <button type="button" id="variation-lightbox-close" class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors" aria-label="{{ __('store.product.lightbox_close') }}">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1122,7 +1122,7 @@
             </div>
 
             {{-- Modern uyarı dialog: minimum sipariş vb. --}}
-            <div id="product-warning-dialog" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="alertdialog" aria-labelledby="product-warning-dialog-title" aria-describedby="product-warning-dialog-desc">
+            <div id="product-warning-dialog" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center p-4" aria-modal="true" role="alertdialog" aria-labelledby="product-warning-dialog-title" aria-describedby="product-warning-dialog-desc">
                 <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="product-warning-dialog-backdrop"></div>
                 <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
                     <div class="p-6 sm:p-8">
@@ -1141,7 +1141,7 @@
             </div>
 
             {{-- Kumaş detay bilgisi modal --}}
-            <div id="fabric-detail-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="fabric-detail-modal-title">
+            <div id="fabric-detail-modal" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="fabric-detail-modal-title">
                 <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="fabric-detail-modal-backdrop"></div>
                 <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
                     <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
@@ -1163,7 +1163,7 @@
             </div>
 
             {{-- Konum görseli modal --}}
-            <div id="customization-position-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="customization-position-modal-title">
+            <div id="customization-position-modal" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="customization-position-modal-title">
                 <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="customization-position-modal-backdrop"></div>
                 <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
                     <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
@@ -1187,7 +1187,7 @@
             </div>
 
             {{-- Kalıp modeli beden tablosu modal --}}
-            <div id="mold-model-size-table-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="mold-model-size-table-modal-title">
+            <div id="mold-model-size-table-modal" class="store-overlay fixed inset-0 z-[400] hidden items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="mold-model-size-table-modal-title">
                 <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="mold-model-size-table-modal-backdrop"></div>
                 <div class="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80 overflow-hidden transform transition-all">
                     <div class="flex items-start gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
