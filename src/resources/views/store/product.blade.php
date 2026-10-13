@@ -3128,6 +3128,32 @@
                                 }
                                 return;
                             }
+                            if (vType === 'size_table') {
+                                if ((panel.getAttribute('data-size-table-confirmed') || '') !== '1') return;
+                                var sizeLabel = '';
+                                var sizeSel = getVisibleSelectedProductOption(panel);
+                                if (sizeSel) sizeLabel = (sizeSel.getAttribute('data-option') || '').trim();
+                                if (!sizeLabel) {
+                                    var sizeTarget = resolveSizeTableTarget(panel);
+                                    if (sizeTarget && sizeTarget.optionVal) sizeLabel = String(sizeTarget.optionVal).trim();
+                                }
+                                if (!sizeLabel) {
+                                    var sizeWrap = panel.querySelector('.size-table-wrap:not(.hidden)') || panel.querySelector('.size-table-wrap');
+                                    if (sizeWrap) sizeLabel = (sizeWrap.getAttribute('data-size-table-option') || '').trim();
+                                }
+                                var sizeSummary = summaryVal ? String(summaryVal.textContent || '').trim() : '';
+                                var storedSize = sizeLabel || (sizeSummary && sizeSummary !== '—' ? sizeSummary : '');
+                                if (storedSize) {
+                                    list.push({
+                                        name: name,
+                                        value: sizeSummary && sizeSummary !== '—' ? sizeSummary : storedSize,
+                                        rawValue: storedSize,
+                                        priceDelta: sizeSel ? variationMultiplierFromAttr(sizeSel) : 1,
+                                        isMulti: false
+                                    });
+                                }
+                                return;
+                            }
                             if (isMulti) {
                                 if (!confirmed) return;
                                 var values = [];
@@ -3164,10 +3190,10 @@
                                     });
                                     return;
                                 }
-                                if (summary && summaryVal && !summary.classList.contains('hidden')) {
+                                if (summaryVal) {
                                     var summaryText = (summaryVal.textContent || '').trim();
                                     if (summaryText && summaryText !== '—') {
-                                        list.push({ name: name, value: summaryText, priceDelta: 1, isMulti: false });
+                                        list.push({ name: name, value: summaryText, rawValue: summaryText, priceDelta: 1, isMulti: false });
                                     }
                                 }
                             }

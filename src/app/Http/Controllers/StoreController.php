@@ -145,6 +145,33 @@ class StoreController extends Controller
         return $normalized;
     }
 
+    /** @param  array<string, mixed>|null  $sizeQuantities */
+    private function sizeQuantitiesHaveUnits(?array $sizeQuantities): bool
+    {
+        if ($sizeQuantities === null || $sizeQuantities === []) {
+            return false;
+        }
+
+        foreach ($sizeQuantities as $qty) {
+            if ((int) $qty > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function sizeTableFallbackLabel(mixed $variation): string
+    {
+        $option = $variation->options->first();
+        $label = $this->normalizeVariationLabel((string) ($option->option_value ?? ''));
+        if ($label !== '') {
+            return $label;
+        }
+
+        return $this->normalizeVariationLabel((string) $variation->name);
+    }
+
     private function getCart(): array
     {
         return session('cart', []);
@@ -680,16 +707,24 @@ class StoreController extends Controller
                     return $this->normalizeVariationLabel((string) ($variation->depends_on ?? '')) === ''
                         && $variation->options->isNotEmpty();
                 })
-                ->map(fn ($variation) => $this->normalizeVariationLabel((string) $variation->name))
-                ->filter(fn ($name) => $name !== '')
-                ->unique()
+                ->unique(fn ($variation) => $this->normalizeVariationLabel((string) $variation->name))
                 ->values();
             if ($rootVariations->isNotEmpty()) {
-                if (empty($variationData) || ! is_array($variationData)) {
-                    return redirect()->back()->with('error', __('store.flash.select_all_options'));
+                if (! is_array($variationData)) {
+                    $variationData = [];
                 }
-                foreach ($rootVariations as $variationName) {
-                    if (! array_key_exists($variationName, $variationData) || $this->variationValueIsBlank($variationData[$variationName])) {
+                foreach ($rootVariations as $variation) {
+                    $variationName = $this->normalizeVariationLabel((string) $variation->name);
+                    if ($variationName === '') {
+                        continue;
+                    }
+                    $selected = array_key_exists($variationName, $variationData)
+                        && ! $this->variationValueIsBlank($variationData[$variationName]);
+                    if (! $selected && (string) $variation->type === 'size_table' && $this->sizeQuantitiesHaveUnits($sizeQuantities)) {
+                        $variationData[$variationName] = $this->sizeTableFallbackLabel($variation);
+                        $selected = ! $this->variationValueIsBlank($variationData[$variationName]);
+                    }
+                    if (! $selected) {
                         return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                     }
                 }
