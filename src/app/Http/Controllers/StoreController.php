@@ -111,6 +111,40 @@ class StoreController extends Controller
         return trim((string) $value) === '';
     }
 
+    /**
+     * Ürün sayfası seçim anahtarını trimler. Veritabanındaki varyasyon adının
+     * sonundaki boşluk ile formun gönderdiği anahtar bu yüzden ayrışmasın.
+     */
+    private function normalizeVariationLabel(string $name): string
+    {
+        $normalized = preg_replace('/^\s+|\s+$/u', '', $name);
+
+        return is_string($normalized) ? $normalized : trim($name);
+    }
+
+    /**
+     * @param  array<mixed, mixed>  $variationData
+     * @return array<string, mixed>
+     */
+    private function variationDataWithNormalizedKeys(array $variationData): array
+    {
+        $normalized = [];
+        foreach ($variationData as $key => $value) {
+            if (! is_string($key) && ! is_int($key)) {
+                continue;
+            }
+            $label = $this->normalizeVariationLabel((string) $key);
+            if ($label === '') {
+                continue;
+            }
+            if (! array_key_exists($label, $normalized) || $this->variationValueIsBlank($normalized[$label])) {
+                $normalized[$label] = $value;
+            }
+        }
+
+        return $normalized;
+    }
+
     private function getCart(): array
     {
         return session('cart', []);
@@ -605,7 +639,7 @@ class StoreController extends Controller
         if (! empty($request->variation_data)) {
             $decoded = json_decode($request->variation_data, true);
             if (is_array($decoded) && ! empty($decoded)) {
-                $variationData = $decoded;
+                $variationData = $this->variationDataWithNormalizedKeys($decoded);
             }
         }
 
@@ -642,8 +676,12 @@ class StoreController extends Controller
             $this->filterSizeTableVariationOptionsForProduct($product);
             $this->filterPackagingVariationOptionsForProduct($product);
             $rootVariations = $product->variations
-                ->filter(fn ($variation) => empty($variation->depends_on) && $variation->options->isNotEmpty())
-                ->pluck('name')
+                ->filter(function ($variation) {
+                    return $this->normalizeVariationLabel((string) ($variation->depends_on ?? '')) === ''
+                        && $variation->options->isNotEmpty();
+                })
+                ->map(fn ($variation) => $this->normalizeVariationLabel((string) $variation->name))
+                ->filter(fn ($name) => $name !== '')
                 ->unique()
                 ->values();
             if ($rootVariations->isNotEmpty()) {
@@ -651,10 +689,7 @@ class StoreController extends Controller
                     return redirect()->back()->with('error', __('store.flash.select_all_options'));
                 }
                 foreach ($rootVariations as $variationName) {
-                    if (! isset($variationData[$variationName])) {
-                        return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
-                    }
-                    if ($this->variationValueIsBlank($variationData[$variationName])) {
+                    if (! array_key_exists($variationName, $variationData) || $this->variationValueIsBlank($variationData[$variationName])) {
                         return redirect()->back()->with('error', __('store.flash.select_option_named', ['name' => $variationName]));
                     }
                 }

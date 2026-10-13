@@ -837,7 +837,7 @@
                                         $hasVariationInfoText = filled($variation->localized_info_text);
                                     @endphp
                                     <div class="product-variation-block variation-step-panel flex flex-row gap-0 {{ $loop->first ? '' : 'mt-3 lg:mt-4' }} {{ $isDependent ? 'dependent-variation-block variation-step-locked' : '' }}"
-                                         data-variation-name="{{ $variation->name }}"
+                                         data-variation-name="{{ trim($variation->name) }}"
                                          data-variation-label="{{ $variation->display_name }}"
                                          data-variation-type="{{ $variation->type }}"
                                          data-depends-on="{{ $dependsOnName }}"

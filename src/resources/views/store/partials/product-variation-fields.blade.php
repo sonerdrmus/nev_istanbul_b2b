@@ -42,7 +42,7 @@
                                                             @endforeach
                                                         </div>
                                                     @endif
-                                                    <div class="size-table-variation-grids mt-4 {{ $sizeTableOptionCount > 1 ? 'hidden' : '' }}" data-variation-name="{{ $variation->name }}">
+                                                    <div class="size-table-variation-grids mt-4 {{ $sizeTableOptionCount > 1 ? 'hidden' : '' }}" data-variation-name="{{ trim($variation->name) }}">
                                                         @foreach($variation->options as $option)
                                                             @php $linkedSizeTable = $option->sizeTable ?? $sizeTablesById->get($option->size_table_id); @endphp
                                                             @if($linkedSizeTable)
