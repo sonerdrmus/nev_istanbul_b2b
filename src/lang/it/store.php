@@ -5,6 +5,7 @@ return [
 
     'topbar' => [
         'free_shipping' => 'SPEDIZIONE GRATUITA — per ordini idonei sopra il minimo',
+        'user_guide' => 'User guide',
     ],
 
     'header' => [
@@ -142,6 +143,13 @@ return [
         'title_home' => 'Home',
         'title_products' => 'Prodotti',
         'title_category_suffix' => 'Prodotti',
+    ],
+
+    'blog' => [
+        'heading' => 'Blog',
+        'intro' => 'Note su produzione, tessuti e come effettuare un ordine.',
+        'read' => 'Leggi l\'articolo',
+        'back' => 'Torna alla home',
     ],
 
     'mega_nav' => [

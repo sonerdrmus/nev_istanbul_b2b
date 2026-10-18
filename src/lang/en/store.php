@@ -5,6 +5,7 @@ return [
 
     'topbar' => [
         'free_shipping' => 'Check the most suitable delivery method for your order…',
+        'user_guide' => 'User guide',
     ],
 
     'header' => [
@@ -142,6 +143,13 @@ return [
         'title_home' => 'Home',
         'title_products' => 'Products',
         'title_category_suffix' => 'Products',
+    ],
+
+    'blog' => [
+        'heading' => 'Blog',
+        'intro' => 'Notes on production, fabrics, and how to place an order.',
+        'read' => 'Read article',
+        'back' => 'Back to home',
     ],
 
     'mega_nav' => [

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\DealerRequestController;
@@ -42,6 +43,7 @@ Route::post('/cikis', [StoreAccountController::class, 'logout'])->name('store.lo
 
 Route::get('/', [StoreController::class, 'index'])->name('home');
 Route::get('/urun/{product}', [StoreController::class, 'showProduct'])->name('store.product.show');
+Route::get('/blog/{post}', [BlogController::class, 'show'])->name('store.blog.show');
 Route::get('/sozlesme/{slug}', [LegalPageController::class, 'show'])->name('store.legal.show');
 Route::get('/iletisim', [LegalPageController::class, 'showContact'])->name('store.contact');
 Route::post('/iletisim', [ContactMessageController::class, 'store'])->middleware('throttle:5,60')->name('store.contact.send');

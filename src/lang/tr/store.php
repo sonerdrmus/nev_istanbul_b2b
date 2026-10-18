@@ -5,6 +5,7 @@ return [
 
     'topbar' => [
         'free_shipping' => 'En uygun teslimat şeklini kontrol ediniz​...',
+        'user_guide' => 'User guide',
     ],
 
     'header' => [
@@ -142,6 +143,13 @@ return [
         'title_home' => 'Ana Sayfa',
         'title_products' => 'Ürünler',
         'title_category_suffix' => 'Ürünleri',
+    ],
+
+    'blog' => [
+        'heading' => 'Blog',
+        'intro' => 'Üretim, kumaş ve sipariş süreci hakkında notlar.',
+        'read' => 'Devamını oku',
+        'back' => 'Ana sayfaya dön',
     ],
 
     'mega_nav' => [

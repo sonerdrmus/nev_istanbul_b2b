@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\BannerSlideResource;
+use App\Filament\Resources\BlogPostResource;
 use App\Filament\Resources\CustomizationChoiceResource;
 use App\Filament\Resources\ExtraVariationResource;
 use App\Filament\Resources\CategoryResource;
@@ -250,6 +251,22 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn (): string => ManageStoreDisplay::getUrl(panel: $panelId))
                         ->icon('heroicon-o-eye')
                         ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.store-display')),
+                ]),
+            NavigationItem::make('Blog')
+                ->group('E-Ticaret')
+                ->icon('heroicon-o-newspaper')
+                ->url(fn (): string => BlogPostResource::getUrl(panel: $panelId))
+                ->sort(5)
+                ->isActiveWhen(fn (): bool => request()->routeIs(BlogPostResource::getRouteBaseName($panelId).'.*'))
+                ->childItems([
+                    NavigationItem::make('Makaleler')
+                        ->url(fn (): string => BlogPostResource::getUrl(panel: $panelId))
+                        ->icon('heroicon-o-list-bullet')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(BlogPostResource::getRouteBaseName($panelId).'.index')),
+                    NavigationItem::make('Yeni makale')
+                        ->url(fn (): string => BlogPostResource::getUrl('create', panel: $panelId))
+                        ->icon('heroicon-o-plus')
+                        ->isActiveWhen(fn (): bool => request()->routeIs(BlogPostResource::getRouteBaseName($panelId).'.create')),
                 ]),
         ];
     }

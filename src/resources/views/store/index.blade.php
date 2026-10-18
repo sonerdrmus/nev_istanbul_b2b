@@ -280,6 +280,9 @@
     @else
         {{-- Eski kampanya linkleri (/#urunler) için hedef; görünür ürün listesi yok --}}
         <div id="urunler" class="sr-only" aria-hidden="true"></div>
+        <div id="blog">
+            @include('store.partials.home-blog-section')
+        </div>
     @endif
 
 @endsection

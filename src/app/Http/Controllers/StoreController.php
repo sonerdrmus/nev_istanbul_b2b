@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BankAccount;
 use App\Models\BannerSlide;
+use App\Models\BlogPost;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Order;
@@ -372,6 +373,15 @@ class StoreController extends Controller
         $bannerSlides = collect();
         $homeCategoryShowcase = collect();
         $homeProductShowcase = collect();
+        $blogPosts = collect();
+        if (Schema::hasTable('blog_posts')) {
+            $blogPosts = BlogPost::query()
+                ->published()
+                ->orderBy('sort_order')
+                ->orderByDesc('published_at')
+                ->orderByDesc('id')
+                ->get();
+        }
         if (! $currentCategory) {
             $bannerSlides = BannerSlide::forHome()->get();
             if (Schema::hasColumn('categories', 'image_path')) {
@@ -395,7 +405,7 @@ class StoreController extends Controller
             }
         }
 
-        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeCategoryShowcase', 'homeProductShowcase'));
+        return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeCategoryShowcase', 'homeProductShowcase', 'blogPosts'));
     }
 
     /** Giriş yapmış müşterinin şirketindeki kâr marjı (indirim) yüzdesi; yoksa null */
