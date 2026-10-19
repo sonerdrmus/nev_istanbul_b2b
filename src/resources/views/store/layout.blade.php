@@ -139,7 +139,7 @@
                     @endif
                 </div>
                 <span class="hidden sm:inline-block h-4 w-px shrink-0 bg-white/20" aria-hidden="true"></span>
-                <a href="{{ asset('docs/nevistanbul-b2b-user-guide.pdf') }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-medium text-white transition-colors hover:bg-white/10">
+                <a href="{{ asset(app()->getLocale() === 'en' ? 'docs/nevistanbul-b2b-user-guide-en.pdf' : 'docs/nevistanbul-b2b-user-guide.pdf') }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm font-medium text-white transition-colors hover:bg-white/10">
                     <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 3v5a1 1 0 001 1h5"/></svg>
                     {{ __('store.topbar.user_guide') }}
                 </a>
