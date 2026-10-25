@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Forms\ProductDimensionMultiplierFormSchema;
 use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\CustomerGroup;
@@ -529,542 +530,16 @@ class ProductResource extends Resource
                                             ->columns(2),
                                     ]),
                             ]),
-                        Forms\Components\Tabs\Tab::make('Varyasyonlar')
-                            ->icon('heroicon-o-squares-2x2')
+                        Forms\Components\Tabs\Tab::make('Özelleştirme')
+                            ->icon('heroicon-o-adjustments-horizontal')
                             ->schema([
-                                Forms\Components\Section::make('Varyasyonlar')
-                                    ->description('Renk, beden vb. varyasyonlar tanımlayın. Performans için kayıtlar varsayılan olarak kapalı gelir; düzenlemek istediğiniz varyasyonu açın.')
+                                Forms\Components\Section::make('Mağaza akışı')
+                                    ->description('Ürün özelleştirme adımı ve baskı ayarları. Varyasyonlar ayrı «Varyasyonlar» sekmesinde yönetilir.')
                                     ->schema([
-                                        Forms\Components\Repeater::make('variations')
-                                            ->relationship()
-                                            ->orderColumn('sort_order')
-                                            ->reorderable()
-                                            ->reorderableWithButtons()
-                                            ->collapsible()
-                                            ->collapsed()
-                                            ->itemLabel(function (array $state): ?string {
-                                                $name = trim((string) ($state['name'] ?? ''));
-                                                $label = $name !== '' ? $name : 'Varyasyon';
-                                                $optionCount = is_array($state['options'] ?? null) ? count($state['options']) : 0;
-                                                if ($optionCount > 0) {
-                                                    $label .= ' ('.$optionCount.' seçenek)';
-                                                }
-                                                $type = (string) ($state['type'] ?? '');
-                                                if (in_array($type, ['select', 'color', 'fabric', 'image', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type'], true)) {
-                                                    $label .= ! empty($state['allows_multiple']) ? ' · çoklu seçim' : ' · tek seçim';
-                                                } elseif (! empty($state['allows_multiple'])) {
-                                                    $label .= ' · çoklu';
-                                                }
-
-                                                return $label;
-                                            })
-                                            ->addActionLabel('Varyasyon ekle')
-                                            ->schema([
-                                                Forms\Components\TextInput::make('name')
-                                                    ->label('Varyasyon adı (TR)')
-                                                    ->placeholder('Örn: Renk, Beden')
-                                                    ->required()
-                                                    ->maxLength(255)
-                                                    ->helperText('Eşleştirme anahtarıdır (bağımlılıklar, tetikleyiciler). Çeviri için EN/IT alanlarını kullanın.')
-                                                    ->columnSpan(1),
-                                                Forms\Components\TextInput::make('name_en')
-                                                    ->label('Varyasyon adı (EN)')
-                                                    ->maxLength(255)
-                                                    ->helperText('Mağaza İngilizce gösterimi. Eşleştirmeyi değiştirmez.')
-                                                    ->columnSpan(1),
-                                                Forms\Components\TextInput::make('name_it')
-                                                    ->label('Varyasyon adı (IT)')
-                                                    ->maxLength(255)
-                                                    ->helperText('Mağaza İtalyanca gösterimi. Eşleştirmeyi değiştirmez.')
-                                                    ->columnSpan(1),
-                                                Forms\Components\Select::make('type')
-                                                    ->label('Tip')
-                                                    ->options([
-                                                        'select' => 'Select',
-                                                        'color' => 'Renk',
-                                                        'fabric' => 'Kumaş Türü',
-                                                        'label_type' => 'Etiket Türü',
-                                                        'certificate_type' => 'Sertifika Türü',
-                                                        'mold_model_type' => 'Kalıp Modeli',
-                                                        'delivery_type' => 'Teslimat Seçenekleri',
-                                                        'packaging_type' => 'Ambalaj Türü',
-                                                        'image' => 'Görsel',
-                                                        'size_table' => 'Beden Tablosu',
-                                                    ])
-                                                    ->default('select')
-                                                    ->required()
-                                                    ->live(debounce: 400)
-                                                    ->afterStateUpdated(function ($state, Set $set, $livewire): void {
-                                                        $rows = static::interfacePresetOptionRowsForType(
-                                                            (string) $state,
-                                                            static::currentProductIdFromLivewire($livewire),
-                                                        );
-                                                        if ($rows !== null) {
-                                                            $set('options', $rows);
-                                                            if (static::variationTypeRequiresSingleSelectOnly((string) $state)) {
-                                                                $set('allows_multiple', false);
-                                                            }
-                                                            if ($rows === []) {
-                                                                $titles = [
-                                                                    'fabric' => ['Bu ürüne ait kumaş bulunamadı', 'Varyasyon yönetimi → Kumaş Türü Varyasyonları bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
-                                                                    'color' => ['Renk kaydı bulunamadı', 'Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.'],
-                                                                    'label_type' => ['Etiket türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Etiket Türü Yönetimi bölümünden kayıt ekleyin.'],
-                                                                    'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
-                                                                    'mold_model_type' => ['Bu ürüne ait kalıp modeli bulunamadı', 'Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
-                                                                    'delivery_type' => ['Teslim şekli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Teslim Şeklini Yönet bölümünden kayıt ekleyin.'],
-                                                                    'packaging_type' => ['Bu ürüne ait ambalaj bulunamadı', 'Varyasyon yönetimi → Ambalaj Tercih Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
-                                                                    'size_table' => ['Beden tablosu bulunamadı', 'Önce Varyasyon yönetimi → Beden tabloları bölümünden en az bir tablo tanımlayın.'],
-                                                                ];
-                                                                if (isset($titles[$state])) {
-                                                                    Notification::make()
-                                                                        ->warning()
-                                                                        ->title($titles[$state][0])
-                                                                        ->body($titles[$state][1])
-                                                                        ->send();
-                                                                }
-                                                            }
-
-                                                            return;
-                                                        }
-                                                    })
-                                                    ->helperText(fn (Get $get): ?string => match ($get('type')) {
-                                                        'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
-                                                        'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
-                                                        'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
-                                                        'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
-                                                        'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
-                                                        'packaging_type' => 'Seçenekler yalnızca Ambalaj Tercih Yönetimi → Ürünler alanından bu ürüne atanmış ambalajlardan gelir. Buradan silinen ambalaj bu üründen kalkar ve sonraki kayıtlarda geri gelmez.',
-                                                        'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
-                                                        'size_table' => 'Seçenekler, Beden tabloları kayıtlarından otomatik doldurulur (global tablolar + bu ürüne atanmış tablolar). İstemediğiniz satırları silebilirsiniz.',
-                                                        default => null,
-                                                    })
-                                                    ->columnSpan(1),
-                                                Forms\Components\Select::make('depends_on')
-                                                    ->label('Bağlı olduğu varyasyon')
-                                                    ->placeholder('Bağımsız (boş bırakın)')
-                                                    ->options(fn (Get $get): array => static::dependsOnVariationOptions($get))
-                                                    ->searchable()
-                                                    ->live(debounce: 400)
-                                                    ->nullable()
-                                                    ->helperText('Bu varyasyon hangi adıma bağlı? Ürün varyasyonları veya (açıksa) Ürün özelleştirme adımı seçilebilir.')
-                                                    ->columnSpan(1),
-                                                Forms\Components\Select::make('depends_on_option_ids')
-                                                    ->label('Bağlı olduğu seçenekler')
-                                                    ->multiple()
-                                                    ->options(function (Get $get): array {
-                                                        $dependsOn = trim((string) ($get('depends_on') ?? ''));
-
-                                                        return static::resolveParentVariationOptionChoices($get, $dependsOn);
-                                                    })
-                                                    ->searchable()
-                                                    ->nullable()
-                                                    ->visible(fn (Get $get): bool => filled($get('depends_on')))
-                                                    ->helperText(fn (Get $get): string => ProductVariationFlowSteps::isCustomizationDependency((string) ($get('depends_on') ?? ''))
-                                                        ? 'Ürün özelleştirmede seçilen konum(lar)a göre bu adım görünür. Boş bırakırsanız özelleştirme tamamlandığında görünür.'
-                                                        : 'Üst varyasyondaki hangi seçeneklerde bu adım görünsün? Boş bırakırsanız her seçimde görünür (ör. yalnızca Erkek, Çocuk).')
-                                                    ->columnSpan(1),
-                                                Forms\Components\TextInput::make('sort_order')
-                                                    ->label('Sıra')
-                                                    ->numeric()
-                                                    ->minValue(0)
-                                                    ->default(0)
-                                                    ->columnSpan(1),
-                                                Forms\Components\Textarea::make('info_text')
-                                                    ->label('Mağaza açıklama metni')
-                                                    ->helperText('Opsiyonel. Varyasyon genelinde gösterilir. Seçenek bazlı metin için aşağıdaki seçenek satırlarını kullanın.')
-                                                    ->rows(3)
-                                                    ->maxLength(2000)
-                                                    ->nullable()
-                                                    ->columnSpanFull(),
-                                                Forms\Components\Textarea::make('info_text_en')
-                                                    ->label('Store description (EN)')
-                                                    ->rows(3)
-                                                    ->maxLength(2000)
-                                                    ->nullable()
-                                                    ->columnSpanFull(),
-                                                Forms\Components\Textarea::make('info_text_it')
-                                                    ->label('Descrizione negozio (IT)')
-                                                    ->rows(3)
-                                                    ->maxLength(2000)
-                                                    ->nullable()
-                                                    ->columnSpanFull(),
-                                                Forms\Components\Toggle::make('replace_main_gallery_image')
-                                                    ->label('Seçilen seçeneğin görseli sol ürün görselinde gösterilsin')
-                                                    ->helperText('Açıksa, müşteri bu varyasyonda seçim yaptığında seçeneğin görseli (varsa) mağazada sol taraftaki ana ürün galerisinin ilk görselinin yerine geçer. Birden fazla varyasyonda işaretliyse küçük sıra numarası önceliklidir.')
-                                                    ->default(false)
-                                                    ->visible(fn (Get $get): bool => ($get('type') ?? '') !== 'size_table')
-                                                    ->columnSpanFull(),
-                                                Forms\Components\Section::make('Seçim modu')
-                                                    ->description(fn (Get $get): string => match ((string) ($get('type') ?? '')) {
-                                                        'select' => 'Select tipinde müşterinin tek veya çoklu seçim yapıp yapamayacağını belirleyin.',
-                                                        'label_type' => 'Çoklu seçimde müşteri birden fazla etiket seçer; her etiket için alt adımlar sırayla sorulur.',
-                                                        default => 'Müşteri bu varyasyonda kaç seçenek seçebilir?',
-                                                    })
-                                                    ->visible(fn (Get $get): bool => static::variationTypeShowsSelectionModeSection((string) ($get('type') ?? '')))
-                                                    ->schema([
-                                                        Forms\Components\ToggleButtons::make('allows_multiple')
-                                                            ->label('Seçim kuralı')
-                                                            ->options([
-                                                                0 => 'Tek seçim (zorunlu)',
-                                                                1 => 'Birden fazla seçilebilir',
-                                                            ])
-                                                            ->icons([
-                                                                0 => 'heroicon-o-check-circle',
-                                                                1 => 'heroicon-o-squares-plus',
-                                                            ])
-                                                            ->colors([
-                                                                0 => 'primary',
-                                                                1 => 'success',
-                                                            ])
-                                                            ->default(0)
-                                                            ->inline()
-                                                            ->grouped()
-                                                            ->live()
-                                                            ->afterStateHydrated(function (Forms\Components\ToggleButtons $component, $state): void {
-                                                                $component->state(($state === true || $state === 1 || $state === '1') ? 1 : 0);
-                                                            })
-                                                            ->dehydrateStateUsing(fn ($state): bool => $state === 1 || $state === '1' || $state === true)
-                                                            ->visible(fn (Get $get): bool => static::variationTypeAllowsConfigurableSelectionMode((string) ($get('type') ?? '')))
-                                                            ->helperText('Tek seçim: otomatik sonraki adım. Çoklu seçim: «Devam et» ile ilerlenir.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\ViewField::make('selection_mode_locked_preview')
-                                                            ->label('Seçim kuralı')
-                                                            ->view('filament.forms.components.selection-mode-locked')
-                                                            ->visible(fn (Get $get): bool => static::variationTypeRequiresSingleSelectOnly((string) ($get('type') ?? '')))
-                                                            ->helperText(fn (Get $get): string => static::variationSelectionModeLockedHint((string) ($get('type') ?? '')))
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\TextInput::make('solo_option_value')
-                                                            ->label('Tek başına seçim seçeneği (isteğe bağlı)')
-                                                            ->placeholder('Örn: İstemiyorum')
-                                                            ->maxLength(255)
-                                                            ->nullable()
-                                                            ->visible(fn (Get $get): bool => in_array($get('allows_multiple'), [true, 1, '1'], true)
-                                                                && ! static::variationTypeRequiresSingleSelectOnly((string) ($get('type') ?? '')))
-                                                            ->helperText('Çoklu seçim modunda: bu metinle birebir eşleşen seçenek seçilince diğer işaretler kalkar ve adım otomatik tamamlanır. Boş bırakılırsa solo davranış olmaz.')
-                                                            ->columnSpanFull(),
-                                                    ])
-                                                    ->columns(1)
-                                                    ->columnSpanFull(),
-                                                Forms\Components\Repeater::make('options')
-                                                    ->relationship()
-                                                    ->orderColumn('sort_order')
-                                                    ->reorderable()
-                                                    ->reorderableWithButtons()
-                                                    ->collapsible()
-                                                    ->collapsed()
-                                                    ->itemLabel(fn (array $state): ?string => $state['option_value'] ?? 'Seçenek')
-                                                    ->addActionLabel('Seçenek ekle')
-                                                    ->addable(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true))
-                                                    ->schema([
-                                                        Forms\Components\Select::make('size_table_id')
-                                                            ->label('Beden tablosu')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'size_table')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchSizeTableOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::sizeTableOptionLabel($value))
-                                                            ->searchable()
-                                                            ->required(fn (Get $get): bool => ($get('../../type') ?? '') === 'size_table')
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $table = SizeTable::find((int) $state);
-                                                                if (! $table) {
-                                                                    return;
-                                                                }
-                                                                $label = trim((string) ($table->title ?: $table->name ?: ''));
-                                                                $set('option_value', $label !== '' ? $label : $table->slug);
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Beden tabloları listesinden seçin.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Hidden::make('option_value')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'size_table'),
-                                                        Forms\Components\TextInput::make('option_value')
-                                                            ->label('Seçenek değeri (TR)')
-                                                            ->placeholder('Örn: Kırmızı, XL')
-                                                            ->required(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
-                                                            ->maxLength(255)
-                                                            ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT alanlarını kullanın.')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\TextInput::make('option_value_en')
-                                                            ->label('Seçenek (EN)')
-                                                            ->maxLength(255)
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
-                                                            ->helperText('Mağaza İngilizce gösterimi.')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\TextInput::make('option_value_it')
-                                                            ->label('Seçenek (IT)')
-                                                            ->maxLength(255)
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') !== 'size_table')
-                                                            ->helperText('Mağaza İtalyanca gösterimi.')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\Textarea::make('info_text')
-                                                            ->label('Mağaza açıklama metni (seçenek)')
-                                                            ->helperText('Opsiyonel. Bu seçenek seçildiğinde mağazada gösterilir; metin varsa müşteri Devam et ile ilerler.')
-                                                            ->rows(2)
-                                                            ->maxLength(2000)
-                                                            ->nullable()
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Textarea::make('info_text_en')
-                                                            ->label('Store option description (EN)')
-                                                            ->rows(2)
-                                                            ->maxLength(2000)
-                                                            ->nullable()
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Textarea::make('info_text_it')
-                                                            ->label('Descrizione opzione negozio (IT)')
-                                                            ->rows(2)
-                                                            ->maxLength(2000)
-                                                            ->nullable()
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_color_variation_id')
-                                                            ->label('Kayıtlı renk görseli (Arayüz)')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'color')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceColorOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceColorOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceColorVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $label = trim((string) ($preset->name ?? ''));
-                                                                $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Renk Varyasyonlarından tanımlı görsel seçilir ve aşağıdaki görsel alanı güncellenir. Özel yükleme kullanırsanız preset sıfırlanır.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_fabric_type_variation_id')
-                                                            ->label('Kayıtlı kumaş görseli (Arayüz)')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'fabric')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceFabricOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceFabricOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceFabricTypeVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $label = trim((string) ($preset->name ?? ''));
-                                                                $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
-                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; ad, fiyat çarpanı ve görsel otomatik doldurulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_label_type_variation_id')
-                                                            ->label('Kayıtlı etiket türü')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'label_type')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceLabelTypeOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceLabelTypeOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceLabelTypeVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $set('option_value', (string) $preset->name);
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel ve ad otomatik doldurulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_certificate_variation_id')
-                                                            ->label('Kayıtlı sertifika türü')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'certificate_type')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceCertificateOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceCertificateOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceCertificateVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $set('option_value', (string) $preset->name);
-                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
-                                                                if (filled($preset->description)) {
-                                                                    $set('info_text', (string) $preset->description);
-                                                                }
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Sertifika Yönetimi kayıtlarından seçilir; açıklama, görsel, ad ve fiyat çarpanı otomatik doldurulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_mold_model_variation_id')
-                                                            ->label('Kayıtlı kalıp modeli')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'mold_model_type')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceMoldModelOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceMoldModelOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceMoldModelVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $set('option_value', (string) $preset->name);
-                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Kalıp Modeli Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_delivery_method_variation_id')
-                                                            ->label('Kayıtlı teslimat seçeneği')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'delivery_type')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceDeliveryMethodOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfaceDeliveryMethodOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfaceDeliveryMethodVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $set('option_value', (string) $preset->name);
-                                                                $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
-                                                                if (filled($preset->description)) {
-                                                                    $set('info_text', (string) $preset->description);
-                                                                }
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Varyasyon yönetimi → Teslim Şeklini Yönet kayıtlarından seçilir; açıklama, görsel, ad ve fiyat çarpanı otomatik doldurulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('interface_packaging_preference_variation_id')
-                                                            ->label('Kayıtlı ambalaj türü')
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'packaging_type')
-                                                            ->getSearchResultsUsing(fn (string $search): array => static::searchInterfacePackagingOptions($search))
-                                                            ->getOptionLabelUsing(fn ($value): ?string => static::interfacePackagingOptionLabel($value))
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->live(debounce: 400)
-                                                            ->afterStateUpdated(function ($state, Set $set): void {
-                                                                if ($state === null || $state === '') {
-                                                                    return;
-                                                                }
-                                                                $preset = InterfacePackagingPreferenceVariation::find((int) $state);
-                                                                if (! $preset) {
-                                                                    return;
-                                                                }
-                                                                $set('option_value', (string) $preset->name);
-                                                                $set('price_delta', 1);
-                                                                if (is_string($preset->image_path) && $preset->image_path !== '') {
-                                                                    $set('option_image', [$preset->image_path]);
-                                                                }
-                                                            })
-                                                            ->helperText('Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından gelir; malzeme/özelleştirme mağazada alt adımlarda sorulur.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\TextInput::make('option_color')
-                                                            ->label('Renk (hex)')
-                                                            ->placeholder('#ff0000')
-                                                            ->maxLength(20)
-                                                            ->nullable()
-                                                            ->visible(fn (Get $get): bool => ($get('../../type') ?? '') === 'color')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\FileUpload::make('option_image')
-                                                            ->label('Varyasyon görseli')
-                                                            ->visible(fn (Get $get): bool => ! in_array($get('../../type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true))
-                                                            ->image()
-                                                            ->disk('public')
-                                                            ->directory('variation_options')
-                                                            ->visibility('public')
-                                                            ->imagePreviewHeight(72)
-                                                            ->maxFiles(1)
-                                                            ->nullable()
-                                                            ->formatStateUsing(function ($state): ?array {
-                                                                if ($state === null || $state === '') {
-                                                                    return null;
-                                                                }
-
-                                                                return is_array($state) ? $state : [$state];
-                                                            })
-                                                            ->helperText('Dosya doğrudan kaydedilir. Kayıtlı renk/kumaş preset’i seçtiyseniz preset görseli buraya yazılır; farklı bir dosya yüklerseniz preset bağlantısı kaldırılır.')
-                                                            ->columnSpanFull(),
-                                                        Forms\Components\Select::make('option_image_size')
-                                                            ->label('Görsel boyutu (ürün sayfasında)')
-                                                            ->options([
-                                                                'small' => 'Küçük',
-                                                                'medium' => 'Orta',
-                                                                'large' => 'Büyük',
-                                                            ])
-                                                            ->default('medium')
-                                                            ->nullable()
-                                                            ->helperText('Varyasyon görseli mağaza ürün sayfasında bu boyutta gösterilir.')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\TextInput::make('price_delta')
-                                                            ->label('Fiyat çarpanı (×)')
-                                                            ->numeric()
-                                                            ->default(1)
-                                                            ->minValue(0)
-                                                            ->step(0.001)
-                                                            ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
-                                                            ->columnSpan(1),
-                                                        Forms\Components\TextInput::make('stock_quantity')
-                                                            ->label('Stok miktarı')
-                                                            ->numeric()
-                                                            ->minValue(0)
-                                                            ->integer()
-                                                            ->nullable()
-                                                            ->columnSpan(1),
-                                                        Forms\Components\Select::make('parent_option_ids')
-                                                            ->label('Bağlı seçenekler (üst varyasyondan)')
-                                                            ->multiple()
-                                                            ->options(function (Get $get): array {
-                                                                $dependsOn = trim((string) ($get('../../depends_on') ?? ''));
-                                                                if ($dependsOn === '') {
-                                                                    return [];
-                                                                }
-
-                                                                return static::resolveParentVariationOptionChoices($get, $dependsOn, '../../');
-                                                            })
-                                                            ->searchable()
-                                                            ->nullable()
-                                                            ->visible(fn (Get $get): bool => filled($get('../../depends_on')))
-                                                            ->helperText('Bu seçenek hangi üst varyasyon seçeneğinde görünsün? Birden fazla seçebilirsiniz. Boş bırakırsanız tüm üst seçeneklerde görünür.')
-                                                            ->columnSpanFull(),
-                                                    ])
-                                                    ->columns(2)
-                                                    ->columnSpanFull(),
-                                            ])
-                                            ->columns(2)
+                                        Forms\Components\Placeholder::make('variations_after_create_notice')
+                                            ->hiddenLabel()
+                                            ->content('Varyasyonları (renk, beden, kumaş vb.) ürünü kaydettikten sonra sayfanın üstündeki «Varyasyonlar» sekmesinden ekleyebilirsiniz.')
+                                            ->visibleOn('create')
                                             ->columnSpanFull(),
                                         Forms\Components\Section::make('Mağaza: Ürün özelleştirme')
                                             ->description('Bu üründe özelleştirme adımı, atanmış baskı konumları ve ürüne özel çarpanlar.')
@@ -1133,6 +608,538 @@ class ProductResource extends Resource
                             ]),
                     ]),
             ]);
+    }
+
+    /**
+     * Tek bir varyasyonun (ve seçeneklerinin) düzenleme formu.
+     * Varyasyonlar sekmesindeki (VariationsRelationManager) pencerede kullanılır;
+     * böylece ürün sayfası yalnızca düzenlenen varyasyonun seçeneklerini render eder.
+     *
+     * @return array<int, \Filament\Forms\Components\Component>
+     */
+    public static function variationFormSchema(): array
+    {
+        return [
+            Forms\Components\TextInput::make('name')
+                ->label('Varyasyon adı (TR)')
+                ->placeholder('Örn: Renk, Beden')
+                ->required()
+                ->maxLength(255)
+                ->helperText('Eşleştirme anahtarıdır (bağımlılıklar, tetikleyiciler). Çeviri için EN/IT alanlarını kullanın.')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('name_en')
+                ->label('Varyasyon adı (EN)')
+                ->maxLength(255)
+                ->helperText('Mağaza İngilizce gösterimi. Eşleştirmeyi değiştirmez.')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('name_it')
+                ->label('Varyasyon adı (IT)')
+                ->maxLength(255)
+                ->helperText('Mağaza İtalyanca gösterimi. Eşleştirmeyi değiştirmez.')
+                ->columnSpan(1),
+            Forms\Components\Select::make('type')
+                ->label('Tip')
+                ->options([
+                    'select' => 'Select',
+                    'color' => 'Renk',
+                    'fabric' => 'Kumaş Türü',
+                    'label_type' => 'Etiket Türü',
+                    'certificate_type' => 'Sertifika Türü',
+                    'mold_model_type' => 'Kalıp Modeli',
+                    'delivery_type' => 'Teslimat Seçenekleri',
+                    'packaging_type' => 'Ambalaj Türü',
+                    'image' => 'Görsel',
+                    'size_table' => 'Beden Tablosu',
+                ])
+                ->default('select')
+                ->required()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set, $livewire): void {
+                    $rows = static::interfacePresetOptionRowsForType(
+                        (string) $state,
+                        static::currentProductIdFromLivewire($livewire),
+                    );
+                    if ($rows !== null) {
+                        $set('options', $rows);
+                        if (static::variationTypeRequiresSingleSelectOnly((string) $state)) {
+                            $set('allows_multiple', false);
+                        }
+                        if ($rows === []) {
+                            $titles = [
+                                'fabric' => ['Bu ürüne ait kumaş bulunamadı', 'Varyasyon yönetimi → Kumaş Türü Varyasyonları bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
+                                'color' => ['Renk kaydı bulunamadı', 'Önce Varyasyon yönetimi → Renk Varyasyonları bölümünden görseli olan aktif kayıtlar ekleyin.'],
+                                'label_type' => ['Etiket türü kaydı bulunamadı', 'Önce Varyasyon yönetimi → Etiket Türü Yönetimi bölümünden kayıt ekleyin.'],
+                                'certificate_type' => ['Sertifika kaydı bulunamadı', 'Önce Varyasyon yönetimi → Sertifika Yönetimi bölümünden kayıt ekleyin.'],
+                                'mold_model_type' => ['Bu ürüne ait kalıp modeli bulunamadı', 'Varyasyon yönetimi → Kalıp Modeli Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
+                                'delivery_type' => ['Teslim şekli kaydı bulunamadı', 'Önce Varyasyon yönetimi → Teslim Şeklini Yönet bölümünden kayıt ekleyin.'],
+                                'packaging_type' => ['Bu ürüne ait ambalaj bulunamadı', 'Varyasyon yönetimi → Ambalaj Tercih Yönetimi bölümünde kayıt ekleyin ve «Ürünler» alanından bu ürünü seçin.'],
+                                'size_table' => ['Beden tablosu bulunamadı', 'Önce Varyasyon yönetimi → Beden tabloları bölümünden en az bir tablo tanımlayın.'],
+                            ];
+                            if (isset($titles[$state])) {
+                                Notification::make()
+                                    ->warning()
+                                    ->title($titles[$state][0])
+                                    ->body($titles[$state][1])
+                                    ->send();
+                            }
+                        }
+
+                        return;
+                    }
+                })
+                ->helperText(fn (Get $get): ?string => match ($get('type')) {
+                    'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
+                    'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
+                    'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
+                    'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
+                    'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
+                    'packaging_type' => 'Seçenekler yalnızca Ambalaj Tercih Yönetimi → Ürünler alanından bu ürüne atanmış ambalajlardan gelir. Buradan silinen ambalaj bu üründen kalkar ve sonraki kayıtlarda geri gelmez.',
+                    'color' => 'Seçenekler, Renk varyasyonları kayıtlarından otomatik doldurulur; kumaş türü grubuna göre sıralanır (mevcut seçenek satırlarının yerine geçer).',
+                    'size_table' => 'Seçenekler, Beden tabloları kayıtlarından otomatik doldurulur (global tablolar + bu ürüne atanmış tablolar). İstemediğiniz satırları silebilirsiniz.',
+                    default => null,
+                })
+                ->columnSpan(1),
+            Forms\Components\Select::make('depends_on')
+                ->label('Bağlı olduğu varyasyon')
+                ->placeholder('Bağımsız (boş bırakın)')
+                ->options(fn (Get $get): array => static::dependsOnVariationOptions($get))
+                ->searchable()
+                ->live(debounce: 400)
+                ->nullable()
+                ->helperText('Bu varyasyon hangi adıma bağlı? Ürün varyasyonları veya (açıksa) Ürün özelleştirme adımı seçilebilir.')
+                ->columnSpan(1),
+            Forms\Components\Select::make('depends_on_option_ids')
+                ->label('Bağlı olduğu seçenekler')
+                ->multiple()
+                ->options(function (Get $get): array {
+                    $dependsOn = trim((string) ($get('depends_on') ?? ''));
+
+                    return static::resolveParentVariationOptionChoices($get, $dependsOn);
+                })
+                ->searchable()
+                ->nullable()
+                ->visible(fn (Get $get): bool => filled($get('depends_on')))
+                ->helperText(fn (Get $get): string => ProductVariationFlowSteps::isCustomizationDependency((string) ($get('depends_on') ?? ''))
+                    ? 'Ürün özelleştirmede seçilen konum(lar)a göre bu adım görünür. Boş bırakırsanız özelleştirme tamamlandığında görünür.'
+                    : 'Üst varyasyondaki hangi seçeneklerde bu adım görünsün? Boş bırakırsanız her seçimde görünür (ör. yalnızca Erkek, Çocuk).')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('sort_order')
+                ->label('Sıra')
+                ->numeric()
+                ->minValue(0)
+                ->default(0)
+                ->columnSpan(1),
+            Forms\Components\Textarea::make('info_text')
+                ->label('Mağaza açıklama metni')
+                ->helperText('Opsiyonel. Varyasyon genelinde gösterilir. Seçenek bazlı metin için aşağıdaki seçenek satırlarını kullanın.')
+                ->rows(3)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Textarea::make('info_text_en')
+                ->label('Store description (EN)')
+                ->rows(3)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Textarea::make('info_text_it')
+                ->label('Descrizione negozio (IT)')
+                ->rows(3)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Toggle::make('replace_main_gallery_image')
+                ->label('Seçilen seçeneğin görseli sol ürün görselinde gösterilsin')
+                ->helperText('Açıksa, müşteri bu varyasyonda seçim yaptığında seçeneğin görseli (varsa) mağazada sol taraftaki ana ürün galerisinin ilk görselinin yerine geçer. Birden fazla varyasyonda işaretliyse küçük sıra numarası önceliklidir.')
+                ->default(false)
+                ->visible(fn (Get $get): bool => ($get('type') ?? '') !== 'size_table')
+                ->columnSpanFull(),
+            Forms\Components\Section::make('Seçim modu')
+                ->description(fn (Get $get): string => match ((string) ($get('type') ?? '')) {
+                    'select' => 'Select tipinde müşterinin tek veya çoklu seçim yapıp yapamayacağını belirleyin.',
+                    'label_type' => 'Çoklu seçimde müşteri birden fazla etiket seçer; her etiket için alt adımlar sırayla sorulur.',
+                    default => 'Müşteri bu varyasyonda kaç seçenek seçebilir?',
+                })
+                ->visible(fn (Get $get): bool => static::variationTypeShowsSelectionModeSection((string) ($get('type') ?? '')))
+                ->schema([
+                    Forms\Components\ToggleButtons::make('allows_multiple')
+                        ->label('Seçim kuralı')
+                        ->options([
+                            0 => 'Tek seçim (zorunlu)',
+                            1 => 'Birden fazla seçilebilir',
+                        ])
+                        ->icons([
+                            0 => 'heroicon-o-check-circle',
+                            1 => 'heroicon-o-squares-plus',
+                        ])
+                        ->colors([
+                            0 => 'primary',
+                            1 => 'success',
+                        ])
+                        ->default(0)
+                        ->inline()
+                        ->grouped()
+                        ->live()
+                        ->afterStateHydrated(function (Forms\Components\ToggleButtons $component, $state): void {
+                            $component->state(($state === true || $state === 1 || $state === '1') ? 1 : 0);
+                        })
+                        ->dehydrateStateUsing(fn ($state): bool => $state === 1 || $state === '1' || $state === true)
+                        ->visible(fn (Get $get): bool => static::variationTypeAllowsConfigurableSelectionMode((string) ($get('type') ?? '')))
+                        ->helperText('Tek seçim: otomatik sonraki adım. Çoklu seçim: «Devam et» ile ilerlenir.')
+                        ->columnSpanFull(),
+                    Forms\Components\ViewField::make('selection_mode_locked_preview')
+                        ->label('Seçim kuralı')
+                        ->view('filament.forms.components.selection-mode-locked')
+                        ->visible(fn (Get $get): bool => static::variationTypeRequiresSingleSelectOnly((string) ($get('type') ?? '')))
+                        ->helperText(fn (Get $get): string => static::variationSelectionModeLockedHint((string) ($get('type') ?? '')))
+                        ->columnSpanFull(),
+                    Forms\Components\TextInput::make('solo_option_value')
+                        ->label('Tek başına seçim seçeneği (isteğe bağlı)')
+                        ->placeholder('Örn: İstemiyorum')
+                        ->maxLength(255)
+                        ->nullable()
+                        ->visible(fn (Get $get): bool => in_array($get('allows_multiple'), [true, 1, '1'], true)
+                            && ! static::variationTypeRequiresSingleSelectOnly((string) ($get('type') ?? '')))
+                        ->helperText('Çoklu seçim modunda: bu metinle birebir eşleşen seçenek seçilince diğer işaretler kalkar ve adım otomatik tamamlanır. Boş bırakılırsa solo davranış olmaz.')
+                        ->columnSpanFull(),
+                ])
+                ->columns(1)
+                ->columnSpanFull(),
+        ];
+    }
+
+    /**
+     * Tek bir varyasyon seçeneğinin formu (Varyasyon sayfası → Seçenekler sekmesindeki pencere).
+     * Üst varyasyonun tipi / bağlılığı owner record'dan okunur (bkz. optionParentValue).
+     *
+     * @return array<int, \Filament\Forms\Components\Component>
+     */
+    public static function variationOptionFormSchema(): array
+    {
+        return [
+            Forms\Components\Select::make('size_table_id')
+                ->label('Beden tablosu')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'size_table')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchSizeTableOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::sizeTableOptionLabel($value))
+                ->searchable()
+                ->required(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'size_table')
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $table = SizeTable::find((int) $state);
+                    if (! $table) {
+                        return;
+                    }
+                    $label = trim((string) ($table->title ?: $table->name ?: ''));
+                    $set('option_value', $label !== '' ? $label : $table->slug);
+                })
+                ->helperText('Varyasyon yönetimi → Beden tabloları listesinden seçin.')
+                ->columnSpanFull(),
+            Forms\Components\Hidden::make('option_value')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'size_table'),
+            Forms\Components\TextInput::make('option_value')
+                ->label('Seçenek değeri (TR)')
+                ->placeholder('Örn: Kırmızı, XL')
+                ->required(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') !== 'size_table')
+                ->maxLength(255)
+                ->helperText('Eşleştirme anahtarı. Çeviri için EN/IT alanlarını kullanın.')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') !== 'size_table')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('option_value_en')
+                ->label('Seçenek (EN)')
+                ->maxLength(255)
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') !== 'size_table')
+                ->helperText('Mağaza İngilizce gösterimi.')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('option_value_it')
+                ->label('Seçenek (IT)')
+                ->maxLength(255)
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') !== 'size_table')
+                ->helperText('Mağaza İtalyanca gösterimi.')
+                ->columnSpan(1),
+            Forms\Components\Textarea::make('info_text')
+                ->label('Mağaza açıklama metni (seçenek)')
+                ->helperText('Opsiyonel. Bu seçenek seçildiğinde mağazada gösterilir; metin varsa müşteri Devam et ile ilerler.')
+                ->rows(2)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Textarea::make('info_text_en')
+                ->label('Store option description (EN)')
+                ->rows(2)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Textarea::make('info_text_it')
+                ->label('Descrizione opzione negozio (IT)')
+                ->rows(2)
+                ->maxLength(2000)
+                ->nullable()
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_color_variation_id')
+                ->label('Kayıtlı renk görseli (Arayüz)')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'color')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceColorOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceColorOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceColorVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $label = trim((string) ($preset->name ?? ''));
+                    $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Renk Varyasyonlarından tanımlı görsel seçilir ve aşağıdaki görsel alanı güncellenir. Özel yükleme kullanırsanız preset sıfırlanır.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_fabric_type_variation_id')
+                ->label('Kayıtlı kumaş görseli (Arayüz)')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'fabric')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceFabricOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceFabricOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceFabricTypeVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $label = trim((string) ($preset->name ?? ''));
+                    $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
+                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; ad, fiyat çarpanı ve görsel otomatik doldurulur.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_label_type_variation_id')
+                ->label('Kayıtlı etiket türü')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'label_type')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceLabelTypeOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceLabelTypeOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceLabelTypeVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $set('option_value', (string) $preset->name);
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel ve ad otomatik doldurulur.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_certificate_variation_id')
+                ->label('Kayıtlı sertifika türü')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'certificate_type')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceCertificateOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceCertificateOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceCertificateVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $set('option_value', (string) $preset->name);
+                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    if (filled($preset->description)) {
+                        $set('info_text', (string) $preset->description);
+                    }
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Sertifika Yönetimi kayıtlarından seçilir; açıklama, görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_mold_model_variation_id')
+                ->label('Kayıtlı kalıp modeli')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'mold_model_type')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceMoldModelOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceMoldModelOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceMoldModelVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $set('option_value', (string) $preset->name);
+                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Kalıp Modeli Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_delivery_method_variation_id')
+                ->label('Kayıtlı teslimat seçeneği')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'delivery_type')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfaceDeliveryMethodOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfaceDeliveryMethodOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfaceDeliveryMethodVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $set('option_value', (string) $preset->name);
+                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    if (filled($preset->description)) {
+                        $set('info_text', (string) $preset->description);
+                    }
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Varyasyon yönetimi → Teslim Şeklini Yönet kayıtlarından seçilir; açıklama, görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('interface_packaging_preference_variation_id')
+                ->label('Kayıtlı ambalaj türü')
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'packaging_type')
+                ->getSearchResultsUsing(fn (string $search): array => static::searchInterfacePackagingOptions($search))
+                ->getOptionLabelUsing(fn ($value): ?string => static::interfacePackagingOptionLabel($value))
+                ->searchable()
+                ->nullable()
+                ->live(debounce: 400)
+                ->afterStateUpdated(function ($state, Set $set): void {
+                    if ($state === null || $state === '') {
+                        return;
+                    }
+                    $preset = InterfacePackagingPreferenceVariation::find((int) $state);
+                    if (! $preset) {
+                        return;
+                    }
+                    $set('option_value', (string) $preset->name);
+                    $set('price_delta', 1);
+                    if (is_string($preset->image_path) && $preset->image_path !== '') {
+                        $set('option_image', [$preset->image_path]);
+                    }
+                })
+                ->helperText('Ambalaj Tercih Yönetimi → Ambalaj seç kayıtlarından gelir; malzeme/özelleştirme mağazada alt adımlarda sorulur.')
+                ->columnSpanFull(),
+            Forms\Components\TextInput::make('option_color')
+                ->label('Renk (hex)')
+                ->placeholder('#ff0000')
+                ->maxLength(20)
+                ->nullable()
+                ->visible(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'color')
+                ->columnSpan(1),
+            Forms\Components\FileUpload::make('option_image')
+                ->label('Varyasyon görseli')
+                ->visible(fn (Get $get): bool => ! in_array(static::optionParentValue($get, 'type') ?? '', ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'], true))
+                ->image()
+                ->disk('public')
+                ->directory('variation_options')
+                ->visibility('public')
+                ->imagePreviewHeight(72)
+                ->maxFiles(1)
+                ->nullable()
+                ->formatStateUsing(function ($state): ?array {
+                    if ($state === null || $state === '') {
+                        return null;
+                    }
+
+                    return is_array($state) ? $state : [$state];
+                })
+                ->helperText('Dosya doğrudan kaydedilir. Kayıtlı renk/kumaş preset’i seçtiyseniz preset görseli buraya yazılır; farklı bir dosya yüklerseniz preset bağlantısı kaldırılır.')
+                ->columnSpanFull(),
+            Forms\Components\Select::make('option_image_size')
+                ->label('Görsel boyutu (ürün sayfasında)')
+                ->options([
+                    'small' => 'Küçük',
+                    'medium' => 'Orta',
+                    'large' => 'Büyük',
+                ])
+                ->default('medium')
+                ->nullable()
+                ->helperText('Varyasyon görseli mağaza ürün sayfasında bu boyutta gösterilir.')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('price_delta')
+                ->label('Fiyat çarpanı (×)')
+                ->numeric()
+                ->default(1)
+                ->minValue(0)
+                ->step(0.001)
+                ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
+                ->columnSpan(1),
+            Forms\Components\TextInput::make('stock_quantity')
+                ->label('Stok miktarı')
+                ->numeric()
+                ->minValue(0)
+                ->integer()
+                ->nullable()
+                ->columnSpan(1),
+            Forms\Components\Select::make('parent_option_ids')
+                ->label('Bağlı seçenekler (üst varyasyondan)')
+                ->multiple()
+                ->options(function (Get $get): array {
+                    $dependsOn = trim((string) (static::optionParentValue($get, 'depends_on') ?? ''));
+                    if ($dependsOn === '') {
+                        return [];
+                    }
+
+                    return static::resolveParentVariationOptionChoices($get, $dependsOn, '../../');
+                })
+                ->searchable()
+                ->nullable()
+                ->visible(fn (Get $get): bool => filled(static::optionParentValue($get, 'depends_on')))
+                ->helperText('Bu seçenek hangi üst varyasyon seçeneğinde görünsün? Birden fazla seçebilirsiniz. Boş bırakırsanız tüm üst seçeneklerde görünür.')
+                ->columnSpanFull(),
+        ];
+    }
+
+    /**
+     * Seçenek formunda üst varyasyon alanı (type, depends_on).
+     * Seçenekler sekmesinde (OptionsRelationManager) owner record varyasyondur; eski iç içe
+     * repeater düzeninde ise '../../' yoluyla okunur.
+     */
+    public static function optionParentValue(Get $get, string $key): mixed
+    {
+        $component = Livewire::current();
+        if ($component && method_exists($component, 'getOwnerRecord')) {
+            $owner = $component->getOwnerRecord();
+            if ($owner instanceof ProductVariation) {
+                return $owner->getAttribute($key);
+            }
+        }
+
+        return $get('../../'.$key);
     }
 
     public static function table(Table $table): Table
@@ -1455,13 +1462,33 @@ class ProductResource extends Resource
      */
     public static function currentProductIdFromLivewire(?object $livewire): ?int
     {
-        if ($livewire === null || ! method_exists($livewire, 'getRecord')) {
+        if ($livewire === null) {
             return null;
         }
 
-        $record = $livewire->getRecord();
+        // Varyasyonlar sekmesi: owner record üründür. Seçenekler sekmesi: owner record varyasyondur.
+        if (method_exists($livewire, 'getOwnerRecord')) {
+            return static::productIdFromRecord($livewire->getOwnerRecord());
+        }
 
-        return $record instanceof Product && $record->exists ? (int) $record->getKey() : null;
+        if (! method_exists($livewire, 'getRecord')) {
+            return null;
+        }
+
+        return static::productIdFromRecord($livewire->getRecord());
+    }
+
+    /** Ürün veya varyasyon kaydından ürün id'si. */
+    public static function productIdFromRecord(mixed $record): ?int
+    {
+        if ($record instanceof Product) {
+            return $record->exists ? (int) $record->getKey() : null;
+        }
+        if ($record instanceof ProductVariation) {
+            return $record->product_id ? (int) $record->product_id : null;
+        }
+
+        return null;
     }
 
     public static function interfacePresetOptionRowsForType(string $type, ?int $productId = null): ?array
@@ -2158,7 +2185,7 @@ class ProductResource extends Resource
     /**
      * @param  array<string, mixed>  $row
      */
-    private static function createVariationOptionFromPresetRow(ProductVariation $variation, array $row, string $variationType): void
+    public static function createVariationOptionFromPresetRow(ProductVariation $variation, array $row, string $variationType): void
     {
         $image = $row['option_image'] ?? null;
         if (is_array($image)) {
@@ -3003,8 +3030,25 @@ class ProductResource extends Resource
         return static::$customizationRowOptionsCache[$cacheKey];
     }
 
+    /** @return array<string, string> Varyasyon tipi => etiket */
+    public static function variationTypeLabels(): array
+    {
+        return [
+            'select' => 'Select',
+            'color' => 'Renk',
+            'fabric' => 'Kumaş Türü',
+            'label_type' => 'Etiket Türü',
+            'certificate_type' => 'Sertifika Türü',
+            'mold_model_type' => 'Kalıp Modeli',
+            'delivery_type' => 'Teslimat Seçenekleri',
+            'packaging_type' => 'Ambalaj Türü',
+            'image' => 'Görsel',
+            'size_table' => 'Beden Tablosu',
+        ];
+    }
+
     /** Ambalaj ve beden tablosu varyasyonlarında mağazada yalnızca tek seçim desteklenir. */
-    protected static function variationTypeRequiresSingleSelectOnly(?string $type): bool
+    public static function variationTypeRequiresSingleSelectOnly(?string $type): bool
     {
         return in_array((string) $type, ['size_table', 'packaging_type'], true);
     }
@@ -3033,8 +3077,16 @@ class ProductResource extends Resource
     protected static function resolveProductIdFromGet(Get $get, string $pathPrefix = ''): ?int
     {
         $component = Livewire::current();
+        if ($component && method_exists($component, 'getOwnerRecord')) {
+            // Varyasyonlar / Seçenekler sekmesi: formdaki `id` ürün değildir, ürün owner record'dan alınır.
+            return static::productIdFromRecord($component->getOwnerRecord());
+        }
         if ($component && method_exists($component, 'getRecord')) {
             $record = $component->getRecord();
+            if ($record instanceof ProductVariation) {
+                // Varyasyon düzenleme sayfası
+                return static::productIdFromRecord($record);
+            }
             if ($record instanceof Product && $record->exists) {
                 return (int) $record->getKey();
             }
@@ -3065,7 +3117,9 @@ class ProductResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            RelationManagers\VariationsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

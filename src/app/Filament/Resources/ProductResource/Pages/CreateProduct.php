@@ -19,6 +19,15 @@ class CreateProduct extends CreateRecord
 
     protected ?string $maxContentWidth = 'full';
 
+    /** Kayıttan sonra varyasyon eklemek için doğrudan «Varyasyonlar» sekmesi açılsın. */
+    protected function getRedirectUrl(): string
+    {
+        return ProductResource::getUrl('edit', [
+            'record' => $this->getRecord(),
+            'activeRelationManager' => 0,
+        ]);
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
@@ -40,7 +49,6 @@ class CreateProduct extends CreateRecord
             }
         }
 
-        ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $this->form->getState());
         ProductResource::syncPackagingAssignmentsFromProduct($this->record);
         ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
     }
@@ -74,7 +82,7 @@ class CreateProduct extends CreateRecord
         unset($data['home_showcase_image_upload']);
         unset($data['dimension_multipliers']);
 
-        $data = ProductResource::finalizeVariationOptionsInProductFormData($data);
+        unset($data['variations']);
 
         return $data;
     }

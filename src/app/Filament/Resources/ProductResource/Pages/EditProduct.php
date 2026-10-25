@@ -14,6 +14,22 @@ class EditProduct extends EditRecord
 
     protected ?string $maxContentWidth = 'full';
 
+    /** Ürün formu ve «Varyasyonlar» üst düzey sekmeler olarak gösterilir; yalnızca aktif sekme render edilir. */
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return 'Ürün bilgileri';
+    }
+
+    public function getContentTabIcon(): ?string
+    {
+        return 'heroicon-o-document-text';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -29,17 +45,12 @@ class EditProduct extends EditRecord
         ProductVariationOptionInterfaceSync::reconcileSizeTableProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
 
-        // Mutabakat sonrası taze veri gerektiği için loadMissing değil load kullanılır.
-        $this->record->load([
-            'variations' => fn ($query) => $query->orderBy('sort_order'),
-            'variations.options' => fn ($query) => $query->orderBy('sort_order'),
-            'customizationRows',
-        ]);
+        // Varyasyonlar artık ayrı «Varyasyonlar» sekmesinde (VariationsRelationManager) yüklenir;
+        // ürün formu seçenekleri yüklemez/render etmez.
+        $this->record->load(['customizationRows']);
 
         $data['_product_id'] = $this->record->getKey();
         $data['dimension_multipliers'] = ProductDimensionMultiplierSync::loadTemplateForNewProduct();
-
-        $data = ProductResource::ensureInterfacePresetOptionsInProductFormData($data, (int) $this->record->getKey());
 
         return $data;
     }
@@ -70,15 +81,14 @@ class EditProduct extends EditRecord
         // Ürün tablosunda kolon değil; afterSave'de persist edilir.
         unset($data['dimension_multipliers']);
 
-        $data = ProductResource::finalizeVariationOptionsInProductFormData($data, (int) $this->record->getKey());
+        // Varyasyonlar formda değil (Varyasyonlar sekmesinde ayrı kaydedilir).
+        unset($data['variations']);
 
         return $data;
     }
 
     protected function afterSave(): void
     {
-        $state = $this->form->getState();
-        ProductResource::syncVariationOptionImagesAfterFilamentSave($this->record, $state);
         ProductResource::syncPackagingAssignmentsFromProduct($this->record);
         ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
     }
