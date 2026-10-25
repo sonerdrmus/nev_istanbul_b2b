@@ -15,7 +15,7 @@ final class QuantityDimensionMultiplierCatalog
      */
     public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
-        if (! Schema::hasTable('quantity_dimension_multipliers')) {
+        if (! \App\Support\SchemaInfo::hasTable('quantity_dimension_multipliers')) {
             return [];
         }
 

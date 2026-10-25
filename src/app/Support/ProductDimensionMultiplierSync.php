@@ -68,7 +68,7 @@ final class ProductDimensionMultiplierSync
             'color_dimension_multipliers' => ColorDimensionMultiplier::class,
             'quantity_dimension_multipliers' => QuantityDimensionMultiplier::class,
         ] as $table => $model) {
-            if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'product_id')) {
+            if (! \App\Support\SchemaInfo::hasTable($table) || ! \App\Support\SchemaInfo::hasColumn($table, 'product_id')) {
                 continue;
             }
             if ($model::query()->where('product_id', $productId)->exists()) {
@@ -81,7 +81,7 @@ final class ProductDimensionMultiplierSync
 
     public static function applyProductScope(Builder $query, string $table, ?int $productId): Builder
     {
-        if (! Schema::hasColumn($table, 'product_id')) {
+        if (! \App\Support\SchemaInfo::hasColumn($table, 'product_id')) {
             return $query;
         }
 
@@ -184,7 +184,7 @@ final class ProductDimensionMultiplierSync
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];
 
-            if (! Schema::hasColumn('size_dimension_multipliers', 'product_id')) {
+            if (! \App\Support\SchemaInfo::hasColumn('size_dimension_multipliers', 'product_id')) {
                 unset($attrs['product_id']);
             }
 
@@ -217,7 +217,7 @@ final class ProductDimensionMultiplierSync
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];
 
-            if (! Schema::hasColumn('color_dimension_multipliers', 'product_id')) {
+            if (! \App\Support\SchemaInfo::hasColumn('color_dimension_multipliers', 'product_id')) {
                 unset($attrs['product_id']);
             }
 
@@ -251,7 +251,7 @@ final class ProductDimensionMultiplierSync
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];
 
-            if (! Schema::hasColumn('quantity_dimension_multipliers', 'product_id')) {
+            if (! \App\Support\SchemaInfo::hasColumn('quantity_dimension_multipliers', 'product_id')) {
                 unset($attrs['product_id']);
             }
 
@@ -264,7 +264,7 @@ final class ProductDimensionMultiplierSync
 
     private static function scopeExactProduct(Builder $query, string $table, ?int $productId): void
     {
-        if (! Schema::hasColumn($table, 'product_id')) {
+        if (! \App\Support\SchemaInfo::hasColumn($table, 'product_id')) {
             return;
         }
 
@@ -286,7 +286,7 @@ final class ProductDimensionMultiplierSync
             $model = $modelClass::query()->find((int) $row['id']);
             if ($model) {
                 // Şablondan gelen id ile ürün kaydı çakışmasın: başka ürüne/şablona aitse yeni oluştur.
-                $modelProductId = Schema::hasColumn($model->getTable(), 'product_id')
+                $modelProductId = \App\Support\SchemaInfo::hasColumn($model->getTable(), 'product_id')
                     ? ($model->product_id !== null ? (int) $model->product_id : null)
                     : null;
                 if ($modelProductId === $productId) {
@@ -323,7 +323,7 @@ final class ProductDimensionMultiplierSync
 
     private static function supportsPrintTechniqueColumn(string $table): bool
     {
-        return Schema::hasTable($table) && Schema::hasColumn($table, 'print_technique_slug');
+        return \App\Support\SchemaInfo::hasTable($table) && \App\Support\SchemaInfo::hasColumn($table, 'print_technique_slug');
     }
 
     /**

@@ -185,7 +185,7 @@ class StoreController extends Controller
      */
     private function buildSizeValueMultiplierMap(): array
     {
-        if (! Schema::hasColumn('size_table_columns', 'price_multiplier')) {
+        if (! \App\Support\SchemaInfo::hasColumn('size_table_columns', 'price_multiplier')) {
             return [];
         }
         $map = [];
@@ -374,7 +374,7 @@ class StoreController extends Controller
         $homeCategoryShowcase = collect();
         $homeProductShowcase = collect();
         $blogPosts = collect();
-        if (Schema::hasTable('blog_posts')) {
+        if (\App\Support\SchemaInfo::hasTable('blog_posts')) {
             $blogPosts = BlogPost::query()
                 ->published()
                 ->orderBy('sort_order')
@@ -384,7 +384,7 @@ class StoreController extends Controller
         }
         if (! $currentCategory) {
             $bannerSlides = BannerSlide::forHome()->get();
-            if (Schema::hasColumn('categories', 'image_path')) {
+            if (\App\Support\SchemaInfo::hasColumn('categories', 'image_path')) {
                 $homeCategoryShowcase = Category::query()
                     ->active()
                     ->whereNotNull('image_path')
@@ -393,7 +393,7 @@ class StoreController extends Controller
                     ->orderBy('name')
                     ->get();
             }
-            if (Schema::hasColumn('products', 'show_on_home')) {
+            if (\App\Support\SchemaInfo::hasColumn('products', 'show_on_home')) {
                 $homeProductShowcase = Product::query()
                     ->active()
                     ->visibleInStore()

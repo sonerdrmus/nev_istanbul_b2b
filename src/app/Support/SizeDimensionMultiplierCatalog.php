@@ -17,7 +17,7 @@ final class SizeDimensionMultiplierCatalog
      */
     public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
-        if (! Schema::hasTable('size_dimension_multipliers')) {
+        if (! \App\Support\SchemaInfo::hasTable('size_dimension_multipliers')) {
             return [];
         }
 

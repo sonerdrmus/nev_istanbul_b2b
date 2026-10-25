@@ -15,7 +15,7 @@ final class CatalogLocaleBackfill
      */
     public static function table(string $table, array $pairs): int
     {
-        if (! Schema::hasTable($table)) {
+        if (! \App\Support\SchemaInfo::hasTable($table)) {
             return 0;
         }
 
@@ -23,12 +23,12 @@ final class CatalogLocaleBackfill
         $select = ['id'];
         $writable = [];
         foreach ($pairs as [$source, $prefix]) {
-            if (! Schema::hasColumn($table, $source)) {
+            if (! \App\Support\SchemaInfo::hasColumn($table, $source)) {
                 continue;
             }
             $enCol = $prefix.'_en';
             $itCol = $prefix.'_it';
-            if (! Schema::hasColumn($table, $enCol) || ! Schema::hasColumn($table, $itCol)) {
+            if (! \App\Support\SchemaInfo::hasColumn($table, $enCol) || ! \App\Support\SchemaInfo::hasColumn($table, $itCol)) {
                 continue;
             }
             $select[] = $source;
@@ -135,18 +135,18 @@ final class CatalogLocaleBackfill
 
         $updated = 0;
         foreach (self::targets() as [$table, $pairs]) {
-            if (! Schema::hasTable($table)) {
+            if (! \App\Support\SchemaInfo::hasTable($table)) {
                 continue;
             }
             $select = ['id'];
             $writable = [];
             foreach ($pairs as [$source, $prefix]) {
-                if (! Schema::hasColumn($table, $source)) {
+                if (! \App\Support\SchemaInfo::hasColumn($table, $source)) {
                     continue;
                 }
                 $enCol = $prefix.'_en';
                 $itCol = $prefix.'_it';
-                if (! Schema::hasColumn($table, $enCol) || ! Schema::hasColumn($table, $itCol)) {
+                if (! \App\Support\SchemaInfo::hasColumn($table, $enCol) || ! \App\Support\SchemaInfo::hasColumn($table, $itCol)) {
                     continue;
                 }
                 $select[] = $source;
@@ -197,13 +197,13 @@ final class CatalogLocaleBackfill
         $neededIt = [];
 
         foreach (self::targets() as [$table, $pairs]) {
-            if (! Schema::hasTable($table)) {
+            if (! \App\Support\SchemaInfo::hasTable($table)) {
                 continue;
             }
             foreach ($pairs as [$source, $prefix]) {
                 $enCol = $prefix.'_en';
                 $itCol = $prefix.'_it';
-                if (! Schema::hasColumn($table, $source) || ! Schema::hasColumn($table, $enCol) || ! Schema::hasColumn($table, $itCol)) {
+                if (! \App\Support\SchemaInfo::hasColumn($table, $source) || ! \App\Support\SchemaInfo::hasColumn($table, $enCol) || ! \App\Support\SchemaInfo::hasColumn($table, $itCol)) {
                     continue;
                 }
                 foreach (DB::table($table)->select($source, $enCol, $itCol)->get() as $row) {

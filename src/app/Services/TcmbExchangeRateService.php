@@ -66,18 +66,33 @@ class TcmbExchangeRateService
     }
 
     /**
-     * USD/EUR için TCMB kurları (kısa süreli cache — istek yağmurunu azaltır, veri güncel kalır).
+     * USD/EUR için TCMB kurları.
+     *
+     * TCMB today.xml günde bir kez güncellenir. Eskiden 45 sn'lik cache süresi dolduğunda
+     * ilk gelen (ve aynı anda gelen tüm) istekler TCMB'ye 12 sn'ye kadar bekleyen HTTP çağrısı
+     * yapıyor, bu sırada DB bağlantısı açık kalıyordu. Artık Cache::flexible ile süre dolunca
+     * eski değer hemen döner, yenileme yanıt gönderildikten sonra arka planda yapılır.
+     * Başarısız çekimde son başarılı kur korunur.
      *
      * @return array<string, float>
      */
     public function getUsdEurCached(): array
     {
-        $ttl = max(15, (int) config('services.tcmb.cache_ttl_seconds', 60));
+        $fresh = max(60, (int) config('services.tcmb.cache_ttl_seconds', 900));
+        $stale = max($fresh, (int) config('services.tcmb.stale_ttl_seconds', 86400));
 
-        return Cache::remember(
+        return Cache::flexible(
             'tcmb_spot_rates_usd_eur',
-            now()->addSeconds($ttl),
-            fn (): array => $this->fetchFromTcmbTodayXml(['USD', 'EUR'])
+            [$fresh, $stale],
+            function (): array {
+                $rates = $this->fetchFromTcmbTodayXml(['USD', 'EUR']);
+                if ($rates === []) {
+                    return (array) Cache::get('tcmb_spot_rates_usd_eur_last_good', []);
+                }
+                Cache::forever('tcmb_spot_rates_usd_eur_last_good', $rates);
+
+                return $rates;
+            }
         );
     }
 

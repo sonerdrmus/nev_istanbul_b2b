@@ -21,7 +21,7 @@ final class PackagingPreferenceCatalog
      */
     public static function forStore(): array
     {
-        if (! Schema::hasTable('interface_packaging_preference_variations')) {
+        if (! \App\Support\SchemaInfo::hasTable('interface_packaging_preference_variations')) {
             return self::emptyCatalog();
         }
 
@@ -41,7 +41,7 @@ final class PackagingPreferenceCatalog
             ->values()
             ->all();
 
-        $materials = Schema::hasTable('interface_packaging_materials')
+        $materials = \App\Support\SchemaInfo::hasTable('interface_packaging_materials')
             ? InterfacePackagingMaterial::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
@@ -57,13 +57,13 @@ final class PackagingPreferenceCatalog
                 ->all()
             : [];
 
-        $settings = Schema::hasTable('interface_packaging_settings')
+        $settings = \App\Support\SchemaInfo::hasTable('interface_packaging_settings')
             ? InterfacePackagingSetting::instance()
             : null;
 
         $customizationsEnabled = (bool) ($settings?->customizations_enabled ?? true);
 
-        $customizations = ($customizationsEnabled && Schema::hasTable('interface_packaging_customizations'))
+        $customizations = ($customizationsEnabled && \App\Support\SchemaInfo::hasTable('interface_packaging_customizations'))
             ? InterfacePackagingCustomization::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')

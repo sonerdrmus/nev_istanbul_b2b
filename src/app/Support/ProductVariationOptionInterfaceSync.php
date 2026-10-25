@@ -442,7 +442,7 @@ class ProductVariationOptionInterfaceSync
 
     private static function hasProductVariationOptionColumn(string $column): bool
     {
-        return Schema::hasTable('product_variation_options')
-            && Schema::hasColumn('product_variation_options', $column);
+        return \App\Support\SchemaInfo::hasTable('product_variation_options')
+            && \App\Support\SchemaInfo::hasColumn('product_variation_options', $column);
     }
 }

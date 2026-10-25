@@ -14,7 +14,7 @@ final class DeliveryMethodCatalog
      */
     public static function forStore(): array
     {
-        if (! Schema::hasTable('interface_delivery_method_sub_options')) {
+        if (! \App\Support\SchemaInfo::hasTable('interface_delivery_method_sub_options')) {
             return ['sub_options' => []];
         }
 

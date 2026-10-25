@@ -24,7 +24,7 @@ final class ProductCustomizationCatalog
      */
     public static function forStore(?Product $product = null): array
     {
-        if (! Schema::hasTable('product_customization_settings')) {
+        if (! \App\Support\SchemaInfo::hasTable('product_customization_settings')) {
             return self::fallbackFromTranslations();
         }
 

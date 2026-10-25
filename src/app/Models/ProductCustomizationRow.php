@@ -59,7 +59,7 @@ class ProductCustomizationRow extends Model
 
     public static function productPivotTableExists(): bool
     {
-        return Schema::hasTable('product_customization_row_product');
+        return \App\Support\SchemaInfo::hasTable('product_customization_row_product');
     }
 
     /** Yalnızca verilen ürüne açıkça atanmış satırlar. */

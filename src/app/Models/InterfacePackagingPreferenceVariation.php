@@ -71,7 +71,7 @@ class InterfacePackagingPreferenceVariation extends Model
 
     public static function productPivotTableExists(): bool
     {
-        return Schema::hasTable('interface_packaging_preference_variation_product');
+        return \App\Support\SchemaInfo::hasTable('interface_packaging_preference_variation_product');
     }
 
     /**

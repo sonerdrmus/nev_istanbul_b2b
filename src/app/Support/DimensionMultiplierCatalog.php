@@ -33,7 +33,7 @@ final class DimensionMultiplierCatalog
 
     public static function hasPrintTechniqueColumn(): bool
     {
-        return Schema::hasTable('size_dimension_multipliers')
-            && Schema::hasColumn('size_dimension_multipliers', 'print_technique_slug');
+        return \App\Support\SchemaInfo::hasTable('size_dimension_multipliers')
+            && \App\Support\SchemaInfo::hasColumn('size_dimension_multipliers', 'print_technique_slug');
     }
 }

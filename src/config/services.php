@@ -41,8 +41,9 @@ return [
     */
     'tcmb' => [
         'kurlar_url' => env('TCMB_KURLAR_URL', 'https://www.tcmb.gov.tr/kurlar/today.xml'),
-        'cache_ttl_seconds' => (int) env('TCMB_CACHE_TTL', 45),
-        'timeout' => (int) env('TCMB_HTTP_TIMEOUT', 12),
+        'cache_ttl_seconds' => (int) env('TCMB_CACHE_TTL', 900),
+        'stale_ttl_seconds' => (int) env('TCMB_STALE_TTL', 86400),
+        'timeout' => (int) env('TCMB_HTTP_TIMEOUT', 5),
     ],
 
 ];

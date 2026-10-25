@@ -15,7 +15,7 @@ final class PrintTechniqueMultiplierTabs
      */
     public static function definitions(): array
     {
-        if (! Schema::hasTable('product_customization_print_techniques')) {
+        if (! \App\Support\SchemaInfo::hasTable('product_customization_print_techniques')) {
             return self::fallbackDefinitions();
         }
 

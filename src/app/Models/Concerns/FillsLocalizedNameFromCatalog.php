@@ -31,7 +31,7 @@ trait FillsLocalizedNameFromCatalog
             $itAttr = $sourceAttr.'_it';
             $columnKey = $model->getTable().'.'.$enAttr;
             if (! array_key_exists($columnKey, static::$localizedColumnExists)) {
-                static::$localizedColumnExists[$columnKey] = Schema::hasColumn($model->getTable(), $enAttr);
+                static::$localizedColumnExists[$columnKey] = \App\Support\SchemaInfo::hasColumn($model->getTable(), $enAttr);
             }
             if (! static::$localizedColumnExists[$columnKey]) {
                 return;

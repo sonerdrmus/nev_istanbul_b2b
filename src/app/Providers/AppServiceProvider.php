@@ -7,6 +7,10 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\FooterMenuGroup;
 use App\Models\FooterSetting;
+use App\Support\CatalogLabelTranslator;
+use App\Support\SchemaInfo;
+use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -28,6 +32,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Şema önbelleği: migration sonrası yenilensin.
+        Event::listen(MigrationsEnded::class, fn () => SchemaInfo::flush());
+
+        // Katalog çeviri önbelleği: ilgili tablolarda kayıt değişince (istek sonunda bir kez) temizlensin.
+        $translationTables = array_flip(CatalogLabelTranslator::storedTranslationTables());
+        $flushScheduled = false;
+        Event::listen(['eloquent.saved: *', 'eloquent.deleted: *'], function (string $event, array $payload) use ($translationTables, &$flushScheduled): void {
+            $model = $payload[0] ?? null;
+            if (! $model instanceof \Illuminate\Database\Eloquent\Model || ! isset($translationTables[$model->getTable()])) {
+                return;
+            }
+            if ($flushScheduled) {
+                return;
+            }
+            $flushScheduled = true;
+            app()->terminating(function () use (&$flushScheduled): void {
+                CatalogLabelTranslator::flushStoredTranslations();
+                $flushScheduled = false;
+            });
+        });
+
         // Docker ortamında port mapping (80->8010) nedeniyle redirect'ler yanlış URL'e gidiyor.
         // APP_URL'i zorla kullanarak bu sorunu çözüyoruz.
         $appUrl = config('app.url');

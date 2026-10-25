@@ -287,6 +287,7 @@ class ManageProductCustomization extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
+        self::$printTechniqueOptionsCache = null;
 
         $settings = ProductCustomizationSetting::instance();
         $settings->update([
@@ -405,6 +406,8 @@ class ManageProductCustomization extends Page implements HasForms
             ->when($keptRowIds !== [], fn ($q) => $q->whereNotIn('id', $keptRowIds))
             ->delete();
 
+        self::$printTechniqueOptionsCache = null;
+
         Notification::make()
             ->title('Ürün özelleştirme kaydedildi')
             ->success()
@@ -413,10 +416,13 @@ class ManageProductCustomization extends Page implements HasForms
         $this->mount();
     }
 
+    /** @var array<string, string>|null İstek içi önbellek (her satırdaki Select ayrı sorgu atmasın). */
+    private static ?array $printTechniqueOptionsCache = null;
+
     /** @return array<string, string> */
     private static function printTechniqueOptions(): array
     {
-        return ProductCustomizationPrintTechnique::query()
+        return self::$printTechniqueOptionsCache ??= ProductCustomizationPrintTechnique::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')

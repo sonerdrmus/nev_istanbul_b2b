@@ -89,7 +89,7 @@ class SizeTable extends Model
 
     public static function productPivotTableExists(): bool
     {
-        return Schema::hasTable('size_table_product');
+        return \App\Support\SchemaInfo::hasTable('size_table_product');
     }
 
     /**

@@ -96,7 +96,7 @@ class InterfaceFabricTypeVariation extends Model
 
     public static function productPivotTableExists(): bool
     {
-        return Schema::hasTable('interface_fabric_type_variation_product');
+        return \App\Support\SchemaInfo::hasTable('interface_fabric_type_variation_product');
     }
 
     /**

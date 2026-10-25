@@ -71,7 +71,7 @@ class InterfaceMoldModelVariation extends Model
 
     public static function productPivotTableExists(): bool
     {
-        return Schema::hasTable('interface_mold_model_variation_product');
+        return \App\Support\SchemaInfo::hasTable('interface_mold_model_variation_product');
     }
 
     /**

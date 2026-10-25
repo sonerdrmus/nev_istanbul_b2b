@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -149,46 +150,76 @@ class CatalogLabelTranslator
         self::overlayStoredTranslations();
     }
 
+    /** Önbellekteki panel çevirileri (overlay) anahtarı. */
+    private const STORED_TRANSLATIONS_CACHE_KEY = 'catalog_label_overlay:v1';
+
+    /** Overlay önbelleğinin en uzun ömrü (saniye). Kayıt değiştiğinde ayrıca anında temizlenir. */
+    private const STORED_TRANSLATIONS_TTL = 1800;
+
+    private const STORED_TRANSLATION_SOURCES = [
+        ['products', 'name', 'name_en', 'name_it'],
+        ['categories', 'name', 'name_en', 'name_it'],
+        ['product_variations', 'name', 'name_en', 'name_it'],
+        ['product_variation_options', 'option_value', 'option_value_en', 'option_value_it'],
+        ['size_tables', 'name', 'name_en', 'name_it'],
+        ['size_tables', 'title', 'title_en', 'title_it'],
+        ['product_customization_rows', 'position_name', 'position_name_en', 'position_name_it'],
+        ['product_customization_print_techniques', 'name', 'name_en', 'name_it'],
+        ['footer_menu_groups', 'title', 'title_en', 'title_it'],
+        ['footer_menu_items', 'label', 'label_en', 'label_it'],
+        ['legal_pages', 'title', 'title_en', 'title_it'],
+        ['banner_slides', 'title', 'title_en', 'title_it'],
+        ['banner_slides', 'headline', 'headline_en', 'headline_it'],
+        ['banner_slides', 'button_text', 'button_text_en', 'button_text_it'],
+        ['interface_fabric_type_variations', 'name', 'name_en', 'name_it'],
+        ['interface_color_variations', 'name', 'name_en', 'name_it'],
+        ['interface_certificate_variations', 'name', 'name_en', 'name_it'],
+        ['interface_mold_model_variations', 'name', 'name_en', 'name_it'],
+        ['interface_delivery_method_variations', 'name', 'name_en', 'name_it'],
+        ['interface_delivery_method_sub_options', 'name', 'name_en', 'name_it'],
+        ['interface_packaging_preference_variations', 'name', 'name_en', 'name_it'],
+        ['interface_label_type_variations', 'name', 'name_en', 'name_it'],
+        ['interface_label_type_variations', 'description_title', 'description_title_en', 'description_title_it'],
+        ['interface_packaging_materials', 'name', 'name_en', 'name_it'],
+        ['interface_packaging_customizations', 'name', 'name_en', 'name_it'],
+    ];
+
     /**
      * Panel translations win over the static map when EN/IT is filled.
+     *
+     * Eskiden her istekte ~175 şema sorgusu + 25 tablo taraması yapıyordu; artık sonuç
+     * cache'te tutulur ve ilgili tablolardan biri kaydedildiğinde temizlenir
+     * (bkz. AppServiceProvider -> flushStoredTranslations).
      */
     private static function overlayStoredTranslations(): void
     {
-        $pairs = [
-            ['products', 'name', 'name_en', 'name_it'],
-            ['categories', 'name', 'name_en', 'name_it'],
-            ['product_variations', 'name', 'name_en', 'name_it'],
-            ['product_variation_options', 'option_value', 'option_value_en', 'option_value_it'],
-            ['size_tables', 'name', 'name_en', 'name_it'],
-            ['size_tables', 'title', 'title_en', 'title_it'],
-            ['product_customization_rows', 'position_name', 'position_name_en', 'position_name_it'],
-            ['product_customization_print_techniques', 'name', 'name_en', 'name_it'],
-            ['footer_menu_groups', 'title', 'title_en', 'title_it'],
-            ['footer_menu_items', 'label', 'label_en', 'label_it'],
-            ['legal_pages', 'title', 'title_en', 'title_it'],
-            ['banner_slides', 'title', 'title_en', 'title_it'],
-            ['banner_slides', 'headline', 'headline_en', 'headline_it'],
-            ['banner_slides', 'button_text', 'button_text_en', 'button_text_it'],
-            ['interface_fabric_type_variations', 'name', 'name_en', 'name_it'],
-            ['interface_color_variations', 'name', 'name_en', 'name_it'],
-            ['interface_certificate_variations', 'name', 'name_en', 'name_it'],
-            ['interface_mold_model_variations', 'name', 'name_en', 'name_it'],
-            ['interface_delivery_method_variations', 'name', 'name_en', 'name_it'],
-            ['interface_delivery_method_sub_options', 'name', 'name_en', 'name_it'],
-            ['interface_packaging_preference_variations', 'name', 'name_en', 'name_it'],
-            ['interface_label_type_variations', 'name', 'name_en', 'name_it'],
-            ['interface_label_type_variations', 'description_title', 'description_title_en', 'description_title_it'],
-            ['interface_packaging_materials', 'name', 'name_en', 'name_it'],
-            ['interface_packaging_customizations', 'name', 'name_en', 'name_it'],
-        ];
+        try {
+            $entries = Cache::remember(
+                self::STORED_TRANSLATIONS_CACHE_KEY,
+                self::STORED_TRANSLATIONS_TTL,
+                fn (): array => self::loadStoredTranslations()
+            );
+        } catch (Throwable) {
+            $entries = self::loadStoredTranslations();
+        }
+
+        foreach ($entries as [$source, $en, $it]) {
+            self::remember($source, $en, $it);
+        }
+    }
+
+    /** @return list<array{0: string, 1: string, 2: string}> */
+    private static function loadStoredTranslations(): array
+    {
+        $entries = [];
 
         try {
-            foreach ($pairs as [$table, $sourceColumn, $enColumn, $itColumn]) {
-                if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $sourceColumn) || ! Schema::hasColumn($table, $enColumn)) {
+            foreach (self::STORED_TRANSLATION_SOURCES as [$table, $sourceColumn, $enColumn, $itColumn]) {
+                if (! SchemaInfo::hasTable($table) || ! SchemaInfo::hasColumn($table, $sourceColumn) || ! SchemaInfo::hasColumn($table, $enColumn)) {
                     continue;
                 }
 
-                $hasIt = Schema::hasColumn($table, $itColumn);
+                $hasIt = SchemaInfo::hasColumn($table, $itColumn);
                 $columns = $hasIt ? [$sourceColumn, $enColumn, $itColumn] : [$sourceColumn, $enColumn];
                 $rows = DB::table($table)->select($columns)->whereNotNull($sourceColumn)->get();
                 foreach ($rows as $row) {
@@ -198,12 +229,31 @@ class CatalogLabelTranslator
                     if ($source === '' || ($en === '' && $it === '')) {
                         continue;
                     }
-                    self::remember($source, $en, $it);
+                    $entries[] = [$source, $en, $it];
                 }
             }
         } catch (Throwable) {
             // Storefront still falls back to the static catalog map.
         }
+
+        return $entries;
+    }
+
+    /** Overlay'in okuduğu tablolar (bu tablolarda kayıt değişince cache temizlenir). */
+    public static function storedTranslationTables(): array
+    {
+        return array_values(array_unique(array_column(self::STORED_TRANSLATION_SOURCES, 0)));
+    }
+
+    public static function flushStoredTranslations(): void
+    {
+        try {
+            Cache::forget(self::STORED_TRANSLATIONS_CACHE_KEY);
+        } catch (Throwable) {
+            //
+        }
+        self::$map = null;
+        self::$lookup = null;
     }
 
     private static function remember(string $source, string $en, string $it): void

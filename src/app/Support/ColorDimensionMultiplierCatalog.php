@@ -16,7 +16,7 @@ final class ColorDimensionMultiplierCatalog
      */
     public static function rowsForStoreMatcher(?string $printTechniqueSlug = null, ?int $productId = null): array
     {
-        if (! Schema::hasTable('color_dimension_multipliers')) {
+        if (! \App\Support\SchemaInfo::hasTable('color_dimension_multipliers')) {
             return [];
         }
 
