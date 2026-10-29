@@ -85,14 +85,15 @@ class InterfaceLabelTypeVariationResource extends Resource
                             ->label('Açıklama başlığı (IT)')
                             ->maxLength(255)
                             ->visible(fn (Get $get): bool => (bool) $get('ask_description')),
-                        Forms\Components\TextInput::make('price_multiplier')
-                            ->label('Fiyat çarpanı (×)')
+                        Forms\Components\TextInput::make('price')
+                            ->label('Fiyat (adet başına)')
                             ->numeric()
-                            ->default(1)
+                            ->default(0)
                             ->minValue(0)
-                            ->step(0.001)
+                            ->step(0.01)
+                            ->prefix('₺')
                             ->required()
-                            ->helperText('Tüm ürünlerde aynı uygulanır (ürün bazlı değildir). 1 = temel fiyat aynı kalır; 1,009 girildiğinde mağazada birim fiyat × 1,009 olur (3 ondalığa kadar). Kaydettiğinizde bu etiketi kullanan tüm ürün seçenekleri güncellenir.'),
+                            ->helperText('Bu etiket seçildiğinde ürünün birim fiyatına adet başına eklenir. Tüm ürünlerde aynıdır (ürün bazlı değildir). 0 = ücretsiz.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -131,9 +132,9 @@ class InterfaceLabelTypeVariationResource extends Resource
                 Tables\Columns\IconColumn::make('ask_description')
                     ->label('Açıklama')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('price_multiplier')
-                    ->label('Fiyat çarpanı')
-                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 3, ',', '.'))
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Fiyat')
+                    ->formatStateUsing(fn ($state): string => (float) $state > 0 ? '+₺'.number_format((float) $state, 2, ',', '.') : 'Ücretsiz')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')

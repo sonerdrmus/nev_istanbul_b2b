@@ -3019,8 +3019,34 @@
                         return mult;
                     }
 
-                    function getPackagingAdditiveExtraTry() {
+                    /**
+                     * Etiket türü / ambalaj kütüphane fiyatı (adet başına TL). Sunucu da sepette aynı tutarı
+                     * veritabanından hesaplar (ProductVariationOption::presetAdditiveTryForSelections).
+                     */
+                    function getPresetAdditiveExtraTry() {
                         var extra = 0;
+                        document.querySelectorAll('.variation-step-panel[data-variation-name][data-step-unlocked="1"]').forEach(function(panel) {
+                            var vType = panel.getAttribute('data-variation-type') || '';
+                            if (vType !== 'label_type' && vType !== 'packaging_type') return;
+                            var picked = [];
+                            if (vType === 'label_type' && (panel.getAttribute('data-allows-multiple') || '') === '1') {
+                                panel.querySelectorAll('.product-option.option-selected').forEach(function(btn) {
+                                    if (btn.style.display !== 'none') picked.push(btn);
+                                });
+                            } else {
+                                var sel = getVisibleSelectedProductOption(panel);
+                                if (sel) picked.push(sel);
+                            }
+                            picked.forEach(function(btn) {
+                                var p = parseFloat(btn.getAttribute('data-preset-price') || '0');
+                                if (isFinite(p) && p > 0) extra += p;
+                            });
+                        });
+                        return extra;
+                    }
+
+                    function getPackagingAdditiveExtraTry() {
+                        var extra = getPresetAdditiveExtraTry();
                         document.querySelectorAll('.variation-step-panel[data-variation-type="packaging_type"][data-step-unlocked="1"]').forEach(function(block) {
                             if ((block.getAttribute('data-packaging-options-confirmed') || '') !== '1') return;
                             var payload = buildPackagingTypeVariationPayload(block);

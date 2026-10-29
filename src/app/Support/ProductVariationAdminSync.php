@@ -58,9 +58,9 @@ final class ProductVariationAdminSync
             ]],
         ]);
 
-        // Etiket türü çarpanı kütüphaneden gelir (ürün bazlı değildir).
+        // Etiket türünde fiyat kütüphanedeki tutardan gelir; seçenek çarpanı nötr kalır.
         if ($type === 'label_type') {
-            ProductVariationOptionInterfaceSync::applyLabelPresetPrices($variation->options()->get());
+            ProductVariationOptionInterfaceSync::neutralizeLabelOptionMultipliers($variation->options()->get());
         }
 
         self::afterVariationsChanged($product);

@@ -25,6 +25,7 @@ class InterfacePackagingPreferenceVariation extends Model
         'slug',
         'image_path',
         'requires_material',
+        'price',
         'sort_order',
         'is_active',
     ];
@@ -33,6 +34,7 @@ class InterfacePackagingPreferenceVariation extends Model
     {
         return [
             'requires_material' => 'boolean',
+            'price' => 'decimal:2',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];

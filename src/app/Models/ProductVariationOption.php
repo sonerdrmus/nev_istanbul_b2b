@@ -296,6 +296,75 @@ class ProductVariationOption extends Model
         return null;
     }
 
+    /**
+     * Etiket türü ve ambalaj seçeneklerinin kütüphane fiyatı (adet başına TL), veritabanından hesaplanır.
+     * Seçilen her etiket / ambalaj için ilgili kaydın `price` tutarı birim fiyata eklenir.
+     *
+     * @param  array<string, mixed>  $selections
+     */
+    public static function presetAdditiveTryForSelections(Product $product, array $selections): float
+    {
+        $product->loadMissing([
+            'variations.options.interfaceLabelTypeVariation',
+            'variations.options.interfacePackagingPreferenceVariation',
+        ]);
+
+        $total = 0.0;
+        foreach ($selections as $variationName => $optionValue) {
+            $variation = $product->variations->first(
+                fn ($row) => trim((string) $row->name) === trim((string) $variationName)
+            );
+            if (! $variation || ! in_array((string) $variation->type, ['label_type', 'packaging_type'], true)) {
+                continue;
+            }
+
+            foreach (self::selectionOptionLabels($optionValue) as $label) {
+                $option = self::findOptionByStoredLabel($variation, $label);
+                if ($option) {
+                    $total += $option->presetUnitPriceTry();
+                }
+            }
+        }
+
+        return round($total, 4);
+    }
+
+    /** Bu seçeneğin bağlı olduğu etiket / ambalaj kaydının adet başına fiyatı (TL). */
+    public function presetUnitPriceTry(): float
+    {
+        $preset = $this->interface_label_type_variation_id
+            ? $this->interfaceLabelTypeVariation
+            : ($this->interface_packaging_preference_variation_id ? $this->interfacePackagingPreferenceVariation : null);
+
+        return $preset ? max(0.0, (float) ($preset->price ?? 0)) : 0.0;
+    }
+
+    /** @return list<string> Seçimden (tekli, çoklu veya yapılandırılmış) seçenek etiketleri */
+    private static function selectionOptionLabels(mixed $optionValue): array
+    {
+        if (is_array($optionValue) && ! self::isMultiValueList($optionValue)) {
+            $label = self::resolveSelectionOptionLabel($optionValue);
+
+            return $label !== '' ? [$label] : [];
+        }
+
+        if (is_array($optionValue)) {
+            $labels = [];
+            foreach ($optionValue as $value) {
+                $label = is_array($value) ? self::resolveSelectionOptionLabel($value) : trim((string) $value);
+                if ($label !== '') {
+                    $labels[] = $label;
+                }
+            }
+
+            return $labels;
+        }
+
+        $label = trim((string) $optionValue);
+
+        return $label !== '' ? [$label] : [];
+    }
+
     /** @param  array<string, mixed>  $selections */
     public static function additiveExtraTryForSelections(array $selections): float
     {

@@ -59,6 +59,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                     'slug' => $row->slug,
                     'image_path' => $row->image_path,
                     'requires_material' => $row->requires_material,
+                    'price' => $row->price ?? 0,
                     'is_active' => $row->is_active,
                     'product_ids' => $row->products->pluck('id')->map(fn ($id): int => (int) $id)->all(),
                 ])
@@ -142,6 +143,14 @@ class ManagePackagingPreferences extends Page implements HasForms
                                 ProductMultiSelect::make('product_ids')
                                     ->helperText('Bu ambalaj yalnızca seçilen ürünlerde görünür. Birden fazla ürün seçebilirsiniz. Boş bırakılırsa hiçbir üründe görünmez.')
                                     ->columnSpanFull(),
+                                Forms\Components\TextInput::make('price')
+                                    ->label('Fiyat (adet başına)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->step(0.01)
+                                    ->default(0)
+                                    ->prefix('₺')
+                                    ->helperText('Bu ambalaj seçildiğinde ürünün birim fiyatına adet başına eklenir; tüm ürünlerde aynıdır. Özelleştirme / barkod ücretleri ayrıca eklenir. 0 = ücretsiz.'),
                                 Forms\Components\Toggle::make('requires_material')
                                     ->label('Malzeme seçimi gerekir (Kilitli poşet)')
                                     ->default(false)
@@ -317,6 +326,7 @@ class ManagePackagingPreferences extends Page implements HasForms
                 'slug' => $slug,
                 'image_path' => $row['image_path'] ?? null,
                 'requires_material' => (bool) ($row['requires_material'] ?? false),
+                'price' => round(max(0, (float) ($row['price'] ?? 0)), 2),
                 'sort_order' => $sort * 10,
                 'is_active' => (bool) ($row['is_active'] ?? true),
             ];

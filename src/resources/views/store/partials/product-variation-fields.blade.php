@@ -162,6 +162,7 @@
                                                 data-price-delta="{{ (float) $option->price_delta }}"
                                                 data-option-image-url="{{ $packagingImageUrl ?? '' }}"
                                                 data-packaging-preset-id="{{ $option->interface_packaging_preference_variation_id ?? '' }}"
+                                                data-preset-price="{{ $option->presetUnitPriceTry() }}"
                                                 data-packaging-slug="{{ $packagingPreset?->slug ?? '' }}"
                                                 data-packaging-requires-material="{{ $packagingRequiresMaterial ? '1' : '0' }}"
                                                 title="{{ $displayOptionValue($option) }}">
@@ -178,6 +179,10 @@
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
                                                         <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
+                                                        @php $presetPriceTry = $option->presetUnitPriceTry(); @endphp
+                                                        @if(($canSeePrices ?? false) && $presetPriceTry > 0)
+                                                            <span class="preset-price-badge ml-1.5 align-middle inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/80">{{ __('store.product.packaging_extra_price_fmt', ['price' => number_format($presetPriceTry, 2, ',', '.')]) }}</span>
+                                                        @endif
                                                     </span>
                                                 </span>
                                             </button>
@@ -295,6 +300,7 @@
                                                 data-price-delta="{{ (float) $option->price_delta }}"
                                                 data-option-image-url="{{ $labelImageUrl ?? '' }}"
                                                 data-label-preset-id="{{ $option->interface_label_type_variation_id ?? '' }}"
+                                                data-preset-price="{{ $option->presetUnitPriceTry() }}"
                                                 data-label-custom-print="{{ ($labelPreset?->is_custom_print ?? false) ? '1' : '0' }}"
                                                 data-label-position-front="{{ ($labelPreset?->position_front ?? false) ? '1' : '0' }}"
                                                 data-label-position-back="{{ ($labelPreset?->position_back ?? false) ? '1' : '0' }}"
@@ -314,6 +320,10 @@
                                                     <span class="label-option-radio shrink-0 w-4 h-4 rounded-full border-2 border-slate-300 bg-white transition-colors" aria-hidden="true"></span>
                                                     <span class="flex-1 min-w-0">
                                                         <span class="text-sm sm:text-[0.9375rem] font-semibold text-slate-800 leading-snug">{{ $displayOptionValue($option) }}</span>
+                                                        @php $presetPriceTry = $option->presetUnitPriceTry(); @endphp
+                                                        @if(($canSeePrices ?? false) && $presetPriceTry > 0)
+                                                            <span class="preset-price-badge ml-1.5 align-middle inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/80">{{ __('store.product.packaging_extra_price_fmt', ['price' => number_format($presetPriceTry, 2, ',', '.')]) }}</span>
+                                                        @endif
                                                         <span class="mt-1 flex flex-wrap gap-1.5">
                                                             @if($labelPreset?->is_custom_print)
                                                                 <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200/80">{{ __('store.product.label_custom_print') }}</span>

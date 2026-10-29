@@ -689,7 +689,7 @@ class ProductResource extends Resource
                 })
                 ->helperText(fn (Get $get): ?string => match ($get('type')) {
                     'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı her kumaş seçeneğinde bu ürün için girilir.',
-                    'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer); fiyat çarpanı kütüphaneden gelir ve tüm ürünlerde aynıdır.',
+                    'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer); fiyat, etiket kaydındaki tutardan (adet başına) birim fiyata eklenir ve tüm ürünlerde aynıdır.',
                     'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                     'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                     'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
@@ -945,12 +945,12 @@ class ProductResource extends Resource
                         return;
                     }
                     $set('option_value', (string) $preset->name);
-                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    $set('price_delta', 1);
                     if (is_string($preset->image_path) && $preset->image_path !== '') {
                         $set('option_image', [$preset->image_path]);
                     }
                 })
-                ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
+                ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel ve ad otomatik doldurulur. Fiyat, etiket kaydındaki tutardan birim fiyata eklenir.')
                 ->columnSpanFull(),
             Forms\Components\Select::make('interface_certificate_variation_id')
                 ->label('Kayıtlı sertifika türü')
@@ -1097,10 +1097,10 @@ class ProductResource extends Resource
                 ->default(1)
                 ->minValue(0)
                 ->step(0.001)
-                // Etiket türlerinde çarpan Etiket Türü Yönetimi'nden gelir (ürün bazlı değildir).
+                // Etiket türlerinde çarpan kullanılmaz: fiyat Etiket Türü Yönetimi'ndeki tutardan eklenir.
                 ->disabled(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'label_type')
                 ->helperText(fn (Get $get): string => (static::optionParentValue($get, 'type') ?? '') === 'label_type'
-                    ? 'Etiket türlerinde fiyat çarpanı Varyasyon yönetimi → Etiket Türleri kaydından gelir ve tüm ürünlerde aynıdır; buradan değiştirilemez.'
+                    ? 'Etiket türlerinde çarpan kullanılmaz; fiyat Varyasyon yönetimi → Etiket Türleri kaydındaki tutardan (adet başına) birim fiyata eklenir ve tüm ürünlerde aynıdır.'
                     : '1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
                 ->columnSpan(1),
             Forms\Components\TextInput::make('stock_quantity')
@@ -1569,7 +1569,8 @@ class ProductResource extends Resource
                     'size_table_id' => null,
                     'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
                     'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
-                    'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier ?? 1),
+                    // Etiket fiyatı kütüphanede tutar olarak durur; çarpan nötr.
+                    'price_delta' => 1,
                     'stock_quantity' => null,
                     'parent_option_id' => null,
                     'parent_option_ids' => null,
@@ -2339,7 +2340,7 @@ class ProductResource extends Resource
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $opt['option_value'] = (string) $preset->name;
                             }
-                            $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier ?? 1);
+                            $opt['price_delta'] = 1; // etiket fiyatı tutar olarak kütüphaneden eklenir
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
                             }
@@ -2850,7 +2851,9 @@ class ProductResource extends Resource
         if ($positions !== []) {
             $parts[] = implode('/', $positions);
         }
-        $parts[] = '×'.number_format((float) ($preset->price_multiplier ?? 1), 3, ',', '.');
+        if ((float) ($preset->price ?? 0) > 0) {
+            $parts[] = '+₺'.number_format((float) $preset->price, 2, ',', '.');
+        }
 
         return implode(' · ', $parts).' · #'.$preset->id;
     }

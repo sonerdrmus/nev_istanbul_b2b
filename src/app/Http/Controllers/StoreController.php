@@ -255,6 +255,8 @@ class StoreController extends Controller
                 $product->loadMissing('variations.options');
                 $unitTry *= ProductVariationOption::combinedMultiplierForSelections($product, $variationData);
                 $unitTry += ProductVariationOption::additiveExtraTryForSelections($variationData);
+                // Etiket türü / ambalaj kütüphane fiyatı (adet başına, sunucuda DB'den hesaplanır)
+                $unitTry += ProductVariationOption::presetAdditiveTryForSelections($product, $variationData);
             }
 
             $sizeQuantities = $item['size_quantities'] ?? null;
