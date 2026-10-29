@@ -85,6 +85,14 @@ class InterfaceLabelTypeVariationResource extends Resource
                             ->label('Açıklama başlığı (IT)')
                             ->maxLength(255)
                             ->visible(fn (Get $get): bool => (bool) $get('ask_description')),
+                        Forms\Components\TextInput::make('price_multiplier')
+                            ->label('Fiyat çarpanı (×)')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(0)
+                            ->step(0.001)
+                            ->required()
+                            ->helperText('Tüm ürünlerde aynı uygulanır (ürün bazlı değildir). 1 = temel fiyat aynı kalır; 1,009 girildiğinde mağazada birim fiyat × 1,009 olur (3 ondalığa kadar). Kaydettiğinizde bu etiketi kullanan tüm ürün seçenekleri güncellenir.'),
                         Forms\Components\TextInput::make('sort_order')
                             ->label('Sıra')
                             ->numeric()
@@ -123,6 +131,10 @@ class InterfaceLabelTypeVariationResource extends Resource
                 Tables\Columns\IconColumn::make('ask_description')
                     ->label('Açıklama')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('price_multiplier')
+                    ->label('Fiyat çarpanı')
+                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 3, ',', '.'))
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sıra')
                     ->sortable(),

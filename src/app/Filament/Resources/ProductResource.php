@@ -688,8 +688,8 @@ class ProductResource extends Resource
                     }
                 })
                 ->helperText(fn (Get $get): ?string => match ($get('type')) {
-                    'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
-                    'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer).',
+                    'fabric' => 'Seçenekler yalnızca Varyasyon yönetimi → Kumaş Türü Varyasyonları → Ürünler alanından bu ürüne atanmış kumaşlardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı her kumaş seçeneğinde bu ürün için girilir.',
+                    'label_type' => 'Seçenekler, Etiket Türü Yönetimi kayıtlarından otomatik doldurulur (mevcut seçenek satırlarının yerine geçer); fiyat çarpanı kütüphaneden gelir ve tüm ürünlerde aynıdır.',
                     'certificate_type' => 'Seçenekler, Sertifika Yönetimi kayıtlarından otomatik doldurulur; fiyat çarpanı preset’ten gelir.',
                     'mold_model_type' => 'Seçenekler yalnızca Varyasyon yönetimi → Kalıp Modeli Yönetimi → Ürünler alanından bu ürüne atanmış kalıplardan otomatik doldurulur ve güncel tutulur; fiyat çarpanı preset’ten gelir.',
                     'delivery_type' => 'Seçenekler, Teslim Şeklini Yönet kayıtlarından otomatik doldurulur; açıklama ve fiyat çarpanı preset’ten gelir.',
@@ -921,12 +921,12 @@ class ProductResource extends Resource
                     }
                     $label = trim((string) ($preset->name ?? ''));
                     $set('option_value', $label !== '' ? $label : ('#'.$preset->id));
-                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
+                    // Kumaşın fiyat çarpanı kütüphanede değil, bu ürünün seçeneğinde (Fiyat çarpanı alanı) girilir.
                     if (is_string($preset->image_path) && $preset->image_path !== '') {
                         $set('option_image', [$preset->image_path]);
                     }
                 })
-                ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; ad, fiyat çarpanı ve görsel otomatik doldurulur.')
+                ->helperText('Varyasyon yönetimi → Kumaş Türü Varyasyonlarından görsel seçilir; ad ve görsel otomatik doldurulur. Fiyat çarpanını aşağıda bu ürün için girin.')
                 ->columnSpanFull(),
             Forms\Components\Select::make('interface_label_type_variation_id')
                 ->label('Kayıtlı etiket türü')
@@ -945,11 +945,12 @@ class ProductResource extends Resource
                         return;
                     }
                     $set('option_value', (string) $preset->name);
+                    $set('price_delta', ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier));
                     if (is_string($preset->image_path) && $preset->image_path !== '') {
                         $set('option_image', [$preset->image_path]);
                     }
                 })
-                ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel ve ad otomatik doldurulur.')
+                ->helperText('Varyasyon yönetimi → Etiket Türü Yönetimi kayıtlarından seçilir; görsel, ad ve fiyat çarpanı otomatik doldurulur.')
                 ->columnSpanFull(),
             Forms\Components\Select::make('interface_certificate_variation_id')
                 ->label('Kayıtlı sertifika türü')
@@ -1096,7 +1097,11 @@ class ProductResource extends Resource
                 ->default(1)
                 ->minValue(0)
                 ->step(0.001)
-                ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
+                // Etiket türlerinde çarpan Etiket Türü Yönetimi'nden gelir (ürün bazlı değildir).
+                ->disabled(fn (Get $get): bool => (static::optionParentValue($get, 'type') ?? '') === 'label_type')
+                ->helperText(fn (Get $get): string => (static::optionParentValue($get, 'type') ?? '') === 'label_type'
+                    ? 'Etiket türlerinde fiyat çarpanı Varyasyon yönetimi → Etiket Türleri kaydından gelir ve tüm ürünlerde aynıdır; buradan değiştirilemez.'
+                    : '1 = temel fiyat aynı kalır; 1,009 girildiğinde birim fiyat × 1,009 olur (3 ondalığa kadar). 0 veya boş kayıtta 1 kabul edilir.')
                 ->columnSpan(1),
             Forms\Components\TextInput::make('stock_quantity')
                 ->label('Stok miktarı')
@@ -1564,7 +1569,7 @@ class ProductResource extends Resource
                     'size_table_id' => null,
                     'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
                     'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
-                    'price_delta' => 0,
+                    'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier ?? 1),
                     'stock_quantity' => null,
                     'parent_option_id' => null,
                     'parent_option_ids' => null,
@@ -1807,7 +1812,8 @@ class ProductResource extends Resource
                     'interface_color_variation_id' => null,
                     'option_image' => filled($preset->image_path) ? [$preset->image_path] : null,
                     'sort_order' => (int) ($preset->sort_order ?? ($index * 10)),
-                    'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+                    // Fiyat çarpanı ürün bazında girilir; yeni kumaş seçeneği nötr (×1) başlar.
+                    'price_delta' => 1,
                     'stock_quantity' => null,
                     'parent_option_id' => null,
                     'parent_option_ids' => null,
@@ -2317,7 +2323,7 @@ class ProductResource extends Resource
                                 $n = trim((string) ($preset->name ?? ''));
                                 $opt['option_value'] = $n !== '' ? $n : ('#'.$preset->id);
                             }
-                            $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier);
+                            // Kumaş fiyat çarpanı ürün seçeneğinde girilir (kütüphaneden ezilmez).
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
                             }
@@ -2333,6 +2339,7 @@ class ProductResource extends Resource
                             if (trim((string) ($opt['option_value'] ?? '')) === '') {
                                 $opt['option_value'] = (string) $preset->name;
                             }
+                            $opt['price_delta'] = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier ?? 1);
                             if ($pPath !== '') {
                                 $opt['option_image'] = $pPath;
                             }
@@ -2794,7 +2801,6 @@ class ProductResource extends Resource
         $name = trim((string) ($preset->name ?? ''));
 
         return ($name !== '' ? $name : 'Kumaş #'.$preset->id)
-            .' · ×'.number_format((float) ($preset->price_multiplier ?? 1), 3, ',', '.')
             .' · #'.$preset->id;
     }
 
@@ -2844,6 +2850,7 @@ class ProductResource extends Resource
         if ($positions !== []) {
             $parts[] = implode('/', $positions);
         }
+        $parts[] = '×'.number_format((float) ($preset->price_multiplier ?? 1), 3, ',', '.');
 
         return implode(' · ', $parts).' · #'.$preset->id;
     }

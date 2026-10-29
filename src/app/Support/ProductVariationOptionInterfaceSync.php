@@ -294,7 +294,7 @@ class ProductVariationOptionInterfaceSync
             ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
             'sort_order' => (int) ($preset->sort_order ?? 0),
             'option_image' => filled($preset->image_path) ? $preset->image_path : null,
-            'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+            // Fiyat çarpanı ürün bazında girilir; kumaş kaydı güncellenince ürün fiyatları ezilmez.
         ]);
     }
 
@@ -304,7 +304,7 @@ class ProductVariationOptionInterfaceSync
             return 0;
         }
 
-        return static::syncLinkedOptions(
+        $updated = static::syncLinkedOptions(
             $preset->productVariationOptions(),
             (string) $preset->name,
             $preset->image_path,
@@ -312,6 +312,43 @@ class ProductVariationOptionInterfaceSync
             $preset->name_en ?? null,
             $preset->name_it ?? null,
         );
+
+        // Etiket fiyat çarpanı kütüphaneden gelir ve tüm ürünlerde aynıdır.
+        if (static::hasLabelPriceMultiplierColumn()) {
+            $preset->productVariationOptions()->update([
+                'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+            ]);
+        }
+
+        return $updated;
+    }
+
+    /** Etiket türü seçeneklerinin çarpanını bağlı oldukları kütüphane kaydından uygular. */
+    public static function applyLabelPresetPrices(iterable $options): void
+    {
+        if (! static::hasLabelPriceMultiplierColumn()) {
+            return;
+        }
+
+        foreach ($options as $option) {
+            $presetId = $option->interface_label_type_variation_id ?? null;
+            if (! $presetId) {
+                continue;
+            }
+            $preset = InterfaceLabelTypeVariation::query()->find((int) $presetId);
+            if (! $preset) {
+                continue;
+            }
+            $price = ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier);
+            if ((float) $option->price_delta !== (float) $price) {
+                $option->forceFill(['price_delta' => $price])->saveQuietly();
+            }
+        }
+    }
+
+    private static function hasLabelPriceMultiplierColumn(): bool
+    {
+        return \App\Support\SchemaInfo::hasColumn('interface_label_type_variations', 'price_multiplier');
     }
 
     public static function fromPackagingPreset(InterfacePackagingPreferenceVariation $preset): int

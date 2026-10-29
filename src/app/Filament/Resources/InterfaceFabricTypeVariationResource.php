@@ -64,14 +64,6 @@ class InterfaceFabricTypeVariationResource extends Resource
                                 ...LocaleNameInputs::textAreas('detail_text', 'Detaylı bilgi (EN)', 'Detaylı bilgi (IT)', 4, 5000),
                             ])
                             ->columns(1),
-                        Forms\Components\TextInput::make('price_multiplier')
-                            ->label('Fiyat çarpanı (×)')
-                            ->numeric()
-                            ->default(1)
-                            ->minValue(0)
-                            ->step(0.001)
-                            ->required()
-                            ->helperText('1 = temel fiyat aynı kalır; 1,009 girildiğinde mağazada birim fiyat × 1,009 olur (3 ondalığa kadar).'),
                         Forms\Components\Select::make('colorVariations')
                             ->label('Renkler')
                             ->relationship(
@@ -129,10 +121,6 @@ class InterfaceFabricTypeVariationResource extends Resource
                     ->formatStateUsing(fn ($state): string => (int) $state === 0 ? 'Atanmamış' : (string) $state)
                     ->badge()
                     ->color(fn ($state): string => (int) $state === 0 ? 'warning' : 'success')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('price_multiplier')
-                    ->label('Fiyat çarpanı')
-                    ->formatStateUsing(fn ($state): string => '×'.number_format((float) $state, 3, ',', '.'))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('detail_text')
                     ->label('Detay')

@@ -29,6 +29,7 @@ class InterfaceLabelTypeVariation extends Model
         'description_title',
         'description_title_en',
         'description_title_it',
+        'price_multiplier',
         'sort_order',
         'is_active',
     ];
@@ -40,6 +41,7 @@ class InterfaceLabelTypeVariation extends Model
             'position_front' => 'boolean',
             'position_back' => 'boolean',
             'ask_description' => 'boolean',
+            'price_multiplier' => 'decimal:3',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
