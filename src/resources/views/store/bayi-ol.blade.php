@@ -247,8 +247,8 @@
                     <div data-step="3" class="dealer-step-pane mx-auto w-full max-w-2xl space-y-5 @unless($initialWizardStep === 3) hidden @endunless">
                         <p class="text-sm text-slate-500">{{ __('store.dealer.business_note') }}</p>
                         <div>
-                            <label for="business_type" class="{{ $labelClass }}">{{ __('store.dealer.business_type') }} *</label>
-                            <input id="business_type" name="business_type" type="text" value="{{ old('business_type') }}" required class="{{ $inputClass }} @error('business_type') border-red-400 @enderror">
+                            <label for="business_type" class="{{ $labelClass }}">{{ __('store.dealer.business_type') }}</label>
+                            <input id="business_type" name="business_type" type="text" value="{{ old('business_type') }}" class="{{ $inputClass }} @error('business_type') border-red-400 @enderror">
                         </div>
                         <details class="dealer-extra group rounded-2xl border border-slate-200">
                             <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm text-slate-700 hover:bg-slate-50">
@@ -271,7 +271,7 @@
                     {{-- Adım 4 --}}
                     <div data-step="4" class="dealer-step-pane mx-auto w-full max-w-2xl space-y-5 @unless($initialWizardStep === 4) hidden @endunless">
                         <fieldset>
-                            <legend class="{{ $labelClass }}">{{ __('store.dealer.profile_question') }} *</legend>
+                            <legend class="{{ $labelClass }}">{{ __('store.dealer.profile_question') }}</legend>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($businessProfiles as $value => $label)
                                     <label class="{{ $chipClass }}">
@@ -282,7 +282,7 @@
                             </div>
                         </fieldset>
                         <fieldset>
-                            <legend class="{{ $labelClass }}">{{ __('store.dealer.interests') }} *</legend>
+                            <legend class="{{ $labelClass }}">{{ __('store.dealer.interests') }}</legend>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($interestAreas as $value => $label)
                                     <label class="{{ $chipClass }}">
@@ -349,10 +349,6 @@
             if (!form) return;
             var TOTAL = 5;
             var STEP_TITLES = @json(array_values($wizardStepTitles));
-            var WIZ_I18N = {
-                validationProfile: @json(__('store.dealer.validation_select_profile')),
-                validationInterest: @json(__('store.dealer.validation_interests'))
-            };
             var initial = {{ (int) $initialWizardStep }};
             if (initial < 1 || initial > TOTAL) initial = 1;
 
@@ -385,28 +381,6 @@
                     if (inputs[i].classList.contains('sr-only')) continue;
                     if (!inputs[i].reportValidity()) {
                         inputs[i].focus({ preventScroll: false });
-                        return false;
-                    }
-                }
-                if (step === 4) {
-                    var checkedProfiles = form.querySelectorAll('input[name="business_profile"]:checked');
-                    if (!checkedProfiles.length) {
-                        var firstRadio = form.querySelector('input[name="business_profile"]');
-                        if (firstRadio && firstRadio.setCustomValidity) {
-                            firstRadio.setCustomValidity(WIZ_I18N.validationProfile);
-                            firstRadio.reportValidity();
-                            firstRadio.setCustomValidity('');
-                        }
-                        return false;
-                    }
-                    var interests = form.querySelectorAll('input[name="interest_areas[]"]:checked');
-                    if (!interests.length) {
-                        var cb = form.querySelector('input[name="interest_areas[]"]');
-                        if (cb && cb.setCustomValidity) {
-                            cb.setCustomValidity(WIZ_I18N.validationInterest);
-                            cb.reportValidity();
-                            cb.setCustomValidity('');
-                        }
                         return false;
                     }
                 }
