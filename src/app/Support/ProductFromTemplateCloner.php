@@ -6,7 +6,6 @@ use App\Models\Product;
 use App\Models\ProductVariation;
 use App\Models\ProductVariationOption;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -26,10 +25,11 @@ final class ProductFromTemplateCloner
 
         $template->loadMissing('variations.options');
 
-        $slug = trim((string) ($overrides['slug'] ?? Str::slug($name)));
-        if ($slug === '') {
-            $slug = Str::slug($name);
-        }
+        $companyId = isset($overrides['company_id'])
+            ? (int) $overrides['company_id']
+            : ($template->company_id !== null ? (int) $template->company_id : null);
+        $slugDesired = trim((string) ($overrides['slug'] ?? $name));
+        $slug = Product::uniqueSlugForCompany($slugDesired !== '' ? $slugDesired : $name, $companyId);
 
         $attributes = [
             'company_id' => $overrides['company_id'] ?? $template->company_id,

@@ -60,14 +60,59 @@ class Product extends Model
     protected static function booted(): void
     {
         static::creating(function (Product $product): void {
-            if (empty($product->slug)) {
-                $product->slug = Str::slug($product->name);
+            $desired = filled($product->slug) ? (string) $product->slug : (string) $product->name;
+            $product->slug = static::uniqueSlugForCompany(
+                $desired,
+                $product->company_id !== null ? (int) $product->company_id : null,
+            );
+        });
+
+        static::updating(function (Product $product): void {
+            if (! $product->isDirty('slug') && filled($product->getOriginal('slug'))) {
+                return;
             }
+
+            $desired = filled($product->slug) ? (string) $product->slug : (string) $product->name;
+            $product->slug = static::uniqueSlugForCompany(
+                $desired,
+                $product->company_id !== null ? (int) $product->company_id : null,
+                (int) $product->getKey(),
+            );
         });
 
         static::saving(function (Product $product): void {
             $product->autoFillEnglishFields();
         });
+    }
+
+    /**
+     * company_id + slug unique indeksine uygun, URL-safe slug üretir.
+     */
+    public static function uniqueSlugForCompany(?string $desired, ?int $companyId, ?int $ignoreId = null): string
+    {
+        $base = Str::slug((string) $desired);
+        if ($base === '') {
+            $base = 'urun';
+        }
+
+        $slug = $base;
+        $i = 1;
+        while (
+            static::query()
+                ->when(
+                    $companyId !== null,
+                    fn ($q) => $q->where('company_id', $companyId),
+                    fn ($q) => $q->whereNull('company_id'),
+                )
+                ->when($ignoreId !== null, fn ($q) => $q->whereKeyNot($ignoreId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = $base.'-'.$i;
+            $i++;
+        }
+
+        return $slug;
     }
 
     /**

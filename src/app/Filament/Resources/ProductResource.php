@@ -210,6 +210,13 @@ class ProductResource extends Resource
                                             ->label('Ürün Adı (TR)')
                                             ->required()
                                             ->maxLength(255)
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state): void {
+                                                if (filled($get('slug'))) {
+                                                    return;
+                                                }
+                                                $set('slug', \Illuminate\Support\Str::slug($state ?? ''));
+                                            })
                                             ->columnSpan(1),
                                         Forms\Components\TextInput::make('name_en')
                                             ->label('Product name (EN)')
@@ -225,6 +232,8 @@ class ProductResource extends Resource
                                             ->label('URL Slug')
                                             ->required()
                                             ->maxLength(255)
+                                            ->helperText('Aynı şirkette benzersiz olmalı. Çakışırsa kayıt sırasında otomatik olarak -2, -3 eklenir.')
+                                            ->dehydrateStateUsing(fn (?string $state): string => \Illuminate\Support\Str::slug((string) $state))
                                             ->columnSpan(1),
                                         Forms\Components\RichEditor::make('description')
                                             ->label('Açıklama (TR)')
