@@ -389,6 +389,7 @@ class StoreController extends Controller
             if (\App\Support\SchemaInfo::hasColumn('categories', 'image_path')) {
                 $homeCategoryShowcase = Category::query()
                     ->active()
+                    ->roots() // Anasayfa: yalnız üst kategori görselleri
                     ->whereNotNull('image_path')
                     ->where('image_path', '!=', '')
                     ->orderBy('sort_order')
