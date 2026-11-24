@@ -255,7 +255,11 @@
             <p class="text-slate-500 text-sm mt-1">{{ __('store.index.empty_hint_intro') }} <a href="{{ route('home') }}" class="text-primary-600 hover:underline">{{ __('store.index.empty_hint_clear') }}</a> {{ __('store.index.empty_hint_or') }} <a href="{{ route('home') }}" class="text-primary-600 hover:underline">{{ __('store.index.empty_hint_click') }}</a>.</p>
         </div>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 sm:gap-5 md:gap-6">
+        <div @class([
+            'grid gap-5 sm:gap-5 md:gap-6',
+            'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8' => (bool) $currentCategory,
+            'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6' => ! $currentCategory,
+        ])>
             @foreach($products as $product)
                 @php $isComingSoon = ($product->status ?? 'satista') === 'yakinda_gelecek'; @endphp
                 <article class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col h-full">
