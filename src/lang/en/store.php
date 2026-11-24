@@ -142,6 +142,7 @@ return [
         'hero_showcase_categories_products' => 'Categories & products',
         'hero_showcase_products' => 'Products',
         'hero_showcase_categories' => 'Categories',
+        'hero_showcase_subcategories' => 'Subcategories',
         'aria_showcase' => 'Category and product showcases',
         'carousel_prev' => 'Previous',
         'carousel_next' => 'Next',

@@ -304,7 +304,10 @@ class StoreController extends Controller
         $categorySlug = request('category');
         $currentCategory = null;
         if ($categorySlug) {
-            $currentCategory = Category::with(['parent', 'children'])->where('slug', $categorySlug)->first();
+            $currentCategory = Category::with([
+                'parent',
+                'children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name'),
+            ])->where('slug', $categorySlug)->first();
             if ($currentCategory) {
                 if ($currentCategory->children->isNotEmpty()) {
                     $childIds = $currentCategory->children->pluck('id')->all();
@@ -314,7 +317,9 @@ class StoreController extends Controller
                 }
             }
         } elseif ($parentSlug) {
-            $currentCategory = Category::with(['children'])->where('slug', $parentSlug)->first();
+            $currentCategory = Category::with([
+                'children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name'),
+            ])->where('slug', $parentSlug)->first();
             if ($currentCategory && $currentCategory->children->isNotEmpty()) {
                 $childIds = $currentCategory->children->pluck('id')->all();
                 $baseQuery->whereIn('category_id', $childIds);
@@ -406,6 +411,20 @@ class StoreController extends Controller
                     ->orderBy('name')
                     ->get();
             }
+        } elseif (
+            \App\Support\SchemaInfo::hasColumn('categories', 'image_path')
+            && $currentCategory->relationLoaded('children')
+            && $currentCategory->children->isNotEmpty()
+        ) {
+            // Üst kategori seçilince: alt kategori görselleri
+            $homeCategoryShowcase = $currentCategory->children
+                ->filter(fn (Category $child) => $child->is_active
+                    && filled($child->image_path))
+                ->sortBy([
+                    ['sort_order', 'asc'],
+                    ['name', 'asc'],
+                ])
+                ->values();
         }
 
         return view('store.index', compact('products', 'cartCount', 'canSeePrices', 'currentCategory', 'selectedCurrency', 'currencies', 'searchQuery', 'customerDiscountPercent', 'bannerSlides', 'homeCategoryShowcase', 'homeProductShowcase', 'blogPosts'));

@@ -142,6 +142,7 @@ return [
         'hero_showcase_categories_products' => 'Categorie e prodotti',
         'hero_showcase_products' => 'Prodotti',
         'hero_showcase_categories' => 'Categorie',
+        'hero_showcase_subcategories' => 'Sottocategorie',
         'aria_showcase' => 'Vetrine categorie e prodotti',
         'carousel_prev' => 'Precedente',
         'carousel_next' => 'Successivo',

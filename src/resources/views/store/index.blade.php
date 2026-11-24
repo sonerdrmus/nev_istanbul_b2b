@@ -131,25 +131,36 @@
     </script>
     @endif
 
+    @endif
+
     @php
         $homeShowcaseHasCategories = isset($homeCategoryShowcase) && $homeCategoryShowcase->isNotEmpty();
-        $homeShowcaseHasProducts = isset($homeProductShowcase) && $homeProductShowcase->isNotEmpty();
+        $homeShowcaseHasProducts = ! $currentCategory
+            && isset($homeProductShowcase)
+            && $homeProductShowcase->isNotEmpty();
+        $isParentCategoryBrowse = $currentCategory
+            && $currentCategory->relationLoaded('children')
+            && $currentCategory->children->isNotEmpty();
     @endphp
     @if($homeShowcaseHasCategories || $homeShowcaseHasProducts)
     <div class="w-full bg-white border-b border-slate-200 py-8 sm:py-10" aria-label="{{ __('store.index.aria_showcase') }}">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             @php
                 $showcaseHeadingTag = $showHomeProductSection ? 'h2' : 'h1';
-                $showcaseHeadingText = $homeShowcaseHasCategories && $homeShowcaseHasProducts
-                    ? __('store.index.hero_showcase_categories_products')
-                    : ($homeShowcaseHasProducts
-                        ? __('store.index.hero_showcase_products')
-                        : __('store.index.hero_showcase_categories'));
+                if ($isParentCategoryBrowse && $homeShowcaseHasCategories) {
+                    $showcaseHeadingText = __('store.index.hero_showcase_subcategories');
+                } elseif ($homeShowcaseHasCategories && $homeShowcaseHasProducts) {
+                    $showcaseHeadingText = __('store.index.hero_showcase_categories_products');
+                } elseif ($homeShowcaseHasProducts) {
+                    $showcaseHeadingText = __('store.index.hero_showcase_products');
+                } else {
+                    $showcaseHeadingText = __('store.index.hero_showcase_categories');
+                }
             @endphp
             <{{ $showcaseHeadingTag }} class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">{{ $showcaseHeadingText }}</{{ $showcaseHeadingTag }}>
             <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
                 @foreach($homeCategoryShowcase ?? [] as $cat)
-                    <a href="{{ route('home', ['category' => $cat->slug]) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
+                    <a href="{{ route('home', array_filter(['category' => $cat->slug, 'parent' => $isParentCategoryBrowse ? $currentCategory->slug : null])) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
                             <div class="absolute inset-[2px] overflow-hidden">
                                 <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->localized_name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
@@ -180,8 +191,6 @@
             </div>
         </div>
     </div>
-    @endif
-
     @endif
 @endsection
 

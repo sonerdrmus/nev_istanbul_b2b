@@ -142,6 +142,7 @@ return [
         'hero_showcase_categories_products' => 'Kategoriler ve ürünler',
         'hero_showcase_products' => 'Ürünler',
         'hero_showcase_categories' => 'Kategoriler',
+        'hero_showcase_subcategories' => 'Alt kategoriler',
         'aria_showcase' => 'Kategori ve ürün vitrinleri',
         'carousel_prev' => 'Önceki',
         'carousel_next' => 'Sonraki',
