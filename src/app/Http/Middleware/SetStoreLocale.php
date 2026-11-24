@@ -2,24 +2,33 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\StoreLocale;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetStoreLocale
 {
+    /** @deprecated Use StoreLocale::supported() */
     public const SUPPORTED = ['tr', 'en', 'it'];
 
     public function handle(Request $request, Closure $next): Response
     {
-        $default = config('app.locale');
-        $fromSession = session('locale', $default);
-        $locale = in_array((string) $fromSession, self::SUPPORTED, true)
-            ? (string) $fromSession
-            : (in_array((string) $default, self::SUPPORTED, true) ? (string) $default : 'tr');
+        $routeLocale = $request->route('locale');
+        if (is_string($routeLocale) && StoreLocale::isSupported($routeLocale)) {
+            StoreLocale::apply($routeLocale);
 
-        App::setLocale($locale);
+            return $next($request);
+        }
+
+        $fromSession = session('locale');
+        if (is_string($fromSession) && StoreLocale::isSupported($fromSession)) {
+            StoreLocale::apply($fromSession);
+
+            return $next($request);
+        }
+
+        StoreLocale::apply(StoreLocale::default());
 
         return $next($request);
     }

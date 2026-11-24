@@ -4,6 +4,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Mağaza dilleri (URL öneki)
+    |--------------------------------------------------------------------------
+    */
+    'locales' => ['tr', 'en', 'it'],
+    'default_locale' => env('STORE_DEFAULT_LOCALE', 'tr'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin paneli güvenlik
+    |--------------------------------------------------------------------------
+    | ADMIN_ALLOWED_IPS boşsa IP kısıtı uygulanmaz.
+    | Virgülle ayrılmış liste: 1.2.3.4,10.0.0.0/8
+    */
+    'admin_allowed_ips' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('ADMIN_ALLOWED_IPS', ''))
+    ))),
+    'admin_force_2fa' => (bool) env('ADMIN_FORCE_2FA', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | İletişim formu
     |--------------------------------------------------------------------------
     */
@@ -15,6 +36,30 @@ return [
             'CONTACT_MAP_QUERY',
             '15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar, İstanbul, Türkiye'
         ),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp destek
+    |--------------------------------------------------------------------------
+    | Mağaza sağ alt köşe butonu. Boşsa buton gizlenir.
+    | Görünen numara ve wa.me için E.164 (ülke kodu + numara, + olmadan da olur).
+    */
+    'whatsapp' => [
+        'number' => env('WHATSAPP_SUPPORT_NUMBER', '+90 532 690 59 19'),
+        'enabled' => filter_var(env('WHATSAPP_SUPPORT_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sosyal medya (footer)
+    |--------------------------------------------------------------------------
+    | Boş bırakılanlar footer'da gizlenir.
+    */
+    'social' => [
+        'instagram' => env('STORE_SOCIAL_INSTAGRAM', ''),
+        'linkedin' => env('STORE_SOCIAL_LINKEDIN', ''),
+        'facebook' => env('STORE_SOCIAL_FACEBOOK', ''),
     ],
 
     /*
@@ -33,6 +78,15 @@ return [
         'swift' => env('STORE_BANK_SWIFT', 'KTEFTRISXXX'),
         'description' => env('STORE_BANK_DESCRIPTION', 'Sipariş numarası açıklama kısmına yazılmalıdır.'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Medya CDN (opsiyonel preconnect)
+    |--------------------------------------------------------------------------
+    | S3/CDN host APP_URL’den farklıysa layout’ta preconnect eklenir.
+    | Öncelik: admin panel (store_settings.media_cdn_url) → bu env değeri.
+    */
+    'media_cdn_url' => env('MEDIA_CDN_URL', ''),
 
     /*
     |--------------------------------------------------------------------------

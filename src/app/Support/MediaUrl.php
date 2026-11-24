@@ -25,10 +25,12 @@ final class MediaUrl
 
         $url = Storage::disk('public')->url($path);
 
-        $full = storage_path('app/public/'.$path);
         $bust = trim((string) config('app.media_query_version', ''));
-        if ($bust === '' && is_file($full)) {
-            $bust = self::fingerprint($full);
+        if ($bust === '' && config('filesystems.disks.public.driver', 'local') !== 's3') {
+            $full = storage_path('app/public/'.$path);
+            if (is_file($full)) {
+                $bust = self::fingerprint($full);
+            }
         }
         if ($bust !== '') {
             $sep = str_contains($url, '?') ? '&' : '?';
@@ -36,6 +38,56 @@ final class MediaUrl
         }
 
         return $url;
+    }
+
+    /**
+     * PNG/JPEG için yanındaki .webp varsa <picture> üretir; yoksa düz <img>.
+     *
+     * @param  array<string, string>  $attributes
+     */
+    public static function pictureHtml(?string $path, string $alt = '', string $imgClass = '', array $attributes = []): string
+    {
+        if ($path === null || $path === '') {
+            return '';
+        }
+
+        $fallback = self::public($path);
+        $attrParts = [];
+        foreach ($attributes as $key => $value) {
+            $attrParts[] = e((string) $key).'="'.e((string) $value).'"';
+        }
+        $attrString = $attrParts !== [] ? ' '.implode(' ', $attrParts) : '';
+        $classAttr = $imgClass !== '' ? ' class="'.e($imgClass).'"' : '';
+        $img = '<img src="'.e($fallback).'" alt="'.e($alt).'"'.$classAttr.$attrString.'>';
+
+        $relative = ltrim($path, '/');
+        if (str_starts_with($relative, 'http://') || str_starts_with($relative, 'https://')) {
+            return $img;
+        }
+
+        $webpRelative = preg_replace('/\.(jpe?g|png)$/i', '.webp', $relative);
+        if (! is_string($webpRelative) || $webpRelative === $relative) {
+            return $img;
+        }
+
+        if (config('filesystems.disks.public.driver', 'local') === 's3') {
+            try {
+                if (! Storage::disk('public')->exists($webpRelative)) {
+                    return $img;
+                }
+            } catch (\Throwable) {
+                return $img;
+            }
+        } else {
+            $webpFull = storage_path('app/public/'.$webpRelative);
+            if (! is_file($webpFull)) {
+                return $img;
+            }
+        }
+
+        $webpUrl = self::public($webpRelative);
+
+        return '<picture><source srcset="'.e($webpUrl).'" type="image/webp">'.$img.'</picture>';
     }
 
     private static function fingerprint(string $full): string

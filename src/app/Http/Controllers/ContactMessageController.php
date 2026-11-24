@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreContactMessageRequest;
 use App\Mail\ContactMessageMail;
+use App\Services\MailConfigApplicator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +38,7 @@ class ContactMessageController extends Controller
         }
 
         try {
+            app(MailConfigApplicator::class)->apply();
             Mail::to($to)->send(new ContactMessageMail(
                 senderName: $validated['name'],
                 senderEmail: $validated['email'],

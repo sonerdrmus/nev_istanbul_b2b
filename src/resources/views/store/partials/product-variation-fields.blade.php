@@ -357,6 +357,28 @@
                                                 'text' => $optionDetailText,
                                             ])
                                             </div>
+                                        @elseif($variation->type === 'color' && (
+                                            filled($option->option_color)
+                                            || filled($option->interfaceColorVariation?->hex_color)
+                                            || (is_string($option->option_image) && str_contains($option->option_image, '/hex-'))
+                                        ))
+                                            @php
+                                                $cssColor = $option->option_color
+                                                    ?: ($option->interfaceColorVariation?->hex_color ?? null);
+                                                if (! $cssColor && is_string($option->option_image) && preg_match('/hex-([0-9a-fA-F]{6})\.png/', $option->option_image, $hexMatch)) {
+                                                    $cssColor = '#'.$hexMatch[1];
+                                                }
+                                            @endphp
+                                            <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
+                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}" title="{{ $displayOptionValue($option) }}">
+                                                <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $cssColor }}"></span>
+                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $displayOptionValue($option) }}</span>
+                                            </button>
+                                            @include('store.partials.variation-detail-info-btn', [
+                                                'title' => $optionDetailTitle,
+                                                'text' => $optionDetailText,
+                                            ])
+                                            </div>
                                         @elseif(in_array($variation->type, ['image', 'color'], true) && $option->option_image)
                                             @php
                                                 $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
@@ -364,23 +386,12 @@
                                             <div class="variation-option-wrap vio-tile-wrap relative overflow-visible">
                                             <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
                                                 <span class="vio-tile-media group">
-                                                    <img src="{{ $optionImageUrl }}" alt="{{ $displayOptionValue($option) }}" class="vio-tile-img" loading="lazy" decoding="async">
+                                                    {!! \App\Support\MediaUrl::pictureHtml($option->option_image, $displayOptionValue($option), 'vio-tile-img', ['loading' => 'lazy', 'decoding' => 'async']) !!}
                                                     <span class="variation-zoom-btn absolute bottom-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                                     </span>
                                                 </span>
                                                 <span class="vio-tile-label"><span>{{ $displayOptionValue($option) }}</span></span>
-                                            </button>
-                                            @include('store.partials.variation-detail-info-btn', [
-                                                'title' => $optionDetailTitle,
-                                                'text' => $optionDetailText,
-                                            ])
-                                            </div>
-                                        @elseif($variation->type === 'color' && $option->option_color)
-                                            <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
-                                            <button type="button" class="{{ $optionClasses }} flex flex-col items-center rounded-xl p-1.5 shrink-0 min-w-[72px]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}" title="{{ $displayOptionValue($option) }}">
-                                                <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shrink-0 border border-slate-200" style="background-color: {{ $option->option_color }}"></span>
-                                                <span class="text-xs font-medium text-slate-600 mt-1.5 w-full max-w-[88px] sm:max-w-[100px] text-center break-words leading-tight">{{ $displayOptionValue($option) }}</span>
                                             </button>
                                             @include('store.partials.variation-detail-info-btn', [
                                                 'title' => $optionDetailTitle,

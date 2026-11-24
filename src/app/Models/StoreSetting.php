@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class StoreSetting extends Model
 {
@@ -11,6 +12,7 @@ class StoreSetting extends Model
         'show_print_total',
         'show_print_price',
         'show_print_card_total',
+        'media_cdn_url',
     ];
 
     protected function casts(): array
@@ -30,7 +32,40 @@ class StoreSetting extends Model
             'show_print_total' => false,
             'show_print_price' => false,
             'show_print_card_total' => false,
+            'media_cdn_url' => null,
         ]);
+    }
+
+    /**
+     * Medya Storage ayarı → store_settings → .env MEDIA_CDN_URL.
+     */
+    public static function mediaCdnUrl(): string
+    {
+        if (MediaStorageSetting::tableReady()) {
+            $fromMedia = MediaStorageSetting::current()->resolvedPublicUrl();
+            if ($fromMedia !== '') {
+                return $fromMedia;
+            }
+        }
+
+        if (static::hasMediaCdnColumn()) {
+            $fromDb = trim((string) (static::current()->media_cdn_url ?? ''));
+            if ($fromDb !== '') {
+                return rtrim($fromDb, '/');
+            }
+        }
+
+        return rtrim(trim((string) config('store.media_cdn_url', '')), '/');
+    }
+
+    public static function hasMediaCdnColumn(): bool
+    {
+        try {
+            return Schema::hasTable('store_settings')
+                && Schema::hasColumn('store_settings', 'media_cdn_url');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public static function showsPriceMultipliers(): bool

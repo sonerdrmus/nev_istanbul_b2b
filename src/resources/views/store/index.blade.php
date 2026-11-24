@@ -22,6 +22,9 @@
 @endphp
 
 @section('title', $currentCategory ? ($currentCategory->localized_name . ' ' . __('store.index.title_category_suffix')) : ($showHomeProductSection ? __('store.index.title_products') : __('store.index.title_home')))
+@section('meta_description', $currentCategory
+    ? trim($currentCategory->localized_name.' — '.__('store.meta_default_description'))
+    : __('store.meta_default_description'))
 
 @section('hero')
     @if(!$currentCategory)
@@ -40,7 +43,15 @@
         @endphp
         <div class="carousel-slide {{ $index === 0 ? 'active' : '' }} relative {{ $slide->text_align === 'center' ? 'text-center' : ($slide->text_align === 'right' ? 'text-right' : '') }}">
             @if($slide->image_path)
-                <img src="{{ \App\Support\MediaUrl::public($slide->image_path) }}" alt="{{ $slideAlt }}" class="absolute inset-0 z-0 h-full w-full object-cover object-center pointer-events-none select-none" width="1024" height="278" loading="{{ $index === 0 ? 'eager' : 'lazy' }}" decoding="async" sizes="100vw">
+                <div class="absolute inset-0 z-0 h-full w-full pointer-events-none select-none [&_img]:h-full [&_img]:w-full [&_img]:object-cover [&_img]:object-center [&_picture]:contents">
+                    {!! \App\Support\MediaUrl::pictureHtml($slide->image_path, $slideAlt, '', [
+                        'width' => '1024',
+                        'height' => '278',
+                        'loading' => $index === 0 ? 'eager' : 'lazy',
+                        'decoding' => 'async',
+                        'sizes' => '100vw',
+                    ]) !!}
+                </div>
             @else
                 <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#114a8c] via-[#155fb3] to-[#0f3c6f]" aria-hidden="true"></div>
             @endif
@@ -95,9 +106,27 @@
         if (prev) prev.addEventListener('click', function() { goTo(current - 1); });
         if (next) next.addEventListener('click', function() { goTo(current + 1); });
         dots.forEach(function(d, i) { d.addEventListener('click', function() { goTo(i); }); });
-        var timer = setInterval(function() { goTo(current + 1); }, 5000);
-        carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
-        carousel.addEventListener('mouseleave', function() { timer = setInterval(function() { goTo(current + 1); }, 5000); });
+        var timer = null;
+        var pausedByHover = false;
+        function startTimer() {
+            if (timer || pausedByHover || document.hidden || total < 2) return;
+            timer = setInterval(function() { goTo(current + 1); }, 5000);
+        }
+        function stopTimer() {
+            if (!timer) return;
+            clearInterval(timer);
+            timer = null;
+        }
+        carousel.addEventListener('mouseenter', function() { pausedByHover = true; stopTimer(); });
+        carousel.addEventListener('mouseleave', function() { pausedByHover = false; startTimer(); });
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        });
+        startTimer();
     })();
     </script>
     @endif
@@ -109,15 +138,15 @@
     @if($homeShowcaseHasCategories || $homeShowcaseHasProducts)
     <div class="w-full bg-white border-b border-slate-200 py-8 sm:py-10" aria-label="{{ __('store.index.aria_showcase') }}">
         <div class="w-full px-4 sm:px-6 lg:px-8">
-            <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">
-                @if($homeShowcaseHasCategories && $homeShowcaseHasProducts)
-                    {{ __('store.index.hero_showcase_categories_products') }}
-                @elseif($homeShowcaseHasProducts)
-                    {{ __('store.index.hero_showcase_products') }}
-                @else
-                    {{ __('store.index.hero_showcase_categories') }}
-                @endif
-            </h2>
+            @php
+                $showcaseHeadingTag = $showHomeProductSection ? 'h2' : 'h1';
+                $showcaseHeadingText = $homeShowcaseHasCategories && $homeShowcaseHasProducts
+                    ? __('store.index.hero_showcase_categories_products')
+                    : ($homeShowcaseHasProducts
+                        ? __('store.index.hero_showcase_products')
+                        : __('store.index.hero_showcase_categories'));
+            @endphp
+            <{{ $showcaseHeadingTag }} class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">{{ $showcaseHeadingText }}</{{ $showcaseHeadingTag }}>
             <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
                 @foreach($homeCategoryShowcase ?? [] as $cat)
                     <a href="{{ route('home', ['category' => $cat->slug]) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
@@ -278,6 +307,13 @@
     </div>
     </div>
     @else
+        @php
+            $homeHasVisibleH1 = (isset($homeCategoryShowcase) && $homeCategoryShowcase->isNotEmpty())
+                || (isset($homeProductShowcase) && $homeProductShowcase->isNotEmpty());
+        @endphp
+        @unless($homeHasVisibleH1)
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-6">{{ __('store.meta_suffix') }}</h1>
+        @endunless
         {{-- Eski kampanya linkleri (/#urunler) için hedef; görünür ürün listesi yok --}}
         <div id="urunler" class="sr-only" aria-hidden="true"></div>
         <div id="blog">

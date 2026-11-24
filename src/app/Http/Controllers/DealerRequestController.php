@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\DealerWelcomeMail;
 use App\Models\DealerRequest;
+use App\Services\MailConfigApplicator;
+use App\Support\MathCaptcha;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class DealerRequestController extends Controller
 {
@@ -15,8 +22,13 @@ class DealerRequestController extends Controller
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:dealer_requests,email', 'unique:users,email'],
-            'password' => ['required', 'string', Password::min(8), 'confirmed'],
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', Password::min(8)->mixedCase()->numbers()->symbols(), 'confirmed'],
+            'captcha_answer' => ['required', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! MathCaptcha::check(is_scalar($value) ? (string) $value : null)) {
+                    $fail(__('store.captcha.invalid'));
+                }
+            }],
             'phone' => ['required', 'string', 'max:64'],
             'mobile_phone' => ['nullable', 'string', 'max:64'],
             'business_name' => ['required', 'string', 'max:255'],
@@ -45,13 +57,25 @@ class DealerRequestController extends Controller
             'interest_areas.*' => ['string', Rule::in(DealerRequest::INTEREST_AREA_KEYS)],
             'how_heard_about_us' => ['required', 'string', 'max:500'],
             'terms_accepted' => ['accepted'],
+        ], [
+            'password.min' => __('store.dealer.password_hint_strong'),
         ]);
+
+        $email = strtolower(trim((string) $validated['email']));
+        $emailTaken = DealerRequest::query()->where('email', $email)->exists()
+            || \App\Models\User::query()->where('email', $email)->exists();
+        if ($emailTaken) {
+            throw ValidationException::withMessages([
+                'email' => __('store.dealer.email_unavailable'),
+            ]);
+        }
+        $validated['email'] = $email;
 
         $fullName = trim($validated['first_name'].' '.$validated['last_name']);
 
         $differentDelivery = $request->boolean('different_delivery_address');
 
-        DealerRequest::create([
+        $dealerRequest = DealerRequest::create([
             'full_name' => $fullName,
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
@@ -89,8 +113,24 @@ class DealerRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        $this->sendWelcomeMail($dealerRequest);
+
         return redirect()->route('home')
             ->with('success', __('store.dealer.request_received'))
             ->with('show_dealer_success_modal', true);
+    }
+
+    private function sendWelcomeMail(DealerRequest $dealerRequest): void
+    {
+        try {
+            app(MailConfigApplicator::class)->apply();
+            Mail::to($dealerRequest->email)->send(new DealerWelcomeMail($dealerRequest));
+        } catch (Throwable $e) {
+            Log::warning('Dealer welcome mail failed', [
+                'dealer_request_id' => $dealerRequest->id,
+                'email' => $dealerRequest->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

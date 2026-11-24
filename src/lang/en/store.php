@@ -1,7 +1,31 @@
 <?php
 
 return [
-    'meta_suffix' => 'Store',
+    'meta_suffix' => 'Nevistanbul',
+    'meta_default_description' => 'Nevistanbul B2B: corporate catalog for textile and promotional products, custom production and dealer orders.',
+
+    'cookie' => [
+        'title' => 'Cookie preferences',
+        'body' => 'We use essential cookies and optional analytics cookies to improve the experience. Analytics cookies load only after you accept.',
+        'policy_link' => 'Cookie policy',
+        'accept' => 'Accept',
+        'reject' => 'Reject',
+    ],
+
+    'a11y' => [
+        'skip_to_content' => 'Skip to content',
+    ],
+
+    'whatsapp' => [
+        'label' => 'Chat on WhatsApp',
+        'aria' => 'WhatsApp support',
+    ],
+
+    'captcha' => [
+        'label' => 'Security question',
+        'hint' => 'What is the result of :question?',
+        'invalid' => 'The security answer is incorrect. Please try again.',
+    ],
 
     'topbar' => [
         'free_shipping' => 'Check the most suitable delivery method for your order…',
@@ -107,7 +131,11 @@ return [
         'company_email' => 'info@nevistanbul.com.tr',
         'company_privacy_email' => 'privacy@nevistanbul.com.tr',
         'company_tax' => 'Tax office: Güneşli — Tax no: 6310675047',
-        'company_phone' => '+90 212 641 48 48',
+        'company_phone' => '+90 532 690 59 19',
+        'social_aria' => 'Social media',
+        'social_instagram' => 'Instagram',
+        'social_linkedin' => 'LinkedIn',
+        'social_facebook' => 'Facebook',
     ],
 
     'index' => [
@@ -659,6 +687,34 @@ return [
         'dealer_hint' => 'Want to become a dealer? Fill in the short form.',
     ],
 
+    'dealer_welcome_mail' => [
+        'subject' => 'We received your dealer application – :app',
+        'heading' => 'Welcome',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your dealer application was received successfully. Our team will review it and activate your account.',
+        'email_label' => 'Application email',
+        'company_label' => 'Company',
+        'status_label' => 'Status',
+        'status_pending' => 'Under review',
+        'next_steps' => 'You will get an email when approved. Then sign in with the password you chose in the application.',
+        'cta' => 'Go to the store',
+        'footer' => 'This email was sent automatically because you submitted a dealer application.',
+    ],
+
+    'dealer_mail' => [
+        'subject' => 'Your dealer application was approved – :app',
+        'heading' => 'Your dealer application was approved',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your dealer application has been reviewed and your account is now active. You can sign in to view prices and place orders.',
+        'email_label' => 'Sign-in email',
+        'company_label' => 'Company',
+        'password_label' => 'Temporary password',
+        'password_generated_note' => 'Please change this password after your first sign-in. Do not share it with anyone.',
+        'password_own_note' => 'Sign in with the password you chose in your application.',
+        'cta' => 'Sign in',
+        'footer' => 'This email was sent automatically because your dealer account was approved. Contact support if you need help.',
+    ],
+
     'dealer' => [
         'page_title' => 'Dealer application',
         'application_title' => 'Dealer application',
@@ -695,6 +751,8 @@ return [
         'password' => 'Password',
         'password_confirmation' => 'Confirm password',
         'password_hint' => 'You will sign in with this password after approval. At least 8 characters.',
+        'password_hint_strong' => 'At least 8 characters with upper/lowercase, a number and a symbol.',
+        'email_unavailable' => 'This email could not be used for an application. Try another email or sign in.',
         'phone' => 'Main phone number',
         'mobile' => 'Mobile (if different from main number)',
         'business_name' => 'Business / company name',

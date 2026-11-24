@@ -10,6 +10,8 @@ use App\Filament\Resources\CategoryResource;
 use App\Filament\Pages\ManagePackagingPreferences;
 use App\Filament\Pages\ManageProductCustomization;
 use App\Filament\Pages\ManageStoreDisplay;
+use App\Http\Middleware\EnsureAdminTwoFactor;
+use App\Http\Middleware\RestrictAdminByIp;
 use App\Filament\Resources\InterfaceCertificateVariationResource;
 use App\Filament\Resources\InterfaceColorVariationResource;
 use App\Filament\Resources\InterfaceDeliveryMethodVariationResource;
@@ -73,6 +75,7 @@ class AdminPanelProvider extends PanelProvider
                 'E-Ticaret',
                 'Varyasyon yönetimi',
                 'B2B Yönetimi',
+                'Sistem',
             ])
             ->navigationItems(static::getSidebarSubMenuItems())
             ->pages([
@@ -84,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
             ])
             ->middleware([
+                RestrictAdminByIp::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
@@ -96,6 +100,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsureAdminTwoFactor::class,
             ]);
     }
 

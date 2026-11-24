@@ -4,97 +4,111 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', config('app.name')) – {{ __('store.meta_suffix') }}</title>
+    @php
+        $pageTitle = trim((string) View::yieldContent('title', config('app.name')));
+        $fullTitle = $pageTitle !== ''
+            ? $pageTitle.' – '.__('store.meta_suffix')
+            : (string) __('store.meta_suffix');
+        $metaDescription = trim((string) View::yieldContent('meta_description', ''));
+        if ($metaDescription === '') {
+            $metaDescription = (string) __('store.meta_default_description');
+        }
+        $ogImage = trim((string) View::yieldContent('og_image', ''));
+        if ($ogImage === '') {
+            $ogImage = asset('images/logo.png');
+        }
+        $robotsMeta = trim((string) View::yieldContent('robots', 'index,follow'));
+        $canonicalUrl = url()->current();
+        $hreflangUrls = \App\Support\StoreLocale::alternateUrls();
+    @endphp
+    <title>{{ $fullTitle }}</title>
+    <meta name="description" content="{{ $metaDescription }}">
+    <meta name="robots" content="{{ $robotsMeta }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+    @foreach($hreflangUrls as $hreflangLocale => $hreflangUrl)
+        <link rel="alternate" hreflang="{{ $hreflangLocale }}" href="{{ $hreflangUrl }}">
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ $hreflangUrls[\App\Support\StoreLocale::default()] ?? $canonicalUrl }}">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:site_name" content="{{ __('store.meta_suffix') }}">
+    <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <meta property="og:title" content="{{ $fullTitle }}">
+    <meta property="og:description" content="{{ $metaDescription }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $fullTitle }}">
+    <meta name="twitter:description" content="{{ $metaDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
+    @include('store.partials.json-ld-organization')
     @stack('meta')
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CMZEX5E35S"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-CMZEX5E35S');
+        window.__nevAnalytics = {
+            measurementId: 'G-CMZEX5E35S',
+            consentKey: 'nev_cookie_consent',
+            load: function () {
+                if (window.__nevAnalyticsLoaded) return;
+                window.__nevAnalyticsLoaded = true;
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=' + this.measurementId;
+                document.head.appendChild(s);
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', this.measurementId);
+            }
+        };
+        try {
+            if (localStorage.getItem(window.__nevAnalytics.consentKey) === 'accepted') {
+                window.__nevAnalytics.load();
+            }
+        } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'] },
-                    colors: {
-                        // Logo mavi tonlarına uyumlu
-                        primary: { 50: '#eef6ff', 100: '#d9ecff', 200: '#b7dcff', 300: '#84c5ff', 400: '#4ea6ff', 500: '#1f7bd6', 600: '#155fb3', 700: '#114a8c', 800: '#0f3c6f', 900: '#0b2a4d' },
-                        accent: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' }
-                    }
-                }
+    @php
+        $mediaPreconnectHosts = [];
+        foreach ([
+            config('filesystems.disks.public.url'),
+            config('filesystems.disks.s3.url'),
+            \App\Models\StoreSetting::mediaCdnUrl(),
+        ] as $mediaBase) {
+            $mediaBase = trim((string) $mediaBase);
+            if ($mediaBase === '') {
+                continue;
             }
+            $host = parse_url($mediaBase, PHP_URL_HOST);
+            $scheme = parse_url($mediaBase, PHP_URL_SCHEME) ?: 'https';
+            if (! is_string($host) || $host === '') {
+                continue;
+            }
+            $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+            if (is_string($appHost) && strcasecmp($host, $appHost) === 0) {
+                continue;
+            }
+            $mediaPreconnectHosts[$scheme.'://'.$host] = true;
         }
-    </script>
-    <style>
-        /* Genel yazı boyutu: tarayıcı varsayılanı 16px + 2px */
-        html { font-size: 18px; }
-        body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-        .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(-8px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
-        /* Slider: 1024×278 banner oranı (~3.68:1); slaytlar üst üste, yalnızca aktif görünür */
-        #hero-carousel {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1024 / 278;
-            min-height: 0;
-        }
-        #hero-carousel .carousel-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.1s ease;
-        }
-        #hero-carousel .carousel-slide.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .carousel-dot-active { width: 0.75rem; height: 0.75rem; background: white !important; }
-        .bottom-nav-active { color: #155fb3; }
-        .dropdown.open .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0) translateX(-50%); }
-        details[open] > .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-        /* Anasayfa mega: ayrıntılar head stack sonrası blokta (!important + display:none) */
-        /* Kategori şeridi menüleri JS ile açılır (hidden sınıfı) */
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-    </style>
+    @endphp
+    @foreach(array_keys($mediaPreconnectHosts) as $preconnectOrigin)
+        <link rel="preconnect" href="{{ $preconnectOrigin }}" crossorigin>
+        <link rel="dns-prefetch" href="{{ $preconnectOrigin }}">
+    @endforeach
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
-    {{-- Mega panel: Tailwind CDN’den sonra — kapalıyken display:none flex min-width kırılmasını kesin önler --}}
-    <style>
-        #home-mega-nav-bar .home-mega-panel-shell:not(.is-open) {
-            display: none !important;
-        }
-        #home-mega-nav-bar .home-mega-panel-shell.is-open {
-            display: block !important;
-            position: fixed;
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            max-height: min(72vh, 22rem);
-            max-width: min(100vw - 1.5rem, 62rem);
-            transform: translateY(0);
-            transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        /* Büyük resim ve tam ekran pencereler: sticky galeri / header (z-50) / seçim sıfırlama (z-120) / mega menü (z-200) üstünde */
-        .store-overlay {
-            z-index: 400 !important;
-        }
-    </style>
 </head>
 <body @class([
     'bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col',
     'h-dvh overflow-hidden pb-0' => View::hasSection('compact_chrome'),
     'pb-20 lg:pb-0' => ! View::hasSection('compact_chrome'),
 ])>
+    <a href="#main-content" class="absolute left-4 top-4 z-[600] -translate-y-[160%] rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-lg transition focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+        {{ __('store.a11y.skip_to_content') }}
+    </a>
     {{-- Topbar: ÜCRETSİZ KARGO + Kurlar + Para birimi seçici --}}
     <div class="bg-primary-600 text-white py-2 px-4 text-sm font-medium">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-between gap-2">
@@ -153,7 +167,7 @@
                             onchange="var u = this.options[this.selectedIndex].getAttribute('data-url'); if (u) window.location.href = u;">
                         @foreach (['tr' => '🇹🇷', 'en' => '🇬🇧', 'it' => '🇮🇹'] as $localeCode => $localeFlag)
                             <option value="{{ $localeCode }}"
-                                    data-url="{{ route('locale.switch', ['locale' => $localeCode]) }}"
+                                    data-url="{{ \App\Support\StoreLocale::alternateUrl($localeCode) }}"
                                     @selected(app()->getLocale() === $localeCode)>{{ $localeFlag }} {{ __('store.header.lang_' . $localeCode) }}</option>
                         @endforeach
                     </select>
@@ -170,7 +184,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center gap-3 sm:gap-4 h-14 sm:h-16">
                 <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center gap-2">
-                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 sm:h-12 w-auto object-contain">
+                    <img src="{{ asset('images/logo.png') }}" alt="{{ __('store.meta_suffix') }}" class="h-10 sm:h-12 w-auto object-contain">
                 </a>
 
                 <div @class(['flex-1 min-w-0 max-w-xl mx-2 sm:mx-4 relative', 'hidden' => View::hasSection('compact_chrome')]) id="header-search-wrap">
@@ -178,7 +192,8 @@
                         @if(request('category'))
                             <input type="hidden" name="category" value="{{ request('category') }}">
                         @endif
-                        <input type="search" name="q" id="header-search-input" value="{{ $searchQuery ?? '' }}" placeholder="{{ __('store.header.search_placeholder') }}" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-slate-900 placeholder-slate-400 text-sm transition-colors" autocomplete="off">
+                        <label for="header-search-input" class="sr-only">{{ __('store.header.search_aria') }}</label>
+                        <input type="search" name="q" id="header-search-input" value="{{ $searchQuery ?? '' }}" placeholder="{{ __('store.header.search_placeholder') }}" aria-label="{{ __('store.header.search_aria') }}" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-slate-900 placeholder-slate-400 text-sm transition-colors" autocomplete="off">
                         <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-label="{{ __('store.header.search_aria') }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </button>
@@ -219,7 +234,7 @@
     </header>
 
     {{-- Giriş Yap Modal (modern UI) --}}
-    <div id="login-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" aria-modal="true" role="dialog">
+    <div id="login-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" aria-modal="true" role="dialog" aria-labelledby="login-modal-title">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="document.getElementById('login-modal').classList.add('hidden')"></div>
         <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             <div class="px-6 sm:px-8 pt-8 pb-2 flex items-center justify-between">
@@ -228,7 +243,7 @@
                         <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">{{ __('store.login_modal.title') }}</h2>
+                        <h2 id="login-modal-title" class="text-xl font-bold text-slate-900">{{ __('store.login_modal.title') }}</h2>
                         <p class="text-sm text-slate-500">{{ __('store.login_modal.subtitle') }}</p>
                     </div>
                 </div>
@@ -335,13 +350,13 @@
     @endif
 
     @hasSection('full_bleed')
-        <div @class(['flex-1 w-full', 'min-h-0 overflow-hidden' => View::hasSection('compact_chrome')])>
+        <div id="main-content" @class(['flex-1 w-full', 'min-h-0 overflow-hidden' => View::hasSection('compact_chrome')]) tabindex="-1">
             @yield('full_bleed')
         </div>
     @else
         @yield('hero')
 
-        <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <main id="main-content" class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12" tabindex="-1">
             @yield('content')
         </main>
     @endif
@@ -386,11 +401,11 @@
     @endunless
 
     {{-- Mobil kategori sheet (bottom sheet) --}}
-    <div id="mobile-cats" class="hidden lg:hidden fixed inset-0 z-50" aria-modal="true" role="dialog">
+    <div id="mobile-cats" class="hidden lg:hidden fixed inset-0 z-50" aria-modal="true" role="dialog" aria-labelledby="mobile-cats-title">
         <div class="absolute inset-0 bg-black/40" onclick="document.getElementById('mobile-cats').classList.add('hidden')"></div>
         <div class="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl border-t border-slate-200 shadow-2xl max-h-[75vh] overflow-y-auto">
             <div class="px-5 pt-4 pb-2 flex items-center justify-between">
-                <p class="font-semibold text-slate-900">{{ __('store.mobile_cats.title') }}</p>
+                <h2 id="mobile-cats-title" class="font-semibold text-slate-900 text-base">{{ __('store.mobile_cats.title') }}</h2>
                 <button type="button" class="p-2 rounded-xl hover:bg-slate-100 text-slate-600" onclick="document.getElementById('mobile-cats').classList.add('hidden')" aria-label="{{ __('store.mobile_cats.close') }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12\"/></svg>
                 </button>
@@ -462,7 +477,7 @@
                             <section class="xl:col-span-4" aria-labelledby="footer-company-heading">
                                 <h3 id="footer-company-heading" class="sr-only">{{ $companyFooterGroup?->localized_title ?? \App\Support\CatalogLabelTranslator::label('Şirket') }}</h3>
                                 <a href="{{ route('home') }}" class="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-lg">
-                                    <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 sm:h-11 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
+                                    <img src="{{ asset('images/logo.png') }}" alt="{{ __('store.meta_suffix') }}" class="h-10 sm:h-11 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
                                 </a>
                                 <p class="mt-3 text-sm font-semibold text-white leading-snug">{{ __('store.footer.company_name') }}</p>
                                 <div class="mt-4 space-y-2.5 text-sm text-slate-400 leading-relaxed">
@@ -470,6 +485,43 @@
                                         <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         <span>{{ __('store.footer.company_address') }}</span>
                                     </p>
+                                    @php
+                                        $footerPhoneDisplay = trim((string) config('store.whatsapp.number', __('store.footer.company_phone')));
+                                        $footerPhoneDigits = preg_replace('/\D+/', '', $footerPhoneDisplay) ?: '';
+                                        if (str_starts_with($footerPhoneDigits, '0') && strlen($footerPhoneDigits) === 11) {
+                                            $footerPhoneDigits = '90'.substr($footerPhoneDigits, 1);
+                                        }
+                                    @endphp
+                                    @if($footerPhoneDisplay !== '')
+                                    <p class="flex gap-2.5">
+                                        <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        <span>
+                                            <a href="tel:+{{ $footerPhoneDigits }}" class="hover:text-white transition-colors">{{ $footerPhoneDisplay }}</a>
+                                        </span>
+                                    </p>
+                                    @endif
+                                    @php
+                                        $socialLinks = array_filter([
+                                            'instagram' => trim((string) config('store.social.instagram', '')),
+                                            'linkedin' => trim((string) config('store.social.linkedin', '')),
+                                            'facebook' => trim((string) config('store.social.facebook', '')),
+                                        ]);
+                                    @endphp
+                                    @if($socialLinks !== [])
+                                    <div class="flex flex-wrap items-center gap-2 pt-1" aria-label="{{ __('store.footer.social_aria') }}">
+                                        @foreach($socialLinks as $network => $socialUrl)
+                                            <a href="{{ $socialUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors" aria-label="{{ __('store.footer.social_'.$network) }}">
+                                                @if($network === 'instagram')
+                                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6m9.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+                                                @elseif($network === 'linkedin')
+                                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.2 8.5h4.6V24H.2V8.5zM8.34 8.5h4.41v2.12h.06c.61-1.16 2.12-2.38 4.36-2.38 4.66 0 5.52 3.07 5.52 7.06V24h-4.6v-6.63c0-1.58-.03-3.61-2.2-3.61-2.2 0-2.54 1.72-2.54 3.5V24h-4.6V8.5z"/></svg>
+                                                @else
+                                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12.07C22 6.48 17.52 2 11.93 2S1.86 6.48 1.86 12.07c0 5.02 3.66 9.18 8.44 9.93v-7.02H7.9v-2.91h2.4V9.84c0-2.37 1.41-3.68 3.57-3.68 1.03 0 2.11.18 2.11.18v2.32h-1.19c-1.17 0-1.54.73-1.54 1.48v1.78h2.62l-.42 2.91h-2.2V22c4.78-.75 8.44-4.91 8.44-9.93z"/></svg>
+                                                @endif
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                    @endif
                                     <p class="flex gap-2.5">
                                         <svg class="w-4 h-4 mt-0.5 shrink-0 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                         <span>
@@ -557,10 +609,11 @@
                             @endforeach
                         </div>
 
+                        @if(($bankAccounts ?? collect())->isNotEmpty())
                         <section class="mt-8 pt-8 border-t border-white/10" aria-labelledby="footer-bank-heading">
                             <h3 id="footer-bank-heading" class="text-xs font-semibold text-white uppercase tracking-widest">{{ __('store.footer.bank_heading') }}</h3>
                             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
-                                @forelse(($bankAccounts ?? []) as $account)
+                                @foreach($bankAccounts as $account)
                                     <article class="rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3.5 hover:border-primary-400/30 transition-colors">
                                         <div class="flex items-start justify-between gap-3">
                                             <p class="text-sm font-semibold text-white leading-snug">{{ $account->bank_name }}</p>
@@ -574,18 +627,17 @@
                                         <p class="mt-2 font-mono text-[11px] sm:text-xs text-slate-300 break-all leading-relaxed">{{ $account->iban }}</p>
                                         <p class="mt-1.5 text-[11px] text-slate-500">{{ $account->account_holder }}</p>
                                     </article>
-                                @empty
-                                    <p class="text-slate-500 text-xs sm:col-span-2">{{ __('store.footer.bank_empty_note') }}</p>
-                                @endforelse
+                                @endforeach
                             </div>
                         </section>
+                        @endif
                     </div>
             </div>
 
             <div class="border-t border-slate-800/80">
                 <div class="w-full px-4 sm:px-6 lg:px-8 py-5">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                        <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('store.footer.copyright') }}</p>
+                        <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ __('store.meta_suffix') }}. {{ __('store.footer.copyright') }}</p>
                         <div class="flex items-center gap-2 text-slate-500 text-xs">
                             <span class="hidden sm:inline">{{ __('store.footer.secure_payment') }}</span>
                             <span class="px-2 py-1 rounded bg-slate-800/60 text-slate-400 font-medium">{{ __('store.footer.payment_label') }}</span>
@@ -597,23 +649,27 @@
     </footer>
     @endunless
 
-    {{-- Topbar kurlarını Merkez Bankası güncellemesine göre periyodik güncelle --}}
+    {{-- Topbar kurları: sunucu cache TTL’ine yakın, sekme görünürken yenile --}}
     @php
         $topbarRateLocaleTag = match (app()->getLocale()) {
             'tr' => 'tr-TR',
             'it' => 'it-IT',
             default => 'en-US',
         };
+        $exchangePollMs = max(300_000, (int) config('services.tcmb.cache_ttl_seconds', 900) * 1000);
     @endphp
     <script>
     (function() {
         var rateEls = document.querySelectorAll('.topbar-rate');
         if (!rateEls.length) return;
         var rateLocaleTag = @json($topbarRateLocaleTag);
+        var pollMs = {{ (int) $exchangePollMs }};
+        var timer = null;
         function formatRate(n) {
             return Number(n).toLocaleString(rateLocaleTag, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         function refreshRates() {
+            if (document.hidden) return;
             fetch('{{ url("/api/exchange-rates") }}', { headers: { 'Accept': 'application/json' } })
                 .then(function(r) { return r.json(); })
                 .then(function(rates) {
@@ -627,7 +683,24 @@
                 })
                 .catch(function() {});
         }
-        setInterval(refreshRates, 60000);
+        function startPoll() {
+            if (timer) return;
+            timer = setInterval(refreshRates, pollMs);
+        }
+        function stopPoll() {
+            if (!timer) return;
+            clearInterval(timer);
+            timer = null;
+        }
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopPoll();
+            } else {
+                refreshRates();
+                startPoll();
+            }
+        });
+        startPoll();
     })();
     </script>
     {{-- Header ürün arama: 3+ karakterde görsel + isim combobox --}}
@@ -707,6 +780,73 @@
                 document.body.appendChild(el);
             }
         });
+    </script>
+
+    @php
+        $whatsappEnabled = (bool) config('store.whatsapp.enabled', true);
+        $whatsappDisplay = trim((string) config('store.whatsapp.number', ''));
+        $whatsappDigits = preg_replace('/\D+/', '', $whatsappDisplay) ?: '';
+        if (str_starts_with($whatsappDigits, '0') && strlen($whatsappDigits) === 11) {
+            $whatsappDigits = '90' . substr($whatsappDigits, 1);
+        }
+    @endphp
+    @if($whatsappEnabled && $whatsappDigits !== '')
+        <a
+            href="https://wa.me/{{ $whatsappDigits }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="fixed z-[450] right-5 bottom-24 lg:right-8 lg:bottom-8 block h-14 w-14 shrink-0 overflow-hidden rounded-full shadow-[0_10px_28px_-6px_rgba(37,211,102,0.65)] transition hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
+            aria-label="{{ __('store.whatsapp.aria') }} ({{ $whatsappDisplay }})"
+            title="{{ __('store.whatsapp.label') }}"
+        >
+            <img
+                src="{{ asset('images/whatsapp-fab.svg') }}"
+                alt=""
+                width="56"
+                height="56"
+                class="block h-full w-full"
+                decoding="async"
+            >
+            <span class="sr-only">{{ __('store.whatsapp.label') }}</span>
+        </a>
+    @endif
+
+    <div id="cookie-consent-banner" class="fixed inset-x-0 bottom-0 z-[500] hidden border-t border-slate-200 bg-white/95 p-4 shadow-[0_-12px_40px_-20px_rgba(15,23,42,0.35)] backdrop-blur sm:p-5" role="dialog" aria-live="polite" aria-label="{{ __('store.cookie.title') }}">
+        <div class="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-900">{{ __('store.cookie.title') }}</p>
+                <p class="mt-1 text-sm leading-relaxed text-slate-600">
+                    {{ __('store.cookie.body') }}
+                    <a href="{{ route('store.legal.show', \App\Models\LegalPage::COOKIE_SLUG) }}" class="font-medium text-primary-700 underline underline-offset-2 hover:text-primary-800">{{ __('store.cookie.policy_link') }}</a>
+                </p>
+            </div>
+            <div class="flex shrink-0 flex-wrap gap-2">
+                <button type="button" id="cookie-consent-reject" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('store.cookie.reject') }}</button>
+                <button type="button" id="cookie-consent-accept" class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">{{ __('store.cookie.accept') }}</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var key = (window.__nevAnalytics && window.__nevAnalytics.consentKey) || 'nev_cookie_consent';
+        var banner = document.getElementById('cookie-consent-banner');
+        if (!banner) return;
+        function setConsent(value) {
+            try { localStorage.setItem(key, value); } catch (e) {}
+            banner.classList.add('hidden');
+            document.dispatchEvent(new CustomEvent('nev-cookie-consent', { detail: { value: value } }));
+            if (value === 'accepted' && window.__nevAnalytics) window.__nevAnalytics.load();
+        }
+        try {
+            var existing = localStorage.getItem(key);
+            if (existing === 'accepted' || existing === 'rejected') return;
+        } catch (e) {}
+        banner.classList.remove('hidden');
+        var accept = document.getElementById('cookie-consent-accept');
+        var reject = document.getElementById('cookie-consent-reject');
+        if (accept) accept.addEventListener('click', function () { setConsent('accepted'); });
+        if (reject) reject.addEventListener('click', function () { setConsent('rejected'); });
+    })();
     </script>
 </body>
 </html>

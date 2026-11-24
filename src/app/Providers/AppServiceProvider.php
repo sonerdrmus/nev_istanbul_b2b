@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\FooterMenuGroup;
 use App\Models\FooterSetting;
+use App\Services\MailConfigApplicator;
+use App\Services\MediaStorageConfigApplicator;
 use App\Support\CatalogLabelTranslator;
 use App\Support\SchemaInfo;
 use Illuminate\Database\Events\MigrationsEnded;
@@ -58,17 +60,37 @@ class AppServiceProvider extends ServiceProvider
         $appUrl = config('app.url');
         if ($appUrl) {
             URL::forceRootUrl($appUrl);
+            $scheme = parse_url($appUrl, PHP_URL_SCHEME);
+            if ($scheme === 'https') {
+                URL::forceScheme('https');
+            }
         }
 
-        // Livewire geçici yükleme: config'de public + livewire-tmp kullanılıyor (Docker'da yazılabilir)
-        $livewireDisk = config('livewire.temporary_file_upload.disk') ?? config('filesystems.default');
-        $livewireDir = config('livewire.temporary_file_upload.directory') ?? 'livewire-tmp';
-        File::ensureDirectoryExists(Storage::disk($livewireDisk)->path($livewireDir), 0755);
+        // Admin panelinden kaydedilen SMTP / medya (R2-S3) ayarlarını runtime config'e uygula.
+        try {
+            app(MailConfigApplicator::class)->apply();
+        } catch (\Throwable) {
+            // Migration öncesi / DB yoksa sessizce geç.
+        }
+        try {
+            app(MediaStorageConfigApplicator::class)->apply();
+        } catch (\Throwable) {
+            // Migration öncesi / DB yoksa sessizce geç.
+        }
 
-        // Varyasyon görselleri ve Livewire temp için public dizinler
-        File::ensureDirectoryExists(Storage::disk('public')->path('product_variations'), 0755);
-        File::ensureDirectoryExists(Storage::disk('public')->path('variation_options'), 0755);
-        File::ensureDirectoryExists(Storage::disk('public')->path('livewire-tmp'), 0755);
+        // Yerel public disk için dizinler (S3/R2 aktifken path() yok — atlanır)
+        if (config('filesystems.disks.public.driver', 'local') !== 's3') {
+            $livewireDisk = config('livewire.temporary_file_upload.disk') ?? config('filesystems.default');
+            $livewireDir = config('livewire.temporary_file_upload.directory') ?? 'livewire-tmp';
+            try {
+                File::ensureDirectoryExists(Storage::disk($livewireDisk)->path($livewireDir), 0755);
+            } catch (\Throwable) {
+                // S3 veya yazılamayan disk
+            }
+            File::ensureDirectoryExists(Storage::disk('public')->path('product_variations'), 0755);
+            File::ensureDirectoryExists(Storage::disk('public')->path('variation_options'), 0755);
+            File::ensureDirectoryExists(Storage::disk('public')->path('livewire-tmp'), 0755);
+        }
 
         View::composer('store.layout', function ($view) {
             $view->with('menuCategories', Category::treeForMenu());

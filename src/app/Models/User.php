@@ -27,6 +27,8 @@ class User extends Authenticatable implements FilamentUser
         'is_admin',
         'is_approved',
         'visible_currency_ids',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -37,6 +39,7 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     /**
@@ -52,7 +55,26 @@ class User extends Authenticatable implements FilamentUser
             'is_admin' => 'boolean',
             'is_approved' => 'boolean',
             'visible_currency_ids' => 'array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return filled($this->two_factor_secret) && $this->two_factor_confirmed_at !== null;
+    }
+
+    public function plainTwoFactorSecret(): ?string
+    {
+        if (! filled($this->two_factor_secret)) {
+            return null;
+        }
+
+        try {
+            return decrypt($this->two_factor_secret);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function isApproved(): bool

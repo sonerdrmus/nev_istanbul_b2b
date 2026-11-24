@@ -167,7 +167,7 @@
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
                                 </div>
-                                <p class="mt-1.5 text-xs text-slate-500">{{ __('store.dealer.password_hint') }}</p>
+                                <p class="mt-1.5 text-xs text-slate-500">{{ __('store.dealer.password_hint_strong') }}</p>
                             </div>
                             <div>
                                 <label for="password_confirmation" class="{{ $labelClass }}">{{ __('store.dealer.password_confirmation') }} *</label>
@@ -296,6 +296,7 @@
                             <label for="how_heard_about_us" class="{{ $labelClass }}">{{ __('store.dealer.heard') }} *</label>
                             <input id="how_heard_about_us" name="how_heard_about_us" type="text" value="{{ old('how_heard_about_us') }}" required class="{{ $inputClass }} @error('how_heard_about_us') border-red-400 @enderror">
                         </div>
+                        @include('store.partials.math-captcha', ['labelClass' => $labelClass, 'inputClass' => $inputClass])
                     </div>
 
                     {{-- Adım 5 --}}

@@ -500,6 +500,24 @@ class Product extends Model
         return $min !== null && $min > 0 ? (int) $min : 1;
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field ??= $this->getRouteKeyName();
+        $query = static::query()->where($field, $value);
+        $product = $query->first();
+
+        if (! $product && ctype_digit((string) $value)) {
+            $product = static::query()->whereKey((int) $value)->first();
+        }
+
+        return $product;
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

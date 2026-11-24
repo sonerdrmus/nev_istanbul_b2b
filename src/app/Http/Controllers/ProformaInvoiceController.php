@@ -10,21 +10,21 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProformaInvoiceController extends Controller
 {
-    public function pdf(Request $request, Order $order, ProformaInvoiceService $proforma)
+    public function pdf(Request $request, string $locale, Order $order, ProformaInvoiceService $proforma)
     {
         $this->authorizeOrder($order);
 
         return $proforma->downloadPdf($order, $this->currency($request));
     }
 
-    public function excel(Request $request, Order $order, ProformaInvoiceService $proforma): StreamedResponse
+    public function excel(Request $request, string $locale, Order $order, ProformaInvoiceService $proforma): StreamedResponse
     {
         $this->authorizeOrder($order);
 
         return $proforma->downloadExcel($order, $this->currency($request));
     }
 
-    public function orderForm(Request $request, Order $order, ProformaInvoiceService $proforma)
+    public function orderForm(Request $request, string $locale, Order $order, ProformaInvoiceService $proforma)
     {
         $this->authorizeOrder($order);
 

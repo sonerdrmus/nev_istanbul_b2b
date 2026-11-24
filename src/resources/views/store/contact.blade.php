@@ -37,13 +37,21 @@
 
         <section class="contact-map relative overflow-hidden rounded-3xl border border-slate-200/80 shadow-[0_18px_50px_-28px_rgba(15,23,42,0.35)] h-[280px] sm:h-[380px] lg:h-[440px] bg-slate-100" aria-label="{{ __('store.contact.map_title') }}">
             <iframe
+                id="contact-map-iframe"
                 title="{{ __('store.contact.map_title') }}"
-                src="{{ $mapEmbedUrl }}"
+                data-src="{{ $mapEmbedUrl }}"
                 class="absolute inset-0 h-full w-full border-0"
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
                 allowfullscreen
             ></iframe>
+            <div id="contact-map-consent" class="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/55 px-4 text-center">
+                <div class="max-w-md rounded-2xl bg-white/95 p-5 shadow-xl">
+                    <p class="text-sm font-semibold text-slate-900">{{ __('store.cookie.title') }}</p>
+                    <p class="mt-2 text-sm text-slate-600">{{ __('store.cookie.body') }}</p>
+                    <button type="button" id="contact-map-accept" class="mt-4 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">{{ __('store.cookie.accept') }}</button>
+                </div>
+            </div>
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent"></div>
             <div class="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-md">
                 <div class="rounded-2xl border border-white/70 bg-white/95 shadow-xl backdrop-blur-md px-4 py-4 sm:px-5">
@@ -177,6 +185,8 @@
                             @error('message') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
 
+                        @include('store.partials.math-captcha', ['labelClass' => $labelClass, 'inputClass' => $inputClass])
+
                         <div>
                             <label for="attachments" class="{{ $labelClass }}">{{ __('store.contact.attachments') }}</label>
                             <label for="attachments" class="mt-0.5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-center hover:border-primary-300 hover:bg-primary-50/40 transition-colors">
@@ -207,16 +217,41 @@
     (function () {
         var input = document.getElementById('attachments');
         var names = document.getElementById('contact-file-names');
-        if (!input || !names) return;
-        input.addEventListener('change', function () {
-            var files = Array.prototype.slice.call(input.files || []);
-            if (!files.length) {
-                names.classList.add('hidden');
-                names.textContent = '';
-                return;
-            }
-            names.textContent = files.map(function (f) { return f.name; }).join(' · ');
-            names.classList.remove('hidden');
+        if (input && names) {
+            input.addEventListener('change', function () {
+                var files = Array.prototype.slice.call(input.files || []);
+                if (!files.length) {
+                    names.classList.add('hidden');
+                    names.textContent = '';
+                    return;
+                }
+                names.textContent = files.map(function (f) { return f.name; }).join(' · ');
+                names.classList.remove('hidden');
+            });
+        }
+
+        var iframe = document.getElementById('contact-map-iframe');
+        var consentBox = document.getElementById('contact-map-consent');
+        var acceptBtn = document.getElementById('contact-map-accept');
+        var key = (window.__nevAnalytics && window.__nevAnalytics.consentKey) || 'nev_cookie_consent';
+        function loadMap() {
+            if (!iframe) return;
+            var src = iframe.getAttribute('data-src');
+            if (src && !iframe.getAttribute('src')) iframe.setAttribute('src', src);
+            if (consentBox) consentBox.classList.add('hidden');
+        }
+        try {
+            if (localStorage.getItem(key) === 'accepted') loadMap();
+        } catch (e) {}
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', function () {
+                try { localStorage.setItem(key, 'accepted'); } catch (e) {}
+                if (window.__nevAnalytics) window.__nevAnalytics.load();
+                loadMap();
+            });
+        }
+        document.addEventListener('nev-cookie-consent', function (ev) {
+            if (ev.detail && ev.detail.value === 'accepted') loadMap();
         });
     })();
     </script>

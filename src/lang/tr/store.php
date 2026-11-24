@@ -1,7 +1,31 @@
 <?php
 
 return [
-    'meta_suffix' => 'E-Ticaret',
+    'meta_suffix' => 'Nevistanbul',
+    'meta_default_description' => 'Nevistanbul B2B: tekstil ve promosyon ürünleri, özel üretim ve bayi siparişleri için kurumsal katalog.',
+
+    'cookie' => [
+        'title' => 'Çerez tercihleri',
+        'body' => 'Deneyimi iyileştirmek için zorunlu çerezler ve isteğe bağlı analitik çerezleri kullanıyoruz. Analitik çerezler yalnızca onayınızdan sonra yüklenir.',
+        'policy_link' => 'Çerez politikası',
+        'accept' => 'Kabul et',
+        'reject' => 'Reddet',
+    ],
+
+    'a11y' => [
+        'skip_to_content' => 'İçeriğe atla',
+    ],
+
+    'whatsapp' => [
+        'label' => 'WhatsApp ile yazın',
+        'aria' => 'WhatsApp destek hattı',
+    ],
+
+    'captcha' => [
+        'label' => 'Güvenlik sorusu',
+        'hint' => ':question işleminin sonucu nedir?',
+        'invalid' => 'Güvenlik sorusu yanıtı hatalı. Lütfen tekrar deneyin.',
+    ],
 
     'topbar' => [
         'free_shipping' => 'En uygun teslimat şeklini kontrol ediniz​...',
@@ -107,7 +131,11 @@ return [
         'company_email' => 'info@nevistanbul.com.tr',
         'company_privacy_email' => 'privacy@nevistanbul.com.tr',
         'company_tax' => 'Vergi Dairesi: Güneşli — VN: 6310675047',
-        'company_phone' => '+90 212 641 48 48',
+        'company_phone' => '+90 532 690 59 19',
+        'social_aria' => 'Sosyal medya',
+        'social_instagram' => 'Instagram',
+        'social_linkedin' => 'LinkedIn',
+        'social_facebook' => 'Facebook',
     ],
 
     'index' => [
@@ -659,6 +687,34 @@ return [
         'dealer_hint' => 'Bayi olmak istiyorsanız kısa formu doldurun.',
     ],
 
+    'dealer_welcome_mail' => [
+        'subject' => 'Bayilik başvurunuz alındı – :app',
+        'heading' => 'Hoş geldiniz',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Bayilik başvurunuz başarıyla alındı. Ekibimiz başvurunuzu inceledikten sonra hesabınızı açacaktır.',
+        'email_label' => 'Başvuru e-postası',
+        'company_label' => 'Firma',
+        'status_label' => 'Durum',
+        'status_pending' => 'İncelemede',
+        'next_steps' => 'Onaylandığında e-posta ile bilgilendirileceksiniz. Ardından başvuruda belirlediğiniz şifre ile giriş yapabilirsiniz.',
+        'cta' => 'Siteye git',
+        'footer' => 'Bu e-posta bayilik başvurunuz nedeniyle otomatik gönderilmiştir.',
+    ],
+
+    'dealer_mail' => [
+        'subject' => 'Bayilik başvurunuz onaylandı – :app',
+        'heading' => 'Bayilik başvurunuz onaylandı',
+        'greeting' => 'Merhaba :name,',
+        'intro' => 'Bayilik başvurunuz incelendi ve hesabınız açıldı. Artık mağazaya giriş yaparak fiyatları görebilir ve sipariş verebilirsiniz.',
+        'email_label' => 'Giriş e-postası',
+        'company_label' => 'Firma',
+        'password_label' => 'Geçici şifre',
+        'password_generated_note' => 'İlk girişten sonra şifrenizi değiştirmenizi öneririz. Bu geçici şifreyi kimseyle paylaşmayın.',
+        'password_own_note' => 'Başvuruda belirlediğiniz şifre ile giriş yapabilirsiniz.',
+        'cta' => 'Giriş yap',
+        'footer' => 'Bu e-posta bayilik onayınız nedeniyle otomatik gönderilmiştir. Yardım için destek ekibimize yazabilirsiniz.',
+    ],
+
     'dealer' => [
         'page_title' => 'Bayilik başvurusu',
         'application_title' => 'Bayilik başvurusu',
@@ -695,6 +751,8 @@ return [
         'password' => 'Şifre',
         'password_confirmation' => 'Şifre (tekrar)',
         'password_hint' => 'Onaydan sonra bu şifre ile giriş yaparsınız. En az 8 karakter.',
+        'password_hint_strong' => 'En az 8 karakter; büyük/küçük harf, rakam ve sembol içermelidir.',
+        'email_unavailable' => 'Bu e-posta ile başvuru tamamlanamadı. Farklı bir e-posta deneyin veya giriş yapın.',
         'phone' => 'Ana telefon numarası',
         'mobile' => 'Cep telefonu (ana numaradan farklıysa)',
         'business_name' => 'İşletme / firma adı',

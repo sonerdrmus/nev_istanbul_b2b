@@ -7,7 +7,7 @@ use Illuminate\View\View;
 
 class LegalPageController extends Controller
 {
-    public function show(string $slug): View
+    public function show(string $locale, string $slug): View
     {
         $page = LegalPage::query()
             ->published()
@@ -19,7 +19,7 @@ class LegalPageController extends Controller
         ]);
     }
 
-    public function showContact(): View
+    public function showContact(string $locale): View
     {
         $page = LegalPage::query()
             ->published()

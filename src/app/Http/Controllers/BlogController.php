@@ -7,7 +7,7 @@ use Illuminate\View\View;
 
 class BlogController extends Controller
 {
-    public function show(BlogPost $post): View
+    public function show(string $locale, BlogPost $post): View
     {
         if (! $post->isPublic()) {
             abort(404);

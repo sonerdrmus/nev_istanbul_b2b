@@ -432,10 +432,15 @@ class StoreController extends Controller
     }
 
     /** Ürün detay sayfası — misafirler de görebilir */
-    public function showProduct(Product $product): View
+    public function showProduct(\Illuminate\Http\Request $request, string $locale, Product $product): View|\Illuminate\Http\RedirectResponse
     {
         if (! $product->is_active) {
             abort(404);
+        }
+
+        $rawSegment = (string) $request->segment(3);
+        if ($rawSegment !== '' && $rawSegment !== (string) $product->slug && ctype_digit($rawSegment)) {
+            return redirect()->route('store.product.show', ['locale' => $locale, 'product' => $product], 301);
         }
         $product->load([
             'company',
@@ -919,7 +924,7 @@ class StoreController extends Controller
                 'shipping_method_id' => $shippingMethod?->id,
                 'shipping_cost' => $shippingCost,
                 'notes' => $request->notes,
-                'locale' => in_array(app()->getLocale(), \App\Http\Middleware\SetStoreLocale::SUPPORTED, true)
+                'locale' => \App\Support\StoreLocale::isSupported(app()->getLocale())
                     ? app()->getLocale()
                     : 'tr',
             ]);
@@ -966,7 +971,7 @@ class StoreController extends Controller
         return redirect()->route('store.order-confirmation', $order)->with('success', __('store.flash.order_placed'));
     }
 
-    public function orderConfirmation(Order $order): View
+    public function orderConfirmation(string $locale, Order $order): View
     {
         abort_unless($order->isAccessibleBy(auth()->user()), 403);
 

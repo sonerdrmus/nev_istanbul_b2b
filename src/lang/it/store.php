@@ -1,7 +1,31 @@
 <?php
 
 return [
-    'meta_suffix' => 'Negozio',
+    'meta_suffix' => 'Nevistanbul',
+    'meta_default_description' => 'Nevistanbul B2B: catalogo corporate per prodotti tessili e promozionali, produzione su misura e ordini dealer.',
+
+    'cookie' => [
+        'title' => 'Preferenze cookie',
+        'body' => 'Utilizziamo cookie essenziali e cookie analitici opzionali. I cookie analitici vengono caricati solo dopo il consenso.',
+        'policy_link' => 'Informativa cookie',
+        'accept' => 'Accetta',
+        'reject' => 'Rifiuta',
+    ],
+
+    'a11y' => [
+        'skip_to_content' => 'Vai al contenuto',
+    ],
+
+    'whatsapp' => [
+        'label' => 'Scrivi su WhatsApp',
+        'aria' => 'Assistenza WhatsApp',
+    ],
+
+    'captcha' => [
+        'label' => 'Domanda di sicurezza',
+        'hint' => 'Qual è il risultato di :question?',
+        'invalid' => 'La risposta di sicurezza non è corretta. Riprova.',
+    ],
 
     'topbar' => [
         'free_shipping' => 'SPEDIZIONE GRATUITA — per ordini idonei sopra il minimo',
@@ -107,7 +131,11 @@ return [
         'company_email' => 'info@nevistanbul.com.tr',
         'company_privacy_email' => 'privacy@nevistanbul.com.tr',
         'company_tax' => 'Ufficio fiscale: Güneşli — P. IVA: 6310675047',
-        'company_phone' => '+90 212 641 48 48',
+        'company_phone' => '+90 532 690 59 19',
+        'social_aria' => 'Social media',
+        'social_instagram' => 'Instagram',
+        'social_linkedin' => 'LinkedIn',
+        'social_facebook' => 'Facebook',
     ],
 
     'index' => [
@@ -659,6 +687,34 @@ return [
         'dealer_hint' => 'Vuoi diventare rivenditore? Compila il modulo breve.',
     ],
 
+    'dealer_welcome_mail' => [
+        'subject' => 'Abbiamo ricevuto la tua richiesta rivenditore – :app',
+        'heading' => 'Benvenuto',
+        'greeting' => 'Ciao :name,',
+        'intro' => 'La tua richiesta rivenditore è stata ricevuta. Il team la esaminerà e attiverà l’account.',
+        'email_label' => 'Email della richiesta',
+        'company_label' => 'Azienda',
+        'status_label' => 'Stato',
+        'status_pending' => 'In revisione',
+        'next_steps' => 'Riceverai un’email all’approvazione. Poi accedi con la password scelta nella richiesta.',
+        'cta' => 'Vai al negozio',
+        'footer' => 'Questa email è stata inviata automaticamente perché hai inviato una richiesta rivenditore.',
+    ],
+
+    'dealer_mail' => [
+        'subject' => 'La tua richiesta rivenditore è stata approvata – :app',
+        'heading' => 'Richiesta rivenditore approvata',
+        'greeting' => 'Ciao :name,',
+        'intro' => 'La tua richiesta è stata esaminata e l’account è attivo. Ora puoi accedere per vedere i prezzi e ordinare.',
+        'email_label' => 'Email di accesso',
+        'company_label' => 'Azienda',
+        'password_label' => 'Password temporanea',
+        'password_generated_note' => 'Ti consigliamo di cambiare la password al primo accesso. Non condividerla con nessuno.',
+        'password_own_note' => 'Accedi con la password scelta nella richiesta.',
+        'cta' => 'Accedi',
+        'footer' => 'Questa email è stata inviata automaticamente perché l’account rivenditore è stato approvato. Contatta l’assistenza se ti serve aiuto.',
+    ],
+
     'dealer' => [
         'page_title' => 'Richiesta rivenditore',
         'application_title' => 'Richiesta rivenditore',
@@ -695,6 +751,8 @@ return [
         'password' => 'Password',
         'password_confirmation' => 'Conferma password',
         'password_hint' => 'Dopo l’approvazione accederai con questa password. Almeno 8 caratteri.',
+        'password_hint_strong' => 'Almeno 8 caratteri con maiuscole/minuscole, un numero e un simbolo.',
+        'email_unavailable' => 'Questa email non può essere usata per la richiesta. Prova un’altra email o accedi.',
         'phone' => 'Telefono principale',
         'mobile' => 'Cellulare (se diverso)',
         'business_name' => 'Ragione sociale / azienda',

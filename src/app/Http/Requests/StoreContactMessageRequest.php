@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\MathCaptcha;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreContactMessageRequest extends FormRequest
@@ -26,6 +27,11 @@ class StoreContactMessageRequest extends FormRequest
             'company' => ['nullable', 'string', 'max:255'],
             'subject' => ['nullable', 'string', 'max:180'],
             'message' => ['required', 'string', 'min:10', 'max:5000'],
+            'captcha_answer' => ['required', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! MathCaptcha::check(is_scalar($value) ? (string) $value : null)) {
+                    $fail(__('store.captcha.invalid'));
+                }
+            }],
             'attachments' => ['nullable', 'array', 'max:'.$maxAttachments],
             'attachments.*' => [
                 'file',

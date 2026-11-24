@@ -1,12 +1,16 @@
 @extends('store.layout')
 
-@section('title', $post->localized_title)
+@php
+    $blogMetaDescription = $post->localized_excerpt !== '' ? $post->localized_excerpt : $post->localized_title;
+    $blogOgImage = $post->image_path
+        ? \App\Support\MediaUrl::public($post->image_path)
+        : asset('images/logo.png');
+@endphp
 
-@push('meta')
-    @if($post->localized_excerpt !== '')
-        <meta name="description" content="{{ $post->localized_excerpt }}">
-    @endif
-@endpush
+@section('title', $post->localized_title)
+@section('meta_description', $blogMetaDescription)
+@section('og_type', 'article')
+@section('og_image', $blogOgImage)
 
 @section('content')
     <style>
@@ -30,7 +34,7 @@
         @endif
         <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ $post->localized_title }}</h1>
         @if($post->image_path)
-            <img src="{{ \App\Support\MediaUrl::public($post->image_path) }}" alt="" class="mt-6 w-full rounded-2xl border border-slate-200 object-cover">
+            <img src="{{ \App\Support\MediaUrl::public($post->image_path) }}" alt="{{ $post->localized_title }}" class="mt-6 w-full rounded-2xl border border-slate-200 object-cover">
         @endif
         <div class="blog-body mt-6 text-sm sm:text-[0.95rem]">
             {!! $post->localized_body !!}

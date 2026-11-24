@@ -2,17 +2,21 @@
 
 namespace App\Services;
 
+use App\Mail\DealerApprovedMail;
 use App\Models\Company;
 use App\Models\DealerRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 class DealerRequestApprover
 {
     /**
-     * @return array{user: User, generated_password: ?string}
+     * @return array{user: User, generated_password: ?string, mail_sent: bool}
      */
     public function approve(DealerRequest $record, ?int $approvedBy = null): array
     {
@@ -24,7 +28,7 @@ class DealerRequestApprover
             throw new RuntimeException('Bu e-posta ile kullanıcı zaten var.');
         }
 
-        return DB::transaction(function () use ($record, $approvedBy) {
+        $result = DB::transaction(function () use ($record, $approvedBy) {
             do {
                 $code = 'BAYI-'.strtoupper(Str::random(6));
             } while (Company::where('code', $code)->exists());
@@ -66,5 +70,35 @@ class DealerRequestApprover
                 'generated_password' => $generatedPassword,
             ];
         });
+
+        $mailSent = $this->sendApprovalMail($record->fresh(), $result['user'], $result['generated_password']);
+
+        return [
+            ...$result,
+            'mail_sent' => $mailSent,
+        ];
+    }
+
+    private function sendApprovalMail(DealerRequest $record, User $user, ?string $generatedPassword): bool
+    {
+        try {
+            app(MailConfigApplicator::class)->apply();
+            Mail::to($user->email)->send(new DealerApprovedMail(
+                dealerRequest: $record,
+                user: $user,
+                generatedPassword: $generatedPassword,
+            ));
+
+            return true;
+        } catch (Throwable $e) {
+            Log::warning('Dealer approval mail failed', [
+                'dealer_request_id' => $record->id,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

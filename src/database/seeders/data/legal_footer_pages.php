@@ -252,6 +252,63 @@ HTML,
 HTML,
     ],
     [
+        'slug' => 'kvkk-aydinlatma-metni',
+        'sort_order' => 65,
+        'footer_label' => 'KVKK Aydınlatma Metni',
+        'title' => 'KVKK Aydınlatma Metni',
+        'title_en' => 'KVKK Privacy Notice',
+        'title_it' => 'Informativa KVKK',
+        'overwrite_body' => true,
+        'body' => <<<'HTML'
+<h1>KVKK Aydınlatma Metni</h1>
+<p>6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) md. 10 uyarınca, veri sorumlusu sıfatıyla aşağıdaki hususlarda sizi bilgilendiririz.</p>
+<h2>1. Veri sorumlusu</h2>
+<p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / İstanbul, Türkiye<br>E-posta: <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a></p>
+<h2>2. İşlenen veriler ve amaçlar</h2>
+<p>Kimlik, iletişim, şirket/fatura, sipariş ve işlem güvenliği verileriniz; bayilik başvurusu, hesap yönetimi, sipariş, teslimat, faturalama, müşteri iletişimi, hukuki yükümlülükler ve bilgi güvenliği amaçlarıyla işlenir.</p>
+<h2>3. Hukuki sebepler</h2>
+<p>Veriler; sözleşmenin kurulması/ifası, hukuki yükümlülük, meşru menfaat ve gerektiğinde açık rıza hukuki sebeplerine dayanılarak işlenir.</p>
+<h2>4. Aktarım</h2>
+<p>Verileriniz, yalnızca hizmetin gerektirdiği ölçüde iş ortakları, kargo/lojistik, barındırma, muhasebe ve yasal mercilerle paylaşılabilir.</p>
+<h2>5. Saklama süresi</h2>
+<p>Veriler, ilgili mevzuatta öngörülen süreler ve işleme amacının gerektirdiği makul süre boyunca saklanır; süre sonunda silinir, yok edilir veya anonim hale getirilir.</p>
+<h2>6. Haklarınız</h2>
+<p>KVKK md. 11 kapsamındaki haklarınızı (erişim, düzeltme, silme, itiraz vb.) <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a> adresine yazarak kullanabilirsiniz. Ayrıntılar için <a href="/sozlesme/gizlilik-politikasi">Gizlilik Politikası</a> ve <a href="/sozlesme/veri-koruma">Veri Koruma</a> sayfalarına bakınız.</p>
+HTML,
+        'body_en' => <<<'HTML'
+<h1>KVKK Privacy Notice</h1>
+<p>Under Article 10 of Türkiye’s Personal Data Protection Law (KVKK), we inform you as data controller as follows.</p>
+<h2>1. Data controller</h2>
+<p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / Istanbul, Türkiye<br>Email: <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a></p>
+<h2>2. Data and purposes</h2>
+<p>Identity, contact, company/billing, order and security data are processed for dealer applications, account management, orders, delivery, invoicing, customer communication, legal duties and information security.</p>
+<h2>3. Legal bases</h2>
+<p>Processing is based on contract performance, legal obligation, legitimate interest and, where required, consent.</p>
+<h2>4. Transfers</h2>
+<p>Data may be shared only as needed with service partners, logistics, hosting, accounting and competent authorities.</p>
+<h2>5. Retention</h2>
+<p>Data is kept for the periods required by law and for as long as the purpose requires; then it is deleted, destroyed or anonymised.</p>
+<h2>6. Your rights</h2>
+<p>You may exercise KVKK Art. 11 rights by emailing <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a>. See also the <a href="/sozlesme/gizlilik-politikasi">Privacy Policy</a> and <a href="/sozlesme/veri-koruma">Data Protection</a> pages.</p>
+HTML,
+        'body_it' => <<<'HTML'
+<h1>Informativa KVKK</h1>
+<p>Ai sensi dell’art. 10 della legge turca sulla protezione dei dati personali (KVKK), il titolare del trattamento informa quanto segue.</p>
+<h2>1. Titolare</h2>
+<p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / Istanbul, Türkiye<br>Email: <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a></p>
+<h2>2. Dati e finalità</h2>
+<p>Dati di identità, contatto, azienda/fattura, ordini e sicurezza sono trattati per richieste rivenditore, account, ordini, consegna, fatturazione, comunicazione, obblighi di legge e sicurezza informatica.</p>
+<h2>3. Basi giuridiche</h2>
+<p>Il trattamento si basa su esecuzione del contratto, obbligo di legge, interesse legittimo e, se necessario, consenso.</p>
+<h2>4. Comunicazione</h2>
+<p>I dati possono essere condivisi solo se necessario con partner, logistica, hosting, contabilità e autorità competenti.</p>
+<h2>5. Conservazione</h2>
+<p>I dati sono conservati per i termini di legge e per il tempo necessario allo scopo; poi sono cancellati, distrutti o anonimizzati.</p>
+<h2>6. Diritti</h2>
+<p>Puoi esercitare i diritti dell’art. 11 KVKK scrivendo a <a href="mailto:privacy@nevistanbul.com.tr">privacy@nevistanbul.com.tr</a>. Vedi anche l’<a href="/sozlesme/gizlilik-politikasi">Informativa sulla privacy</a> e la pagina <a href="/sozlesme/veri-koruma">Protezione dei dati</a>.</p>
+HTML,
+    ],
+    [
         'slug' => 'veri-koruma',
         'sort_order' => 70,
         'footer_label' => 'Veri Koruma',
@@ -261,7 +318,7 @@ HTML,
         'overwrite_body' => true,
         'body' => <<<'HTML'
 <h1>Veri Koruma</h1>
-<p>NEVİSTANBUL, kişisel verileri 6698 sayılı KVKK, GDPR ve uygulanabilir diğer mevzuata uygun işler. Ayrıntılı açıklama <a href="/sozlesme/gizlilik-politikasi">Gizlilik Politikası</a> metnindedir.</p>
+<p>NEVİSTANBUL, kişisel verileri 6698 sayılı KVKK, GDPR ve uygulanabilir diğer mevzuata uygun işler. Kısa bilgilendirme için <a href="/sozlesme/kvkk-aydinlatma-metni">KVKK Aydınlatma Metni</a>; ayrıntılı açıklama <a href="/sozlesme/gizlilik-politikasi">Gizlilik Politikası</a> metnindedir.</p>
 <h2>1. Veri sorumlusu</h2>
 <p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / İstanbul, Türkiye<br>Vergi Dairesi: Güneşli — VN: 6310675047</p>
 <h2>2. İşleme amaçları</h2>
@@ -273,7 +330,7 @@ HTML,
 HTML,
         'body_en' => <<<'HTML'
 <h1>Data Protection</h1>
-<p>NEVISTANBUL processes personal data in line with Türkiye’s KVKK, the GDPR and other applicable laws. Full details are in the <a href="/sozlesme/gizlilik-politikasi">Privacy Policy</a>.</p>
+<p>NEVISTANBUL processes personal data in line with Türkiye’s KVKK, the GDPR and other applicable laws. See the short <a href="/sozlesme/kvkk-aydinlatma-metni">KVKK Privacy Notice</a>; full details are in the <a href="/sozlesme/gizlilik-politikasi">Privacy Policy</a>.</p>
 <h2>1. Controller</h2>
 <p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / Istanbul, Türkiye<br>Tax Office: Güneşli — Tax No: 6310675047</p>
 <h2>2. Purposes</h2>
@@ -285,7 +342,7 @@ HTML,
 HTML,
         'body_it' => <<<'HTML'
 <h1>Protezione dei dati</h1>
-<p>NEVISTANBUL tratta i dati personali in conformità alla KVKK turca, al GDPR e alle altre norme applicabili. I dettagli sono nell’<a href="/sozlesme/gizlilik-politikasi">Informativa sulla privacy</a>.</p>
+<p>NEVISTANBUL tratta i dati personali in conformità alla KVKK turca, al GDPR e alle altre norme applicabili. Vedi la breve <a href="/sozlesme/kvkk-aydinlatma-metni">Informativa KVKK</a>; i dettagli sono nell’<a href="/sozlesme/gizlilik-politikasi">Informativa sulla privacy</a>.</p>
 <h2>1. Titolare</h2>
 <p>Nevistanbul Textile &amp; Promotion Industry and Trade Limited Company<br>15 Temmuz Mahallesi 1432 Sokak No:26-30, Bağcılar / Istanbul, Türkiye<br>Ufficio fiscale: Güneşli — P. IVA/tax: 6310675047</p>
 <h2>2. Finalità</h2>

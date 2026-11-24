@@ -36,6 +36,9 @@ class ViewDealerRequest extends ViewRecord
                     $body = $result['generated_password']
                         ? 'Kullanıcı oluşturuldu. Şifre: '.$result['generated_password']
                         : 'Kullanıcı oluşturuldu. Başvuruda belirlediği şifre ile giriş yapabilir.';
+                    $body .= $result['mail_sent']
+                        ? ' Onay e-postası gönderildi.'
+                        : ' Onay e-postası gönderilemedi (MAIL ayarlarını kontrol edin).';
 
                     Notification::make()
                         ->title('Bayilik talebi onaylandı')

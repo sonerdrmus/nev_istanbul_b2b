@@ -1,14 +1,58 @@
 @extends('store.layout')
 
+@php
+    $productMetaDescription = $product->localized_meta_description
+        ?: \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string) ($product->localized_description ?? $product->description ?? '')))), 160, '');
+    if ($productMetaDescription === '') {
+        $productMetaDescription = $product->localized_name;
+    }
+    $productOgImage = $product->display_image_urls[0] ?? asset('images/logo.png');
+    $productRobots = (($product->status ?? 'satista') === 'yakinda_gelecek') ? 'noindex,follow' : 'index,follow';
+@endphp
+
 @section('title', $product->localized_meta_title ?: $product->localized_name)
+@section('meta_description', $productMetaDescription)
+@section('og_image', $productOgImage)
+@section('og_type', 'product')
+@section('robots', $productRobots)
 
 @push('meta')
-    @if($product->localized_meta_description)
-        <meta name="description" content="{{ $product->localized_meta_description }}">
-    @endif
     @if($product->meta_keywords)
         <meta name="keywords" content="{{ $product->meta_keywords }}">
     @endif
+    @php
+        $productJsonLd = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $product->localized_name,
+            'description' => $productMetaDescription,
+            'image' => array_values(array_filter($product->display_image_urls ?? [])),
+            'sku' => (string) ($product->sku ?: $product->id),
+            'url' => url()->current(),
+            'brand' => [
+                '@type' => 'Brand',
+                'name' => __('store.meta_suffix'),
+            ],
+        ];
+        if (($product->status ?? 'satista') === 'yakinda_gelecek') {
+            $productJsonLd['offers'] = [
+                '@type' => 'Offer',
+                'availability' => 'https://schema.org/PreOrder',
+                'url' => url()->current(),
+            ];
+        } else {
+            $productJsonLd['offers'] = [
+                '@type' => 'Offer',
+                'availability' => 'https://schema.org/InStock',
+                'url' => url()->current(),
+                'priceCurrency' => 'TRY',
+            ];
+        }
+        if ($product->category) {
+            $productJsonLd['category'] = $product->category->localized_name;
+        }
+    @endphp
+    <script type="application/ld+json">{!! json_encode($productJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 @endpush
 
 @section('content')
@@ -692,6 +736,15 @@
                             font-size: 0.875rem;
                             font-weight: 600;
                             color: #64748b;
+                        }
+                        #product-customization-table .customization-row-card {
+                            content-visibility: auto;
+                            contain-intrinsic-size: 72px;
+                        }
+                        #product-customization-table .customization-row-card:not(:has(input.customization-row-check:checked)) .customization-col-dims,
+                        #product-customization-table .customization-row-card:not(:has(input.customization-row-check:checked)) .customization-col-print,
+                        #product-customization-table .customization-row-card:not(:has(input.customization-row-check:checked)) .customization-col-colors {
+                            display: none;
                         }
                         #product-customization-table .customization-row-body {
                             display: flex;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\NormalizeLivewireUploadUrl;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetStoreLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,9 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         // Livewire dosya yüklemede imza 401 önlemi: istek URL'sini APP_URL ile eşleştir
-        $middleware->web(prepend: [NormalizeLivewireUploadUrl::class], append: [SetStoreLocale::class]);
+        $middleware->web(
+            prepend: [NormalizeLivewireUploadUrl::class],
+            append: [SetStoreLocale::class, SecurityHeaders::class],
+        );
         // Mağaza (sepet, ödeme vb.) için giriş yapmamış kullanıcılar müşteri paneli girişine yönlendirilir
-        $middleware->redirectGuestsTo(fn () => route('store.login.show'));
+        $middleware->redirectGuestsTo(fn () => route('store.login.show', [
+            'locale' => \App\Support\StoreLocale::current(),
+        ]));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Boş mesajlı HttpException (genelde 419 CSRF / oturum, dosya yükleme) için anlamlı mesaj

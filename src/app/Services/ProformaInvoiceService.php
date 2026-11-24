@@ -299,9 +299,9 @@ class ProformaInvoiceService
 
     private function withOrderLocale(Order $order, callable $callback): mixed
     {
-        $locale = in_array((string) $order->locale, \App\Http\Middleware\SetStoreLocale::SUPPORTED, true)
+        $locale = \App\Support\StoreLocale::isSupported((string) $order->locale)
             ? (string) $order->locale
-            : (in_array(app()->getLocale(), \App\Http\Middleware\SetStoreLocale::SUPPORTED, true) ? app()->getLocale() : 'tr');
+            : \App\Support\StoreLocale::current();
         $previous = app()->getLocale();
         app()->setLocale($locale);
 

@@ -24,6 +24,8 @@ class LegalPage extends Model
 
     public const DATA_PROTECTION_SLUG = 'veri-koruma';
 
+    public const KVKK_NOTICE_SLUG = 'kvkk-aydinlatma-metni';
+
     public const PAYMENT_SLUG = 'odeme-kosullari';
 
     protected $fillable = [
