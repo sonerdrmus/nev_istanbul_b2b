@@ -261,8 +261,11 @@
             'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6' => ! $currentCategory,
         ])>
             @foreach($products as $product)
-                @php $isComingSoon = ($product->status ?? 'satista') === 'yakinda_gelecek'; @endphp
-                <article class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col h-full">
+                @php
+                    $isComingSoon = ($product->status ?? 'satista') === 'yakinda_gelecek';
+                    $compactProductCard = (bool) $currentCategory;
+                @endphp
+                <article class="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col h-full min-w-0">
                     <a href="{{ route('store.product.show', $product) }}" class="relative block aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
                         @php $thumbPath = $product->image ?? $product->productImages->first()?->path; @endphp
                         @if($thumbPath)
@@ -273,21 +276,33 @@
                         @if($isComingSoon)
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
                         @endif
-                        @if($product->category)
+                        @if($product->category && ! $compactProductCard)
                             <span class="absolute top-3 left-3 px-2.5 py-1.5 rounded-lg bg-white/95 backdrop-blur-sm text-xs font-medium text-slate-700 shadow-sm">{{ $product->category->localized_name }}</span>
                         @endif
                         @if($isComingSoon)
-                            <span class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/95 backdrop-blur-sm text-xs font-semibold text-white shadow-sm">
+                            <span @class([
+                                'absolute top-2 right-2 inline-flex items-center gap-1 rounded-lg bg-amber-500/95 backdrop-blur-sm font-semibold text-white shadow-sm',
+                                'px-1.5 py-1 text-[10px]' => $compactProductCard,
+                                'top-3 right-3 gap-1.5 px-2.5 py-1.5 text-xs' => ! $compactProductCard,
+                            ])>
                                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                {{ __('store.index.coming_soon_badge') }}
+                                @unless($compactProductCard)
+                                    {{ __('store.index.coming_soon_badge') }}
+                                @endunless
                             </span>
                         @endif
                         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none"></div>
                     </a>
-                    <div class="p-6 flex-1 flex flex-col min-h-0">
-                        <a href="{{ route('store.product.show', $product) }}" class="block flex-1 flex flex-col min-h-0">
-                            <p class="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">{{ $product->company?->name ?? '—' }}</p>
-                            <h2 class="font-semibold text-slate-900 text-lg leading-snug hover:text-primary-600 transition-colors line-clamp-2" title="{{ $product->localized_name }}">{{ $product->localized_name }}</h2>
+                    <div @class(['flex-1 flex flex-col min-h-0 min-w-0', 'p-3' => $compactProductCard, 'p-6' => ! $compactProductCard])>
+                        <a href="{{ route('store.product.show', $product) }}" class="block flex-1 flex flex-col min-h-0 min-w-0">
+                            @unless($compactProductCard)
+                                <p class="text-xs font-semibold text-primary-600 uppercase tracking-wider mb-1.5">{{ $product->company?->name ?? '—' }}</p>
+                            @endunless
+                            <h2 @class([
+                                'font-semibold text-slate-900 leading-snug hover:text-primary-600 transition-colors line-clamp-2',
+                                'text-sm' => $compactProductCard,
+                                'text-lg' => ! $compactProductCard,
+                            ]) title="{{ $product->localized_name }}">{{ $product->localized_name }}</h2>
                             @php
                                 $listExcerpt = trim(preg_replace(
                                     '/\s+/u',
@@ -295,22 +310,36 @@
                                     html_entity_decode(strip_tags((string) ($product->localized_description ?: $product->description)), ENT_QUOTES | ENT_HTML5, 'UTF-8')
                                 ) ?? '');
                             @endphp
-                            @if($listExcerpt !== '')
-                                <p class="text-sm text-slate-500 mt-2 line-clamp-2 min-h-[2.5rem]">{{ \Illuminate\Support\Str::limit($listExcerpt, 80) }}</p>
-                            @else
-                                <p class="mt-2 min-h-[2.5rem]"></p>
+                            @if(! $compactProductCard)
+                                @if($listExcerpt !== '')
+                                    <p class="text-sm text-slate-500 mt-2 line-clamp-2 min-h-[2.5rem]">{{ \Illuminate\Support\Str::limit($listExcerpt, 80) }}</p>
+                                @else
+                                    <p class="mt-2 min-h-[2.5rem]"></p>
+                                @endif
                             @endif
                         </a>
-                        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-end gap-3 min-h-[3.25rem] flex-wrap">
+                        <div @class([
+                            'border-t border-slate-100 flex min-w-0',
+                            'mt-3 pt-3' => $compactProductCard,
+                            'mt-4 pt-4 items-center justify-end gap-3 min-h-[3.25rem] flex-wrap' => ! $compactProductCard,
+                        ])>
                             @if($isComingSoon)
-                                <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0">
+                                <a href="{{ route('store.product.show', $product) }}" @class([
+                                    'inline-flex items-center justify-center rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-medium transition-colors',
+                                    'w-full gap-1 px-2 py-2 text-[11px] leading-tight text-center' => $compactProductCard,
+                                    'gap-2 px-3.5 py-2 text-sm whitespace-nowrap flex-shrink-0' => ! $compactProductCard,
+                                ])>
                                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span>{{ __('store.index.coming_soon_cta') }}</span>
                                 </a>
                             @else
-                                <a href="{{ route('store.product.show', $product) }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm shadow-sm hover:shadow transition-all duration-200 flex-shrink-0">
-                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                                    {{ __('store.index.choose_variation') }}
+                                <a href="{{ route('store.product.show', $product) }}" @class([
+                                    'inline-flex items-center justify-center rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium shadow-sm hover:shadow transition-all duration-200',
+                                    'w-full min-w-0 gap-1 px-2 py-2 text-[11px] leading-tight text-center' => $compactProductCard,
+                                    'gap-2 px-3.5 py-2 text-sm flex-shrink-0' => ! $compactProductCard,
+                                ])>
+                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                    <span class="min-w-0">{{ __('store.index.choose_variation') }}</span>
                                 </a>
                             @endif
                         </div>
