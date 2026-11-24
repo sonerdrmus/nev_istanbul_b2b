@@ -17,7 +17,7 @@ use Filament\Notifications\Notification;
 final class ProductVariationAdminSync
 {
     /** Kütüphaneden (preset) beslenen varyasyon tipleri. */
-    public const PRESET_TYPES = ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'packaging_type', 'size_table'];
+    public const PRESET_TYPES = ['fabric', 'color', 'label_type', 'certificate_type', 'mold_model_type', 'model_type', 'delivery_type', 'packaging_type', 'size_table'];
 
     public static function isPresetType(?string $type): bool
     {

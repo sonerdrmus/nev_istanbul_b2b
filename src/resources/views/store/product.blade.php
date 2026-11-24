@@ -343,7 +343,144 @@
             @if($product->category)
                 <a href="{{ route('home', ['category' => $product->category->slug]) }}" class="inline-block text-sm text-slate-500 hover:text-primary-600 mb-2">{{ $product->category->localized_name }}</a>
             @endif
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $product->localized_name }}</h1>
+            @php $galleryModalImages = $product->gallery_image_urls; @endphp
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <h1 class="min-w-0 flex-1 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $product->localized_name }}</h1>
+                @if(count($galleryModalImages) > 0)
+                    <button type="button" id="product-visual-gallery-open" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200/70 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500/30" aria-haspopup="dialog" aria-controls="product-visual-gallery-modal">
+                        <svg class="h-4 w-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        {{ __('store.product.visual_gallery_button') }}
+                    </button>
+                @endif
+            </div>
+
+            @if(count($galleryModalImages) > 0)
+                <div id="product-visual-gallery-modal" class="store-overlay fixed inset-0 z-[420] hidden items-center justify-center p-3 sm:p-6" aria-modal="true" role="dialog" aria-labelledby="product-visual-gallery-title" aria-hidden="true">
+                    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" id="product-visual-gallery-backdrop"></div>
+                    <div class="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/80">
+                        <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
+                            <div class="min-w-0">
+                                <h2 id="product-visual-gallery-title" class="truncate text-base font-semibold text-slate-900 sm:text-lg">{{ __('store.product.visual_gallery_title') }}</h2>
+                                <p class="mt-0.5 text-xs text-slate-500">{{ __('store.product.visual_gallery_count', ['count' => count($galleryModalImages)]) }}</p>
+                            </div>
+                            <button type="button" id="product-visual-gallery-close" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/40" aria-label="{{ __('store.product.lightbox_close') }}">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <div class="overflow-y-auto px-3 py-3 sm:px-5 sm:py-4">
+                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4" role="list">
+                                @foreach($galleryModalImages as $gIdx => $gUrl)
+                                    <button type="button" class="product-visual-gallery-thumb group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500/40" data-gallery-index="{{ $gIdx }}" role="listitem" aria-label="{{ __('store.product.image_alt', ['name' => $product->localized_name, 'num' => $gIdx + 1]) }}">
+                                        <img src="{{ $gUrl }}" alt="{{ __('store.product.image_alt', ['name' => $product->localized_name, 'num' => $gIdx + 1]) }}" class="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]" loading="lazy">
+                                        <span class="pointer-events-none absolute inset-0 bg-slate-900/0 transition group-hover:bg-slate-900/10"></span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="product-visual-gallery-lightbox" class="store-overlay fixed inset-0 z-[430] hidden items-center justify-center bg-black/90 p-4" aria-modal="true" role="dialog" aria-label="{{ __('store.product.visual_gallery_lightbox_aria') }}" aria-hidden="true">
+                    <button type="button" id="product-visual-gallery-lightbox-close" class="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="{{ __('store.product.lightbox_close') }}">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    @if(count($galleryModalImages) > 1)
+                        <button type="button" id="product-visual-gallery-lightbox-prev" class="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="{{ __('store.product.prev_image') }}">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" id="product-visual-gallery-lightbox-next" class="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="{{ __('store.product.next_image') }}">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    @endif
+                    <img id="product-visual-gallery-lightbox-image" src="" alt="{{ $product->localized_name }}" class="relative z-[1] max-h-[90vh] max-w-full object-contain">
+                    <p id="product-visual-gallery-lightbox-counter" class="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white"></p>
+                </div>
+                @push('scripts')
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var openBtn = document.getElementById('product-visual-gallery-open');
+                        var modal = document.getElementById('product-visual-gallery-modal');
+                        var backdrop = document.getElementById('product-visual-gallery-backdrop');
+                        var closeBtn = document.getElementById('product-visual-gallery-close');
+                        var lightbox = document.getElementById('product-visual-gallery-lightbox');
+                        var lightboxImg = document.getElementById('product-visual-gallery-lightbox-image');
+                        var lightboxClose = document.getElementById('product-visual-gallery-lightbox-close');
+                        var lightboxPrev = document.getElementById('product-visual-gallery-lightbox-prev');
+                        var lightboxNext = document.getElementById('product-visual-gallery-lightbox-next');
+                        var lightboxCounter = document.getElementById('product-visual-gallery-lightbox-counter');
+                        if (!openBtn || !modal || !lightbox || !lightboxImg) return;
+
+                        var urls = @json($galleryModalImages);
+                        var current = 0;
+
+                        function showOverlay(el) {
+                            el.classList.remove('hidden');
+                            el.classList.add('flex');
+                            el.setAttribute('aria-hidden', 'false');
+                            document.documentElement.classList.add('overflow-hidden');
+                        }
+                        function hideOverlay(el) {
+                            el.classList.add('hidden');
+                            el.classList.remove('flex');
+                            el.setAttribute('aria-hidden', 'true');
+                        }
+                        function openModal() { showOverlay(modal); }
+                        function closeModal() {
+                            hideOverlay(modal);
+                            if (lightbox.classList.contains('hidden')) {
+                                document.documentElement.classList.remove('overflow-hidden');
+                            }
+                        }
+                        function showLightbox(index) {
+                            if (!urls.length) return;
+                            current = ((index % urls.length) + urls.length) % urls.length;
+                            lightboxImg.src = urls[current];
+                            if (lightboxCounter) {
+                                lightboxCounter.textContent = (current + 1) + ' / ' + urls.length;
+                            }
+                            showOverlay(lightbox);
+                        }
+                        function closeLightbox() {
+                            hideOverlay(lightbox);
+                            lightboxImg.removeAttribute('src');
+                            if (modal.classList.contains('hidden')) {
+                                document.documentElement.classList.remove('overflow-hidden');
+                            }
+                        }
+
+                        openBtn.addEventListener('click', openModal);
+                        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                        if (backdrop) backdrop.addEventListener('click', closeModal);
+                        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+                        lightbox.addEventListener('click', function (e) {
+                            if (e.target === lightbox) closeLightbox();
+                        });
+                        if (lightboxPrev) lightboxPrev.addEventListener('click', function (e) { e.stopPropagation(); showLightbox(current - 1); });
+                        if (lightboxNext) lightboxNext.addEventListener('click', function (e) { e.stopPropagation(); showLightbox(current + 1); });
+
+                        modal.querySelectorAll('.product-visual-gallery-thumb').forEach(function (thumb) {
+                            thumb.addEventListener('click', function () {
+                                var idx = parseInt(thumb.getAttribute('data-gallery-index'), 10) || 0;
+                                showLightbox(idx);
+                            });
+                        });
+
+                        document.addEventListener('keydown', function (e) {
+                            if (e.key === 'Escape') {
+                                if (!lightbox.classList.contains('hidden')) {
+                                    closeLightbox();
+                                    return;
+                                }
+                                if (!modal.classList.contains('hidden')) closeModal();
+                                return;
+                            }
+                            if (lightbox.classList.contains('hidden')) return;
+                            if (e.key === 'ArrowLeft') showLightbox(current - 1);
+                            if (e.key === 'ArrowRight') showLightbox(current + 1);
+                        });
+                    });
+                </script>
+                @endpush
+            @endif
 
             @php $productStatus = $product->status ?? 'satista'; @endphp
             @if($productStatus === 'yakinda_gelecek')
@@ -1102,13 +1239,41 @@
                                     <label for="quick-order-notes" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_notes_label') }}</label>
                                     <textarea id="quick-order-notes" name="quick_order_notes" rows="6" maxlength="4000" class="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-500/20" placeholder="{{ __('store.product.quick_order_notes_placeholder') }}"></textarea>
                                     <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_notes_placeholder') }}</p>
-                                    <label for="quick-order-image" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_image_label') }}</label>
-                                    <input id="quick-order-image" name="quick_order_image" type="file" accept="image/png,image/jpeg,image/jpg" class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
-                                    <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_image_help') }}</p>
+                                    <label for="quick-order-image" class="mt-4 block text-sm font-semibold text-slate-800">{{ __('store.product.quick_order_images_label') }} <span class="text-rose-600">*</span></label>
+                                    <input id="quick-order-image" name="quick_order_images[]" type="file" multiple accept="image/png,image/jpeg,image/jpg" class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+                                    <p class="mt-2 text-xs text-slate-500">{{ __('store.product.quick_order_images_help', ['max' => 8, 'size' => 4]) }}</p>
+                                    <p id="quick-order-images-error" class="mt-2 hidden text-xs font-medium text-rose-600" role="alert"></p>
+                                    <div id="quick-order-image-previews" class="mt-3 flex flex-wrap gap-2"></div>
+                                    @if($canSeePrices && $baseTry !== null && $selectedCurrency)
+                                        @php
+                                            $quickTierMultiplier = 1.0;
+                                            foreach ((array) $priceTiersForStore as $quickTier) {
+                                                $qMin = (int) ($quickTier['min'] ?? 1);
+                                                $qMax = ($quickTier['max'] ?? null) === null || ($quickTier['max'] ?? '') === '' ? null : (int) $quickTier['max'];
+                                                $qMul = (float) ($quickTier['multiplier'] ?? $quickTier['unit_try'] ?? 0);
+                                                if ($minOrderProduct >= $qMin && ($qMax === null || $minOrderProduct <= $qMax) && $qMul > 0) {
+                                                    $quickTierMultiplier = $qMul;
+                                                    break;
+                                                }
+                                            }
+                                            $quickUnitTry = $baseTry * $quickTierMultiplier;
+                                            $quickUnitFormatted = $selectedCurrency->format($selectedCurrency->convertFromTRY($quickUnitTry));
+                                            $quickTotalFormatted = $selectedCurrency->format($selectedCurrency->convertFromTRY($quickUnitTry * $minOrderProduct));
+                                        @endphp
+                                        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+                                            <div class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+                                                <span class="text-sm font-semibold text-slate-600">{{ __('store.product.unit_price_label') }}</span>
+                                                <span class="text-right text-sm font-semibold text-slate-700">{{ $quickUnitFormatted }}</span>
+                                                <span class="text-sm font-semibold text-slate-600">{{ __('store.product.quick_order_price_for_qty', ['count' => $minOrderProduct]) }}</span>
+                                                <span id="quick-order-price" class="text-right text-lg font-bold text-slate-900">{{ $quickTotalFormatted }}</span>
+                                            </div>
+                                        </div>
+                                    @endif
                                     <p id="quick-order-complete-hint" class="mt-4 text-sm text-slate-500">{{ __('store.product.quick_order_complete_hint') }}</p>
                                     @auth
-                                    <button type="submit" name="after_add" value="checkout" id="quick-order-complete-btn" disabled class="mt-3 w-full py-3 sm:py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm sm:text-base font-semibold shadow-md shadow-primary-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {{ __('store.checkout.place_order') }}
+                                    <button type="submit" name="after_add" value="cart" id="quick-order-complete-btn" disabled class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:py-3.5 sm:text-base">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                        <span>{{ __('store.product.add_to_cart') }}@if($canSeePrices && $baseTry !== null && $selectedCurrency) · {{ $quickTotalFormatted }}@endif</span>
                                     </button>
                                     @endauth
                                     @guest
@@ -1303,6 +1468,8 @@
                 'variation_multi_hint' => __('store.product.variation_multi_hint'),
                 'add_to_cart' => __('store.product.add_to_cart'),
                 'add_to_cart_hint' => __('store.product.add_to_cart_hint'),
+                'quick_order_image_too_large' => __('store.product.quick_order_image_too_large', ['size' => 4]),
+                'quick_order_images_too_many' => __('store.product.quick_order_images_too_many', ['max' => 8]),
                 'summary_total_qty' => __('store.product.summary_total_qty'),
                 'qty_row_label' => __('store.product.qty_row_label'),
                 'size_row_prefix' => __('store.product.size_row_prefix'),
@@ -1460,6 +1627,12 @@
                     var quickOrderImageInput = document.getElementById('quick-order-image');
                     if (!variationInput) return;
 
+                    var quickOrderImagesError = document.getElementById('quick-order-images-error');
+                    var quickOrderPreviews = document.getElementById('quick-order-image-previews');
+                    var QUICK_MAX_IMAGES = 8;
+                    var QUICK_MAX_BYTES = 4 * 1024 * 1024;
+                    var QUICK_MODE_FLAG = 'nev_quick_mode_after_reset';
+
                     function getQuickOrderInputState() {
                         var notes = quickOrderNotesInput ? (quickOrderNotesInput.value || '').trim() : '';
                         var hasImage = !!(quickOrderImageInput && quickOrderImageInput.files && quickOrderImageInput.files.length);
@@ -1470,6 +1643,136 @@
                             hasImage: hasImage,
                         };
                     }
+
+                    function showQuickImagesError(msg) {
+                        if (!quickOrderImagesError) return;
+                        quickOrderImagesError.textContent = msg || '';
+                        quickOrderImagesError.classList.toggle('hidden', !msg);
+                    }
+
+                    function renderQuickImagePreviews() {
+                        if (!quickOrderPreviews || !quickOrderImageInput) return;
+                        quickOrderPreviews.querySelectorAll('img').forEach(function(img) {
+                            if (img.src && img.src.indexOf('blob:') === 0) URL.revokeObjectURL(img.src);
+                        });
+                        quickOrderPreviews.innerHTML = '';
+                        Array.prototype.forEach.call(quickOrderImageInput.files || [], function(file, idx) {
+                            var wrap = document.createElement('div');
+                            wrap.className = 'relative h-16 w-16 overflow-hidden rounded-lg border border-slate-200 bg-white';
+                            var img = document.createElement('img');
+                            img.className = 'h-full w-full object-cover';
+                            img.alt = file.name;
+                            img.src = URL.createObjectURL(file);
+                            var rm = document.createElement('button');
+                            rm.type = 'button';
+                            rm.className = 'absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/80 text-xs font-bold leading-none text-white hover:bg-rose-600';
+                            rm.setAttribute('aria-label', 'Remove');
+                            rm.textContent = '×';
+                            rm.addEventListener('click', function() {
+                                removeQuickImageAt(idx);
+                            });
+                            wrap.appendChild(img);
+                            wrap.appendChild(rm);
+                            quickOrderPreviews.appendChild(wrap);
+                        });
+                    }
+
+                    function setQuickImageFiles(files) {
+                        if (!quickOrderImageInput || typeof DataTransfer === 'undefined') return false;
+                        try {
+                            var dt = new DataTransfer();
+                            files.forEach(function(f) { dt.items.add(f); });
+                            quickOrderImageInput.files = dt.files;
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    }
+
+                    function removeQuickImageAt(idx) {
+                        var files = Array.prototype.slice.call(quickOrderImageInput.files || []);
+                        files.splice(idx, 1);
+                        setQuickImageFiles(files);
+                        showQuickImagesError('');
+                        renderQuickImagePreviews();
+                        if (typeof updateVariationSummaryAndButton === 'function') updateVariationSummaryAndButton();
+                    }
+
+                    var quickOrderPreviousFiles = [];
+                    function handleQuickImagesChange() {
+                        if (!quickOrderImageInput) return;
+                        var picked = Array.prototype.slice.call(quickOrderImageInput.files || []);
+                        var merged = quickOrderPreviousFiles.slice();
+                        picked.forEach(function(f) {
+                            var dup = merged.some(function(m) { return m.name === f.name && m.size === f.size && m.lastModified === f.lastModified; });
+                            if (!dup) merged.push(f);
+                        });
+                        var error = '';
+                        var accepted = [];
+                        merged.forEach(function(f) {
+                            if (f.size > QUICK_MAX_BYTES) {
+                                error = (PU.quick_order_image_too_large || 'Each image must be at most 4 MB.');
+                                return;
+                            }
+                            if (accepted.length >= QUICK_MAX_IMAGES) {
+                                error = (PU.quick_order_images_too_many || 'You can upload at most 8 images.');
+                                return;
+                            }
+                            accepted.push(f);
+                        });
+                        if (!setQuickImageFiles(accepted)) {
+                            accepted = picked.slice(0, QUICK_MAX_IMAGES);
+                        }
+                        quickOrderPreviousFiles = accepted.slice();
+                        showQuickImagesError(error);
+                        renderQuickImagePreviews();
+                        if (typeof updateVariationSummaryAndButton === 'function') updateVariationSummaryAndButton();
+                    }
+
+                    function hasDetailedVariationState() {
+                        if (variationInput && (variationInput.value || '').trim() !== '' && (variationInput.value || '').trim() !== '{}' && (variationInput.value || '').trim() !== '[]') return true;
+                        var sizeHidden = document.getElementById('size-quantities-input');
+                        if (sizeHidden && (sizeHidden.value || '').trim() !== '' && (sizeHidden.value || '').trim() !== '{}') return true;
+                        var root = document.getElementById('product-variations');
+                        if (!root) return false;
+                        if (root.querySelector('.product-option.option-selected')) return true;
+                        if (root.querySelector('.customization-row-check:checked, #customization-skip-checkbox:checked')) return true;
+                        var custNotes = document.getElementById('product-customization-notes-field');
+                        if (custNotes && (custNotes.value || '').trim() !== '') return true;
+                        var hasSizeQty = false;
+                        root.querySelectorAll('input[class*="-size-input"]').forEach(function(inp) {
+                            if ((parseInt(inp.value, 10) || 0) > 0) hasSizeQty = true;
+                        });
+                        if (hasSizeQty) return true;
+                        var hasExtra = false;
+                        root.querySelectorAll('.extra-variation-textarea').forEach(function(ta) {
+                            if ((ta.value || '').trim() !== '') hasExtra = true;
+                        });
+                        return hasExtra;
+                    }
+
+                    /** "Seçimleri boşalt" ile aynı mantık: taslağı siler ve sayfayı sıfır durumda yeniler; hızlı sipariş sekmesi yeniden açılır. */
+                    function resetVariationsForQuickMode() {
+                        if (variationInput) variationInput.value = '';
+                        var sizeHidden = document.getElementById('size-quantities-input');
+                        if (sizeHidden) sizeHidden.value = '';
+                        document.querySelectorAll('#product-variations .product-option.option-selected').forEach(function(btn) {
+                            btn.classList.remove('option-selected');
+                        });
+                        if (!hasDetailedVariationStateBeforeReset) {
+                            try { localStorage.removeItem(variationDraftStorageKey()); } catch (e) {}
+                            return false;
+                        }
+                        try { sessionStorage.setItem(QUICK_MODE_FLAG, '1'); } catch (e) {}
+                        if (typeof resetVariationDraft === 'function') {
+                            resetVariationDraft();
+                            return true;
+                        }
+                        var resetBtn = document.getElementById('variation-selections-reset');
+                        if (resetBtn) { resetBtn.click(); return true; }
+                        return false;
+                    }
+                    var hasDetailedVariationStateBeforeReset = false;
 
                     function activateOrderMode(mode) {
                         if (!orderModeInput) return;
@@ -1499,19 +1802,29 @@
                         });
                     }
                     if (quickOrderImageInput) {
-                        quickOrderImageInput.addEventListener('change', function() {
-                            if (typeof updateVariationSummaryAndButton === 'function') {
-                                updateVariationSummaryAndButton();
-                            }
-                        });
+                        quickOrderImageInput.addEventListener('change', handleQuickImagesChange);
                     }
 
                     orderModeTabs.forEach(function(tab) {
                         tab.addEventListener('click', function() {
-                            activateOrderMode(tab.getAttribute('data-order-mode') || 'detailed');
+                            var targetMode = tab.getAttribute('data-order-mode') || 'detailed';
+                            if (targetMode === 'quick' && orderModeInput.value !== 'quick') {
+                                hasDetailedVariationStateBeforeReset = hasDetailedVariationState();
+                                if (resetVariationsForQuickMode()) {
+                                    return;
+                                }
+                            }
+                            activateOrderMode(targetMode);
                         });
                     });
-                    activateOrderMode(orderModeInput.value || 'detailed');
+                    var openQuickAfterReset = false;
+                    try {
+                        if (sessionStorage.getItem(QUICK_MODE_FLAG) === '1') {
+                            sessionStorage.removeItem(QUICK_MODE_FLAG);
+                            openQuickAfterReset = true;
+                        }
+                    } catch (e) {}
+                    activateOrderMode(openQuickAfterReset ? 'quick' : (orderModeInput.value || 'detailed'));
 
                     function getVariationStepsMeta() {
                         var wrap = document.getElementById('product-variations');
@@ -6880,6 +7193,9 @@
                                     e.preventDefault();
                                     return;
                                 }
+                                if (variationInput) variationInput.value = '';
+                                var quickSizeHidden = document.getElementById('size-quantities-input');
+                                if (quickSizeHidden) quickSizeHidden.value = '';
                                 encodeCartPayload(form);
                                 return;
                             }

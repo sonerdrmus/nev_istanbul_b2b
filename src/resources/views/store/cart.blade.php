@@ -126,8 +126,15 @@
                                             <p class="mt-2 text-sm text-slate-600">{{ __('store.product.quick_order_summary') }}:</p>
                                             <p class="mt-1 text-sm text-slate-700 whitespace-pre-wrap">{{ $item->quick_order['notes'] }}</p>
                                         @endif
-                                        @if(!empty($item->quick_order['image_url'] ?? null))
-                                            <a href="{{ $item->quick_order['image_url'] }}" target="_blank" rel="noopener" class="mt-2 inline-flex text-sm font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.quick_order_image_label') }}</a>
+                                        @php $quickImgs = \App\Support\QuickOrderImages::list($item->quick_order ?? null); @endphp
+                                        @if(count($quickImgs) > 0)
+                                            <div class="mt-2 flex flex-wrap gap-2">
+                                                @foreach($quickImgs as $qi)
+                                                    <a href="{{ $qi['url'] }}" target="_blank" rel="noopener" class="block h-16 w-16 overflow-hidden rounded-lg border border-slate-200 bg-white hover:border-primary-400" title="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}">
+                                                        <img src="{{ $qi['url'] }}" alt="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy">
+                                                    </a>
+                                                @endforeach
+                                            </div>
                                         @endif
                                         @php
     $unitTry = (float) ($item->unit_price_try ?? $item->subtotal / max(1, (int) $item->quantity));

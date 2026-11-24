@@ -90,6 +90,7 @@ final class CatalogLocaleBackfill
             ['interface_color_variations', [['name', 'name']]],
             ['interface_certificate_variations', [['name', 'name']]],
             ['interface_mold_model_variations', [['name', 'name']]],
+            ['interface_product_model_variations', [['name', 'name']]],
             ['interface_delivery_method_variations', [['name', 'name']]],
             ['interface_delivery_method_sub_options', [['name', 'name']]],
             ['interface_packaging_preference_variations', [['name', 'name']]],

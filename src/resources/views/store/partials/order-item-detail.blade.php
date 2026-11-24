@@ -12,6 +12,7 @@
     }
     $notes = is_string($data['product_customization_notes'] ?? null) ? trim($data['product_customization_notes']) : '';
     $quick = is_array($data['quick_order'] ?? null) ? $data['quick_order'] : [];
+    $quickImgs = \App\Support\QuickOrderImages::list($quick);
 @endphp
 
 <div class="space-y-3">
@@ -152,7 +153,7 @@
         </section>
     @endif
 
-    @if(trim((string) ($quick['notes'] ?? '')) !== '' || trim((string) ($quick['image_url'] ?? '')) !== '')
+    @if(trim((string) ($quick['notes'] ?? '')) !== '' || count($quickImgs) > 0)
         <section class="overflow-hidden rounded-xl border border-slate-200/90 bg-white">
             <header class="border-b border-slate-100 bg-slate-50/90 px-4 py-2.5">
                 <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ __('store.product.quick_order_summary') }}</h4>
@@ -161,8 +162,14 @@
                 @if(trim((string) ($quick['notes'] ?? '')) !== '')
                     <p class="whitespace-pre-wrap break-words text-sm font-medium leading-relaxed text-slate-800">{{ $quick['notes'] }}</p>
                 @endif
-                @if(trim((string) ($quick['image_url'] ?? '')) !== '')
-                    <a href="{{ $quick['image_url'] }}" target="_blank" rel="noopener" class="inline-flex text-sm font-semibold text-primary-700 hover:text-primary-800">{{ __('store.product.quick_order_image_label') }}</a>
+                @if(count($quickImgs) > 0)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($quickImgs as $qi)
+                            <a href="{{ $qi['url'] }}" target="_blank" rel="noopener" class="block h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-white hover:border-primary-400" title="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}">
+                                <img src="{{ $qi['url'] }}" alt="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy">
+                            </a>
+                        @endforeach
+                    </div>
                 @endif
             </div>
         </section>

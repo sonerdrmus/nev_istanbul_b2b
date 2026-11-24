@@ -67,6 +67,7 @@ class MoldModelProductAssignmentTest extends TestCase
             $table->unsignedBigInteger('interface_label_type_variation_id')->nullable();
             $table->unsignedBigInteger('interface_certificate_variation_id')->nullable();
             $table->unsignedBigInteger('interface_mold_model_variation_id')->nullable();
+            $table->unsignedBigInteger('interface_product_model_variation_id')->nullable();
             $table->unsignedBigInteger('interface_delivery_method_variation_id')->nullable();
             $table->unsignedBigInteger('interface_packaging_preference_variation_id')->nullable();
             $table->unsignedBigInteger('size_table_id')->nullable();

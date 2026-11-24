@@ -61,6 +61,8 @@ class OptionsRelationManager extends RelationManager
     {
         $type = (string) $this->variation()->type;
         $isPreset = ProductVariationAdminSync::isPresetType($type);
+        // Model seçenekleri yalnızca Model Yönetimi kütüphanesinden gelir; buradan silinemez (düzenlemede yalnızca üst seçenek bağlantısı).
+        $isLibraryManaged = $type === 'model_type';
 
         return $table
             ->defaultSort('sort_order')
@@ -125,11 +127,13 @@ class OptionsRelationManager extends RelationManager
                     ->modalHeading(fn (ProductVariationOption $record): string => 'Seçeneği düzenle: '.$record->option_value)
                     ->after(fn () => $this->afterOptionsChanged()),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(! $isLibraryManaged)
                     ->after(fn () => $this->afterOptionsChanged()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
+                        ->visible(! $isLibraryManaged)
                         ->after(fn () => $this->afterOptionsChanged()),
                 ]),
             ]);

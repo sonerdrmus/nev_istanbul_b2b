@@ -116,9 +116,13 @@ class VariationSelectionDisplay
             if ($notes !== '') {
                 $rows[] = ['label' => 'Not', 'value' => $notes];
             }
-            $imageUrl = trim((string) ($value['image_url'] ?? ''));
-            if ($imageUrl !== '') {
-                $rows[] = ['label' => 'Görsel', 'value' => 'Görseli aç', 'href' => $imageUrl];
+            $images = QuickOrderImages::list($value);
+            foreach ($images as $i => $image) {
+                $rows[] = [
+                    'label' => count($images) > 1 ? 'Görsel '.($i + 1) : 'Görsel',
+                    'value' => 'Görseli aç',
+                    'href' => $image['url'],
+                ];
             }
             if ($rows === []) {
                 return '';

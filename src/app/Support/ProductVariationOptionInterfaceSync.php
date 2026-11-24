@@ -10,6 +10,7 @@ use App\Models\InterfaceFabricTypeVariation;
 use App\Models\InterfaceLabelTypeVariation;
 use App\Models\InterfaceMoldModelVariation;
 use App\Models\InterfacePackagingPreferenceVariation;
+use App\Models\InterfaceProductModelVariation;
 use App\Models\ProductVariationOption;
 use App\Models\SizeTable;
 use App\Support\CatalogLabelTranslator;
@@ -27,6 +28,7 @@ class ProductVariationOptionInterfaceSync
         'packaging_type',
         'certificate_type',
         'mold_model_type',
+        'model_type',
         'delivery_type',
         'size_table',
     ];
@@ -54,6 +56,16 @@ class ProductVariationOptionInterfaceSync
     public static function reconcileMoldModelProductOptions(?int $productId = null, ?int $presetId = null): array
     {
         return ProductResource::reconcileMoldModelOptionsForProducts($productId, $presetId);
+    }
+
+    /**
+     * Model–ürün atamalarını ürünlerin "Model" varyasyon seçenekleriyle eşitler.
+     *
+     * @return array{added: int, removed: int}
+     */
+    public static function reconcileProductModelProductOptions(?int $productId = null, ?int $presetId = null): array
+    {
+        return ProductResource::reconcileProductModelOptionsForProducts($productId, $presetId);
     }
 
     /**
@@ -97,6 +109,7 @@ class ProductVariationOptionInterfaceSync
             'packaging_type' => static::fromPackagingPreset($preset),
             'certificate_type' => static::fromCertificatePreset($preset),
             'mold_model_type' => static::fromMoldModelPreset($preset),
+            'model_type' => static::fromModelPreset($preset),
             'delivery_type' => static::fromDeliveryMethodPreset($preset),
             'size_table' => static::fromSizeTable($preset),
             default => 0,
@@ -130,6 +143,10 @@ class ProductVariationOptionInterfaceSync
             $removed += $reconciled['removed'];
         } elseif ($variationType === 'mold_model_type') {
             $reconciled = static::reconcileMoldModelProductOptions();
+            $added = $reconciled['added'];
+            $removed += $reconciled['removed'];
+        } elseif ($variationType === 'model_type') {
+            $reconciled = static::reconcileProductModelProductOptions();
             $added = $reconciled['added'];
             $removed += $reconciled['removed'];
         } elseif ($variationType === 'size_table') {
@@ -175,6 +192,7 @@ class ProductVariationOptionInterfaceSync
             InterfacePackagingPreferenceVariation::class => 'packaging_type',
             InterfaceCertificateVariation::class => 'certificate_type',
             InterfaceMoldModelVariation::class => 'mold_model_type',
+            InterfaceProductModelVariation::class => 'model_type',
             InterfaceDeliveryMethodVariation::class => 'delivery_type',
             SizeTable::class => 'size_table',
             default => null,
@@ -185,7 +203,7 @@ class ProductVariationOptionInterfaceSync
     {
         return match ($type) {
             'color' => (bool) ($preset->is_active ?? true) && filled($preset->image_path ?? null),
-            'label_type', 'packaging_type', 'certificate_type', 'mold_model_type', 'delivery_type', 'fabric' => (bool) ($preset->is_active ?? true),
+            'label_type', 'packaging_type', 'certificate_type', 'mold_model_type', 'model_type', 'delivery_type', 'fabric' => (bool) ($preset->is_active ?? true),
             'size_table' => true,
             default => false,
         };
@@ -253,6 +271,7 @@ class ProductVariationOptionInterfaceSync
             'packaging_type' => InterfacePackagingPreferenceVariation::query()->orderBy('sort_order')->orderBy('id')->get(),
             'certificate_type' => InterfaceCertificateVariation::query()->orderBy('sort_order')->orderBy('id')->get(),
             'mold_model_type' => InterfaceMoldModelVariation::query()->orderBy('sort_order')->orderBy('id')->get(),
+            'model_type' => InterfaceProductModelVariation::query()->orderBy('sort_order')->orderBy('id')->get(),
             'delivery_type' => InterfaceDeliveryMethodVariation::query()->orderBy('sort_order')->orderBy('id')->get(),
             'size_table' => SizeTable::query()->orderBy('sort_order')->orderBy('id')->get(),
             default => collect(),
@@ -370,6 +389,21 @@ class ProductVariationOptionInterfaceSync
     public static function fromMoldModelPreset(InterfaceMoldModelVariation $preset): int
     {
         if (! static::hasProductVariationOptionColumn('interface_mold_model_variation_id')) {
+            return 0;
+        }
+
+        return $preset->productVariationOptions()->update([
+            'option_value' => (string) $preset->name,
+            ...static::optionLocaleColumns($preset->name, $preset->name_en ?? null, $preset->name_it ?? null),
+            'sort_order' => (int) ($preset->sort_order ?? 0),
+            'option_image' => filled($preset->image_path) ? $preset->image_path : null,
+            'price_delta' => ProductVariationOption::normalizePriceMultiplier($preset->price_multiplier),
+        ]);
+    }
+
+    public static function fromModelPreset(InterfaceProductModelVariation $preset): int
+    {
+        if (! static::hasProductVariationOptionColumn('interface_product_model_variation_id')) {
             return 0;
         }
 

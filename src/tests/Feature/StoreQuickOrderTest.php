@@ -6,11 +6,19 @@ use App\Models\Company;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class StoreQuickOrderTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('public');
+    }
 
     public function test_quick_order_can_be_added_to_cart_when_only_quick_fields_are_present(): void
     {
@@ -42,6 +50,10 @@ class StoreQuickOrderTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 1,
             'quick_order_notes' => 'Bu metin hızlı sipariş olarak kabul edilmelidir.',
+            'quick_order_images' => [
+                UploadedFile::fake()->image('a.jpg'),
+                UploadedFile::fake()->image('b.png'),
+            ],
         ]);
 
         $response->assertRedirect(route('store.cart'));
@@ -49,7 +61,12 @@ class StoreQuickOrderTest extends TestCase
 
         $cart = session('cart');
         $this->assertArrayHasKey((string) $product->id, $cart);
-        $this->assertNotEmpty($cart[(string) $product->id]['quick_order'] ?? null);
+        $quick = collect($cart)->first()['quick_order'] ?? null;
+        $this->assertNotEmpty($quick);
+        $this->assertCount(2, $quick['images']);
+        $this->assertSame($quick['images'][0]['path'], $quick['image_path']);
+        $this->assertSame($quick['images'][0]['url'], $quick['image_url']);
+        Storage::disk('public')->assertExists($quick['image_path']);
     }
 
     public function test_quick_order_can_be_added_to_cart_with_short_note(): void
@@ -83,10 +100,19 @@ class StoreQuickOrderTest extends TestCase
             'quantity' => 1,
             'order_mode' => 'quick',
             'quick_order_notes' => 'Kısa not',
+            'quick_order_images' => [UploadedFile::fake()->image('a.jpg')],
         ]);
 
         $response->assertRedirect(route('store.cart'));
         $response->assertSessionHas('success');
+
+        $missing = $this->post(route('store.cart.add'), [
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'order_mode' => 'quick',
+            'quick_order_notes' => 'Görselsiz not',
+        ]);
+        $missing->assertSessionHas('error');
 
         $cart = session('cart');
         $this->assertArrayHasKey((string) $product->id, $cart);

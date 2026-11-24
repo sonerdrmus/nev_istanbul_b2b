@@ -211,8 +211,15 @@
                             @if(!empty($item->quick_order['notes'] ?? null))
                                 <p class="mt-1 text-xs text-slate-600">{{ __('store.product.quick_order_summary') }}: {{ $item->quick_order['notes'] }}</p>
                             @endif
-                            @if(!empty($item->quick_order['image_url'] ?? null))
-                                <a href="{{ $item->quick_order['image_url'] }}" target="_blank" rel="noopener" class="mt-1 inline-flex text-xs font-medium text-primary-600 hover:text-primary-700">{{ __('store.product.quick_order_image_label') }}</a>
+                            @php $quickImgs = \App\Support\QuickOrderImages::list($item->quick_order ?? null); @endphp
+                            @if(count($quickImgs) > 0)
+                                <div class="mt-1 flex flex-wrap gap-1.5">
+                                    @foreach($quickImgs as $qi)
+                                        <a href="{{ $qi['url'] }}" target="_blank" rel="noopener" class="block h-12 w-12 overflow-hidden rounded-md border border-slate-200 bg-white hover:border-primary-400" title="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}">
+                                            <img src="{{ $qi['url'] }}" alt="{{ __('store.product.quick_order_image_label') }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy">
+                                        </a>
+                                    @endforeach
+                                </div>
                             @endif
                         </li>
                     @endforeach

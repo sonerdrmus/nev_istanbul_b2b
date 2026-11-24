@@ -175,6 +175,7 @@ class CatalogLabelTranslator
         ['interface_color_variations', 'name', 'name_en', 'name_it'],
         ['interface_certificate_variations', 'name', 'name_en', 'name_it'],
         ['interface_mold_model_variations', 'name', 'name_en', 'name_it'],
+        ['interface_product_model_variations', 'name', 'name_en', 'name_it'],
         ['interface_delivery_method_variations', 'name', 'name_en', 'name_it'],
         ['interface_delivery_method_sub_options', 'name', 'name_en', 'name_it'],
         ['interface_packaging_preference_variations', 'name', 'name_en', 'name_it'],

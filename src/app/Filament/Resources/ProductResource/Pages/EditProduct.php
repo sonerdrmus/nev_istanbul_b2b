@@ -42,6 +42,7 @@ class EditProduct extends EditRecord
         // Kumaş / kalıp seçenekleri her açılışta güncel: yeni kayıtlar eklenir, başka ürüne özel olanlar düşer.
         ProductVariationOptionInterfaceSync::reconcileFabricProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcileMoldModelProductOptions((int) $this->record->getKey());
+        ProductVariationOptionInterfaceSync::reconcileProductModelProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcileSizeTableProductOptions((int) $this->record->getKey());
         ProductVariationOptionInterfaceSync::reconcilePackagingProductOptions((int) $this->record->getKey());
 

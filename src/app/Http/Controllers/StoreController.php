@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderPendingAdminMail;
+use App\Mail\OrderPendingCustomerMail;
 use App\Models\BankAccount;
 use App\Models\BannerSlide;
 use App\Models\BlogPost;
@@ -14,6 +16,7 @@ use App\Models\ProductVariationOption;
 use App\Models\ShippingMethod;
 use App\Models\SizeTable;
 use App\Support\FirewallSafeBody;
+use App\Support\OrderPendingMailData;
 use App\Support\ProductVariationFlowSteps;
 use App\Support\MediaUrl;
 use App\Support\DeliveryMethodCatalog;
@@ -26,6 +29,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -472,11 +476,13 @@ class StoreController extends Controller
                 'interfaceCertificateVariation',
                 'interfaceDeliveryMethodVariation',
                 'interfaceMoldModelVariation',
+                'interfaceProductModelVariation',
                 'sizeTable.columns',
             ]),
         ]);
         $this->filterFabricVariationOptionsForProduct($product);
         $this->filterMoldModelVariationOptionsForProduct($product);
+        $this->filterProductModelVariationOptionsForProduct($product);
         $this->filterSizeTableVariationOptionsForProduct($product);
         $this->filterPackagingVariationOptionsForProduct($product);
         $product->setRelation(
@@ -557,6 +563,31 @@ class StoreController extends Controller
             $filtered = $variation->options->reject(
                 fn ($option): bool => $option->interface_mold_model_variation_id !== null
                     && in_array((int) $option->interface_mold_model_variation_id, $hiddenMoldIds, true)
+            )->values();
+
+            $variation->setRelation('options', $filtered);
+        }
+    }
+
+    /**
+     * "Model" varyasyonu seçeneklerini yalnızca Varyasyon yönetiminde bu ürüne
+     * atanmış modelleri gösterecek şekilde filtreler.
+     */
+    private function filterProductModelVariationOptionsForProduct(Product $product): void
+    {
+        $hiddenModelIds = $product->hiddenProductModelVariationIds();
+        if ($hiddenModelIds === []) {
+            return;
+        }
+
+        foreach ($product->variations as $variation) {
+            if ((string) $variation->type !== 'model_type') {
+                continue;
+            }
+
+            $filtered = $variation->options->reject(
+                fn ($option): bool => $option->interface_product_model_variation_id !== null
+                    && in_array((int) $option->interface_product_model_variation_id, $hiddenModelIds, true)
             )->values();
 
             $variation->setRelation('options', $filtered);
@@ -669,6 +700,8 @@ class StoreController extends Controller
             'size_quantities' => 'nullable|string',
             'quick_order_notes' => 'nullable|string',
             'quick_order_image' => 'nullable|image|max:4096',
+            'quick_order_images' => 'nullable|array|max:8',
+            'quick_order_images.*' => 'image|max:4096',
         ]);
         $product = Product::findOrFail($request->product_id);
         if (! $product->isOnSale()) {
@@ -703,26 +736,44 @@ class StoreController extends Controller
 
         $quickOrder = null;
         $quickNotes = trim((string) $request->input('quick_order_notes', ''));
-        $hasQuickImage = $request->hasFile('quick_order_image');
-        $isQuickOrder = $request->input('order_mode') === 'quick' || $quickNotes !== '' || $hasQuickImage;
-        if ($isQuickOrder) {
-            $imagePath = null;
-            if ($request->hasFile('quick_order_image')) {
-                $image = $request->file('quick_order_image');
-                if ($image && $image->isValid()) {
-                    $imagePath = $image->store('quick-orders', 'public');
-                }
+        $quickFiles = [];
+        $multiFiles = $request->file('quick_order_images', []);
+        if (! is_array($multiFiles)) {
+            $multiFiles = $multiFiles ? [$multiFiles] : [];
+        }
+        foreach ($multiFiles as $file) {
+            if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                $quickFiles[] = $file;
             }
-            if ($quickNotes === '' && $imagePath === null) {
+        }
+        $legacyFile = $request->file('quick_order_image');
+        if ($legacyFile instanceof \Illuminate\Http\UploadedFile && $legacyFile->isValid()) {
+            $quickFiles[] = $legacyFile;
+        }
+        $quickFiles = array_slice($quickFiles, 0, 8);
+        $isQuickOrder = $request->input('order_mode') === 'quick' || $quickNotes !== '' || $quickFiles !== [];
+        if ($isQuickOrder) {
+            if ($quickNotes === '' && $quickFiles === []) {
                 return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_required'));
             }
-            if ($request->input('after_add') === 'checkout' && ($quickNotes === '' || $imagePath === null)) {
+            if ($quickNotes === '' || $quickFiles === []) {
+                return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_both_required'));
+            }
+            $quickImages = [];
+            foreach ($quickFiles as $file) {
+                $path = $file->store('quick-orders', 'public');
+                if ($path) {
+                    $quickImages[] = ['path' => $path, 'url' => Storage::disk('public')->url($path)];
+                }
+            }
+            if ($quickImages === []) {
                 return redirect()->back()->withInput()->with('error', __('store.flash.quick_order_both_required'));
             }
             $quickOrder = [
                 'notes' => $quickNotes,
-                'image_path' => $imagePath,
-                'image_url' => $imagePath ? Storage::disk('public')->url($imagePath) : null,
+                'images' => $quickImages,
+                'image_path' => $quickImages[0]['path'],
+                'image_url' => $quickImages[0]['url'],
             ];
         }
 
@@ -731,6 +782,7 @@ class StoreController extends Controller
             $product->load('variations.options');
             $this->filterFabricVariationOptionsForProduct($product);
             $this->filterMoldModelVariationOptionsForProduct($product);
+            $this->filterProductModelVariationOptionsForProduct($product);
             $this->filterSizeTableVariationOptionsForProduct($product);
             $this->filterPackagingVariationOptionsForProduct($product);
             $rootVariations = $product->variations
@@ -982,7 +1034,53 @@ class StoreController extends Controller
             return redirect()->route('store.checkout')->with('error', $errorMessage)->withInput();
         }
 
+        $this->sendPendingOrderEmails($order);
+
         return redirect()->route('store.order-confirmation', $order)->with('success', __('store.flash.order_placed'));
+    }
+
+    /**
+     * Sipariş (bekliyor) e-postaları: müşteri + yöneticiler. Hata siparişi bozmaz.
+     */
+    private function sendPendingOrderEmails(Order $order): void
+    {
+        try {
+            $order->load('items');
+        } catch (\Throwable $e) {
+            Log::error('Sipariş e-postası için sipariş yüklenemedi', ['order_id' => $order->id, 'message' => $e->getMessage()]);
+
+            return;
+        }
+
+        $customerEmail = trim((string) $order->customer_email);
+        if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+            try {
+                Mail::to($customerEmail)->send(new OrderPendingCustomerMail($order));
+            } catch (\Throwable $e) {
+                Log::error('Müşteri sipariş e-postası gönderilemedi', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'to' => $customerEmail,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        try {
+            $adminRecipients = OrderPendingMailData::adminRecipients();
+            if ($adminRecipients === []) {
+                Log::warning('Sipariş yönetici e-postası için alıcı bulunamadı', ['order_id' => $order->id]);
+
+                return;
+            }
+            Mail::to($adminRecipients)->send(new OrderPendingAdminMail($order));
+        } catch (\Throwable $e) {
+            Log::error('Yönetici sipariş e-postası gönderilemedi', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function orderConfirmation(string $locale, Order $order): View

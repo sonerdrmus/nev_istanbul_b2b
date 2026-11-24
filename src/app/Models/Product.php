@@ -34,6 +34,7 @@ class Product extends Model
         'stock_quantity',
         'minimum_order_quantity',
         'image',
+        'gallery_images',
         'is_active',
         'status',
         'sort_order',
@@ -49,6 +50,7 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
+            'gallery_images' => 'array',
             'is_active' => 'boolean',
             'customization_enabled' => 'boolean',
             'sort_order' => 'integer',
@@ -279,6 +281,27 @@ class Product extends Model
         return $urls;
     }
 
+    /**
+     * Ürün sayfası «Görsel Galerisi» modalı için URL listesi (ana slayttan bağımsız).
+     *
+     * @return list<string>
+     */
+    public function getGalleryImageUrlsAttribute(): array
+    {
+        $urls = [];
+        foreach ((array) ($this->gallery_images ?? []) as $path) {
+            if (! is_string($path) || trim($path) === '') {
+                continue;
+            }
+            $url = MediaUrl::public($path);
+            if ($url !== '') {
+                $urls[] = $url;
+            }
+        }
+
+        return $urls;
+    }
+
     public function productDiscounts()
     {
         return $this->hasMany(ProductDiscount::class)->orderBy('priority')->orderBy('quantity');
@@ -308,6 +331,17 @@ class Product extends Model
             'interface_mold_model_variation_product',
             'product_id',
             'interface_mold_model_variation_id',
+        )->withTimestamps();
+    }
+
+    /** Bu ürüne atanmış model varyasyonları (çoklu; pivot). */
+    public function productModelVariations()
+    {
+        return $this->belongsToMany(
+            InterfaceProductModelVariation::class,
+            'interface_product_model_variation_product',
+            'product_id',
+            'interface_product_model_variation_id',
         )->withTimestamps();
     }
 
@@ -367,6 +401,16 @@ class Product extends Model
     public function hiddenMoldModelVariationIds(): array
     {
         return InterfaceMoldModelVariation::hiddenIdsForProduct((int) $this->getKey());
+    }
+
+    /**
+     * Bu üründe GİZLENECEK model preset id'leri: bu ürüne atanmamış tüm modeller.
+     *
+     * @return array<int, int>
+     */
+    public function hiddenProductModelVariationIds(): array
+    {
+        return InterfaceProductModelVariation::hiddenIdsForProduct((int) $this->getKey());
     }
 
     /**
