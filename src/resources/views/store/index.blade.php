@@ -158,7 +158,11 @@
                 }
             @endphp
             <{{ $showcaseHeadingTag }} class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight mb-5 sm:mb-6">{{ $showcaseHeadingText }}</{{ $showcaseHeadingTag }}>
-            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div @class([
+                'grid gap-3 sm:gap-4',
+                'grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-6' => $isParentCategoryBrowse,
+                'grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4' => ! $isParentCategoryBrowse,
+            ])>
                 @foreach($homeCategoryShowcase ?? [] as $cat)
                     <a href="{{ route('home', array_filter(['category' => $cat->slug, 'parent' => $isParentCategoryBrowse ? $currentCategory->slug : null])) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
