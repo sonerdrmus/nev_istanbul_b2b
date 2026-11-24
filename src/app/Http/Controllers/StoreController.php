@@ -391,16 +391,13 @@ class StoreController extends Controller
         }
         if (! $currentCategory) {
             $bannerSlides = BannerSlide::forHome()->get();
-            if (\App\Support\SchemaInfo::hasColumn('categories', 'image_path')) {
-                $homeCategoryShowcase = Category::query()
-                    ->active()
-                    ->roots() // Anasayfa: yalnız üst kategori görselleri
-                    ->whereNotNull('image_path')
-                    ->where('image_path', '!=', '')
-                    ->orderBy('sort_order')
-                    ->orderBy('name')
-                    ->get();
-            }
+            // Anasayfa: tüm aktif üst kategoriler (görsel yoksa kart yine görünür)
+            $homeCategoryShowcase = Category::query()
+                ->active()
+                ->roots()
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
             if (\App\Support\SchemaInfo::hasColumn('products', 'show_on_home')) {
                 $homeProductShowcase = Product::query()
                     ->active()
@@ -412,14 +409,12 @@ class StoreController extends Controller
                     ->get();
             }
         } elseif (
-            \App\Support\SchemaInfo::hasColumn('categories', 'image_path')
-            && $currentCategory->relationLoaded('children')
+            $currentCategory->relationLoaded('children')
             && $currentCategory->children->isNotEmpty()
         ) {
-            // Üst kategori seçilince: alt kategori görselleri
+            // Üst kategori seçilince: tüm aktif alt kategoriler (görsel zorunlu değil)
             $homeCategoryShowcase = $currentCategory->children
-                ->filter(fn (Category $child) => $child->is_active
-                    && filled($child->image_path))
+                ->filter(fn (Category $child) => (bool) $child->is_active)
                 ->sortBy([
                     ['sort_order', 'asc'],
                     ['name', 'asc'],

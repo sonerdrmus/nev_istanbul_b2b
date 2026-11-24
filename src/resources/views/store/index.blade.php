@@ -162,9 +162,13 @@
                 @foreach($homeCategoryShowcase ?? [] as $cat)
                     <a href="{{ route('home', array_filter(['category' => $cat->slug, 'parent' => $isParentCategoryBrowse ? $currentCategory->slug : null])) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-slate-50/80 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary-200/80 transition-all duration-300 ring-1 ring-transparent hover:ring-primary-100/60">
                         <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-50">
-                            <div class="absolute inset-[2px] overflow-hidden">
-                                <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->localized_name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
-                            </div>
+                            @if(filled($cat->image_path))
+                                <div class="absolute inset-[2px] overflow-hidden">
+                                    <img src="{{ \App\Support\MediaUrl::public($cat->image_path) }}" alt="{{ $cat->localized_name }}" class="block h-full w-full object-contain object-center" loading="lazy" decoding="async" sizes="(min-width: 1024px) 25vw, 50vw" width="400" height="300">
+                                </div>
+                            @else
+                                <span class="absolute inset-0 flex items-center justify-center text-slate-300 text-4xl font-semibold select-none" aria-hidden="true">{{ mb_strtoupper(mb_substr($cat->localized_name, 0, 1)) }}</span>
+                            @endif
                         </div>
                         <div class="px-3 py-3 sm:px-3.5 sm:py-3.5 flex-1 flex items-center justify-center text-center min-h-[3rem]">
                             <span class="text-sm font-semibold text-slate-800 group-hover:text-primary-700 transition-colors line-clamp-2">{{ $cat->localized_name }}</span>
