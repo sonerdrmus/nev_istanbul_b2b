@@ -362,15 +362,8 @@ class StoreController extends Controller
             default => $baseQuery->orderBy('sort_order')->orderBy('name'),
         };
 
-        // Kategori grid’i 8 sütun; sayfa boyutu 8’in katı olmalı ki satır boş kalmasın.
-        $categoryBrowse = $currentCategory !== null
-            || request()->filled('category')
-            || request()->filled('parent');
-        $perPageOptions = $categoryBrowse ? [16, 24, 32, 40, 48] : [12, 20, 40, 60];
-        $perPageDefault = $categoryBrowse ? 24 : 12;
-        $perPage = (int) request('per_page', $perPageDefault);
-        $perPage = in_array($perPage, $perPageOptions, true) ? $perPage : $perPageDefault;
-        $products = $baseQuery->paginate($perPage)->withQueryString();
+        // Sayfalama yok: liste aşağı kaydırılarak devam eder.
+        $products = $baseQuery->limit(500)->get();
 
         $cartCount = collect($this->getCart())->sum('quantity');
         $canSeePrices = auth()->check();

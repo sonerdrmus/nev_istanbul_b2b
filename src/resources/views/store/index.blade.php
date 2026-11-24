@@ -10,11 +10,10 @@
         || request()->filled('color')
         || request()->filled('cinsiyet')
         || (request()->filled('sort') && request('sort') !== 'default')
-        || (request()->filled('per_page') && (int) request('per_page') !== ($currentCategory ? 24 : 12))
         || request()->filled('category')
         || request()->filled('parent');
     $filterUrl = function ($overrides = []) {
-        $params = array_merge(request()->only(['category', 'parent', 'company', 'in_stock', 'status_satista', 'status_yakinda', 'color', 'cinsiyet', 'q', 'sort', 'per_page']), $overrides);
+        $params = array_merge(request()->only(['category', 'parent', 'company', 'in_stock', 'status_satista', 'status_yakinda', 'color', 'cinsiyet', 'q', 'sort']), $overrides);
         $params = array_filter($params, fn ($v) => $v !== null && $v !== '');
 
         return route('home', $params);
@@ -222,9 +221,9 @@
     </div>
 
     <div class="min-w-0 w-full">
-        {{-- Ürün listesi + sıralama / sayfa (sol filtre kaldırıldı; kategori layout üst şeridinden) --}}
+        {{-- Ürün listesi + sıralama (sayfalama yok; liste aşağı kayar) --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <p class="text-slate-600 text-sm">{{ __('store.index.products_found', ['count' => $products->total()]) }}</p>
+                <p class="text-slate-600 text-sm">{{ __('store.index.products_found', ['count' => $products->count()]) }}</p>
                 <div class="flex flex-wrap items-center gap-3">
                     <label class="flex items-center gap-2 text-sm text-slate-700">
                         <span>{{ __('store.index.sort_label') }}</span>
@@ -235,22 +234,6 @@
                             <option value="{{ $filterUrl(['sort' => 'price_asc']) }}" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>{{ __('store.index.sort_price_asc') }}</option>
                             <option value="{{ $filterUrl(['sort' => 'price_desc']) }}" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>{{ __('store.index.sort_price_desc') }}</option>
                             <option value="{{ $filterUrl(['sort' => 'newest']) }}" {{ request('sort') === 'newest' ? 'selected' : '' }}>{{ __('store.index.sort_newest') }}</option>
-                        </select>
-                    </label>
-                    <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <span>{{ __('store.index.per_page') }}</span>
-                        @php
-                            $perPageOptions = $currentCategory ? [16, 24, 32, 40, 48] : [12, 20, 40, 60];
-                            $perPageDefault = $currentCategory ? 24 : 12;
-                            $perPageSelected = (int) request('per_page', $perPageDefault);
-                            if (! in_array($perPageSelected, $perPageOptions, true)) {
-                                $perPageSelected = $perPageDefault;
-                            }
-                        @endphp
-                        <select onchange="window.location.href=this.value" class="rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-primary-500 focus:border-primary-500">
-                            @foreach($perPageOptions as $n)
-                                <option value="{{ $filterUrl(['per_page' => $n]) }}" {{ $perPageSelected === $n ? 'selected' : '' }}>{{ $n }}</option>
-                            @endforeach
                         </select>
                     </label>
                 </div>
@@ -355,12 +338,6 @@
                 </article>
             @endforeach
         </div>
-
-            @if($products->hasPages())
-                <div class="mt-8 flex justify-center">
-                    {{ $products->links() }}
-                </div>
-            @endif
         @endif
     </div>
     </div>
