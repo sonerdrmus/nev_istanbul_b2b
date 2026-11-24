@@ -14,8 +14,10 @@
 .venv-split
 /auth.json
 /node_modules
-/public/build
+# Hostinger'da npm yok; production Vite çıktısı commitlenir.
+# /public/build
 /public/hot
+/public/build/hot
 /public/storage
 /storage/*.key
 /storage/pail
