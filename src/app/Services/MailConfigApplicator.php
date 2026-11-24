@@ -24,6 +24,13 @@ class MailConfigApplicator
         if ($scheme === '') {
             $scheme = null;
         }
+        // Admin UI: tls/ssl — Symfony Mailer yalnızca smtp/smtps kabul eder.
+        $scheme = match ($scheme) {
+            'tls', 'starttls' => 'smtp',
+            'ssl', 'smtps' => 'smtps',
+            'smtp', 'smtps' => $scheme,
+            default => ((int) $settings->port === 465) ? 'smtps' : 'smtp',
+        };
 
         Config::set('mail.default', $mailer);
         Config::set('mail.from.address', $settings->from_address);
