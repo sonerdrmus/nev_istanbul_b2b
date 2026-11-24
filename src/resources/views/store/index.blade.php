@@ -10,7 +10,7 @@
         || request()->filled('color')
         || request()->filled('cinsiyet')
         || (request()->filled('sort') && request('sort') !== 'default')
-        || (request()->filled('per_page') && (int) request('per_page') !== 12)
+        || (request()->filled('per_page') && (int) request('per_page') !== ($currentCategory ? 24 : 12))
         || request()->filled('category')
         || request()->filled('parent');
     $filterUrl = function ($overrides = []) {
@@ -239,9 +239,17 @@
                     </label>
                     <label class="flex items-center gap-2 text-sm text-slate-700">
                         <span>{{ __('store.index.per_page') }}</span>
+                        @php
+                            $perPageOptions = $currentCategory ? [16, 24, 32, 40, 48] : [12, 20, 40, 60];
+                            $perPageDefault = $currentCategory ? 24 : 12;
+                            $perPageSelected = (int) request('per_page', $perPageDefault);
+                            if (! in_array($perPageSelected, $perPageOptions, true)) {
+                                $perPageSelected = $perPageDefault;
+                            }
+                        @endphp
                         <select onchange="window.location.href=this.value" class="rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-primary-500 focus:border-primary-500">
-                            @foreach([12, 20, 40, 60] as $n)
-                                <option value="{{ $filterUrl(['per_page' => $n]) }}" {{ (int)request('per_page', 12) === $n ? 'selected' : '' }}>{{ $n }}</option>
+                            @foreach($perPageOptions as $n)
+                                <option value="{{ $filterUrl(['per_page' => $n]) }}" {{ $perPageSelected === $n ? 'selected' : '' }}>{{ $n }}</option>
                             @endforeach
                         </select>
                     </label>
