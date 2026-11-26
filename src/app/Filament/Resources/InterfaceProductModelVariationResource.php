@@ -54,6 +54,14 @@ class InterfaceProductModelVariationResource extends Resource
                             ->imageEditor()
                             ->nullable()
                             ->helperText('Opsiyonel. Model önizleme görseli; mağazada model seçeneğinde ve ürün galerisinde gösterilir.'),
+                        Forms\Components\FileUpload::make('size_table_image_path')
+                            ->label('Beden Tablosu')
+                            ->directory('interface_product_model_variations/size_tables')
+                            ->visibility('public')
+                            ->image()
+                            ->imageEditor()
+                            ->nullable()
+                            ->helperText('Opsiyonel. Mağazada seçeneğin yanında «Beden tablosunu görüntüle» ile modalda açılır.'),
                         Forms\Components\TextInput::make('price_multiplier')
                             ->label('Fiyat çarpanı (×)')
                             ->numeric()
@@ -91,6 +99,14 @@ class InterfaceProductModelVariationResource extends Resource
                     ->disk('public')
                     ->visibility('public')
                     ->height(50),
+                Tables\Columns\IconColumn::make('size_table_image_path')
+                    ->label('Beden tablosu')
+                    ->boolean()
+                    ->getStateUsing(fn (InterfaceProductModelVariation $record): bool => filled($record->size_table_image_path))
+                    ->trueIcon('heroicon-o-table-cells')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Model adı')
                     ->searchable()

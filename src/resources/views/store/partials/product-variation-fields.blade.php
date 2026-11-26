@@ -92,6 +92,10 @@
                                                 $moldSizeTableImageUrl = filled($option->interfaceMoldModelVariation?->size_table_image_path)
                                                     ? \App\Support\MediaUrl::public($option->interfaceMoldModelVariation->size_table_image_path)
                                                     : null;
+                                            } elseif ($variation->type === 'model_type') {
+                                                $moldSizeTableImageUrl = filled($option->interfaceProductModelVariation?->size_table_image_path)
+                                                    ? \App\Support\MediaUrl::public($option->interfaceProductModelVariation->size_table_image_path)
+                                                    : null;
                                             }
                                         @endphp
                                         @if($variation->type === 'fabric')
@@ -379,12 +383,37 @@
                                                 'text' => $optionDetailText,
                                             ])
                                             </div>
-                                        @elseif(in_array($variation->type, ['image', 'color', 'model_type'], true) && $option->option_image)
+                                        @elseif($variation->type === 'model_type' && $option->option_image)
                                             @php
                                                 $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
                                             @endphp
                                             <div class="variation-option-wrap vio-tile-wrap relative overflow-visible">
-                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}" data-product-model-preset-id="{{ $option->interface_product_model_variation_id ?? '' }}">
+                                            <div class="mold-model-option-shell vio-tile-shell">
+                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-product-model-preset-id="{{ $option->interface_product_model_variation_id ?? '' }}">
+                                                <span class="vio-tile-media group">
+                                                    {!! \App\Support\MediaUrl::pictureHtml($option->option_image, $displayOptionValue($option), 'vio-tile-img', ['loading' => 'lazy', 'decoding' => 'async']) !!}
+                                                    <span class="variation-zoom-btn absolute bottom-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                                                    </span>
+                                                </span>
+                                                <span class="vio-tile-label"><span>{{ $displayOptionValue($option) }}</span></span>
+                                            </button>
+                                            @include('store.partials.mold-model-size-table-view-btn', [
+                                                'sizeTableImageUrl' => $moldSizeTableImageUrl,
+                                                'optionTitle' => $displayOptionValue($option),
+                                            ])
+                                            </div>
+                                            @include('store.partials.variation-detail-info-btn', [
+                                                'title' => $optionDetailTitle,
+                                                'text' => $optionDetailText,
+                                            ])
+                                            </div>
+                                        @elseif(in_array($variation->type, ['image', 'color'], true) && $option->option_image)
+                                            @php
+                                                $optionImageUrl = \App\Support\MediaUrl::public($option->option_image);
+                                            @endphp
+                                            <div class="variation-option-wrap vio-tile-wrap relative overflow-visible">
+                                            <button type="button" class="product-option vio-tile" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $optionImageUrl }}" data-color-fabric-group-ids="{{ e(json_encode($colorFabricGroupIds)) }}">
                                                 <span class="vio-tile-media group">
                                                     {!! \App\Support\MediaUrl::pictureHtml($option->option_image, $displayOptionValue($option), 'vio-tile-img', ['loading' => 'lazy', 'decoding' => 'async']) !!}
                                                     <span class="variation-zoom-btn absolute bottom-1.5 right-1.5 z-10 w-6 h-6 rounded-md bg-black/50 hover:bg-primary-600 flex items-center justify-center text-white cursor-pointer transition-all opacity-0 group-hover:opacity-100" data-image-url="{{ $optionImageUrl }}" data-image-alt="{{ $displayOptionValue($option) }}" title="{{ __('store.product.variation_zoom') }}" role="button" aria-label="{{ $displayOptionValue($option) }}{{ __('store.product.variation_zoom_aria_suffix') }}">
@@ -398,10 +427,10 @@
                                                 'text' => $optionDetailText,
                                             ])
                                             </div>
-                                        @elseif($variation->type === 'mold_model_type')
+                                        @elseif(in_array($variation->type, ['mold_model_type', 'model_type'], true))
                                             <div class="variation-option-wrap relative inline-block shrink-0 overflow-visible">
                                             <div class="mold-model-option-shell flex min-w-[7.5rem] flex-col overflow-hidden rounded-xl border-2 border-slate-300 bg-white transition-all hover:border-primary-500 hover:shadow-md hover:shadow-primary-500/10 sm:min-w-[8.5rem]">
-                                            <button type="button" class="product-option w-full rounded-none border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50/50 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 sm:px-5 sm:py-3 sm:text-base min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}">{{ $displayOptionValue($option) }}</button>
+                                            <button type="button" class="product-option w-full rounded-none border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-700 shadow-none hover:bg-slate-50/50 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 sm:px-5 sm:py-3 sm:text-base min-h-[2.75rem]" data-variation="{{ $variation->name }}" data-option="{{ $option->option_value }}" data-option-label="{{ $displayOptionValue($option) }}" data-option-id="{{ $option->id }}" data-option-solo="{{ $variation->optionValueIsSoloChoice($option->option_value) ? '1' : '0' }}" data-parent-option-id="{{ $option->parent_option_id ?? '' }}" data-parent-option-ids="{{ json_encode($parentIdsList) }}" data-price-delta="{{ (float) $option->price_delta }}" data-option-image-url="{{ $option->option_image ? \App\Support\MediaUrl::public($option->option_image) : '' }}" @if($variation->type === 'mold_model_type') data-mold-model-preset-id="{{ $option->interface_mold_model_variation_id ?? '' }}" @else data-product-model-preset-id="{{ $option->interface_product_model_variation_id ?? '' }}" @endif>{{ $displayOptionValue($option) }}</button>
                                             @include('store.partials.mold-model-size-table-view-btn', [
                                                 'sizeTableImageUrl' => $moldSizeTableImageUrl,
                                                 'optionTitle' => $displayOptionValue($option),

@@ -23,6 +23,7 @@ class InterfaceProductModelVariation extends Model
         'name_en',
         'name_it',
         'image_path',
+        'size_table_image_path',
         'price_multiplier',
         'sort_order',
         'is_active',
